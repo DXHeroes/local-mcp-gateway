@@ -43,14 +43,26 @@ core/
 - `src/abstractions/McpServer.ts` - Abstract base class that all MCP servers must extend
 - `src/abstractions/ProxyHandler.ts` - Handles routing and aggregation of MCP requests
 - `src/abstractions/ProfileManager.ts` - Profile CRUD operations and validation
-- `src/abstractions/OAuthManager.ts` - OAuth 2.1 implementation according to MCP standard
+- `src/abstractions/OAuthManager.ts` - OAuth 2.1 implementation according to MCP standard (PKCE, DCR, Resource Indicators)
 - `src/abstractions/ApiKeyManager.ts` - Secure API key storage and header injection
+- `src/abstractions/RemoteHttpMcpServer.ts` - Remote HTTP MCP server implementation
+- `src/abstractions/RemoteSseMcpServer.ts` - Remote SSE MCP server implementation
+- `src/abstractions/McpServerFactory.ts` - Factory for creating MCP server instances
 
 ## Dependencies
 
 - `@local-mcp/database` - For database types and repositories
 - `zod` - Runtime validation
-- `@modelcontextprotocol/sdk` - MCP SDK types
+- `@modelcontextprotocol/sdk` - MCP SDK types (optional, for type definitions)
+
+## Implementation Status
+
+According to the implementation plans:
+- ✅ Core abstractions (McpServer, ProxyHandler, ProfileManager, OAuthManager, ApiKeyManager)
+- ✅ Remote HTTP/SSE MCP server implementations
+- ✅ MCP Server Factory for creating instances
+- ⏳ OAuth token exchange HTTP client (in progress)
+- ⏳ Custom MCP loader integration (in progress)
 
 ## Development Rules
 

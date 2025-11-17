@@ -70,9 +70,14 @@ Tables:
 
 ## Dependencies
 
+- `drizzle-orm` - DB-agnostic ORM (supports migrations)
 - `better-sqlite3` - SQLite driver
 - `zod` - Input validation
 - `@local-mcp/core` - For types
+
+## ORM Migration
+
+This package uses **Drizzle ORM** instead of raw SQL for better type safety and DB-agnostic support. All repositories have been migrated to use Drizzle's query builder and schema definitions.
 
 ## Development Rules
 

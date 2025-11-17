@@ -1,0 +1,32 @@
+{
+  "name": "@local-mcp/core",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Core abstractions and types for MCP proxy server",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --build",
+    "dev": "tsc --build --watch",
+    "test": "vitest run",
+    "test:unit": "vitest run --dir __tests__/unit",
+    "test:integration": "vitest run --dir __tests__/integration",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "lint": "biome check src __tests__",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@local-mcp/config": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.21.1",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.8"
+  },
+  "peerDependencies": {
+    "@local-mcp/database": "workspace:*"
+  }
+}

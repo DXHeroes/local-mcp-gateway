@@ -444,17 +444,17 @@ local_mcp_ui/
 - Dynamické načítání TypeScript modulů z `custom-mcps/`
 - **Validace struktury pomocí zod schémat** - strict validation před načtením
 - **Code security:**
-  - Syntax validation před execution
-  - Path traversal prevence (`../` blocking)
-  - File type validation (pouze .ts, .js)
-  - File size limits
+        - Syntax validation před execution
+        - Path traversal prevence (`../` blocking)
+        - File type validation (pouze .ts, .js)
+        - File size limits
 - **Sandboxing pro bezpečnost:**
-  - VM2 nebo worker threads isolation
-  - Resource limits (CPU, memory, execution time)
-  - Network access restrictions
-  - File system access restrictions
-  - No eval() nebo Function() konstruktor
-  - Whitelist povolených imports
+        - VM2 nebo worker threads isolation
+        - Resource limits (CPU, memory, execution time)
+        - Network access restrictions
+        - File system access restrictions
+        - No eval() nebo Function() konstruktor
+        - Whitelist povolených imports
 - Hot-reload v dev módu (s re-validation)
 
 ### 4. Backend (`apps/backend`)
@@ -464,26 +464,28 @@ local_mcp_ui/
 Každý profil má vlastní MCP endpointy pro použití v AI nástrojích (Cursor, Claude, atd.):
 
 - `POST /api/mcp/:profileId` - **HTTP MCP endpoint pro profil** (JSON-RPC 2.0)
-  - Použití: `https://localhost:3001/api/mcp/default-profile`
-  - Podporuje batch requests
-  - Automatické přidání OAuth tokenů nebo API klíčů do headers
-  
+        - Použití: `https://localhost:3001/api/mcp/default-profile`
+- Podporuje batch requests
+        - Automatické přidání OAuth tokenů nebo API klíčů do headers
+
 - `GET /api/mcp/:profileId/sse` - **SSE MCP endpoint pro profil** (Server-Sent Events)
-  - Použití: `https://localhost:3001/api/mcp/default-profile/sse`
-  - Streamování pro real-time komunikaci
-  - Podpora pro Linear SSE transport
-  
+        - Použití: `https://localhost:3001/api/mcp/default-profile/sse`
+        - Streamování pro real-time komunikaci
+        - Podpora pro Linear SSE transport
+
 - `GET /api/mcp/:profileId/info` - Metadata endpoint (tools, resources) pro profil
-  - Vrací seznam všech tools a resources z MCP serverů v profilu
-  - Použití pro discovery a debugging
+        - Vrací seznam všech tools a resources z MCP serverů v profilu
+        - Použití pro discovery a debugging
 
 **Implementace:**
+
 - Agregace tools/resources ze všech MCP serverů v profilu
 - Merge strategie pro duplicitní názvy
 - Routing requestů na správný MCP server podle tool/resource názvu
 - Fallback handling pokud MCP server není dostupný
 
 **Příklad použití:**
+
 - V Cursor: `https://localhost:3001/api/mcp/default-profile`
 - V Claude: `https://localhost:3001/api/mcp/default-profile`
 - SSE endpoint: `https://localhost:3001/api/mcp/default-profile/sse`
@@ -522,41 +524,41 @@ Každý profil má vlastní MCP endpointy pro použití v AI nástrojích (Curso
 #### Stránky
 
 - **Profiles** - seznam, vytvoření, úprava profilů
-  - Zobrazení MCP endpoint URL pro každý profil (`/api/mcp/:profileId`)
-  - Copy-to-clipboard pro snadné přidání do AI nástrojů
-  - Zobrazení transport type (HTTP/SSE)
-  
+        - Zobrazení MCP endpoint URL pro každý profil (`/api/mcp/:profileId`)
+        - Copy-to-clipboard pro snadné přidání do AI nástrojů
+        - Zobrazení transport type (HTTP/SSE)
+
 - **McpServers** - správa externích MCP serverů
-  - Přidání remote MCP serveru (HTTP/SSE)
-  - OAuth flow setup s callback handling
-  - API klíč setup (alternativa k OAuth)
-  - Linear MCP quick setup (pre-filled konfigurace)
-  
+        - Přidání remote MCP serveru (HTTP/SSE)
+        - OAuth flow setup s callback handling
+        - API klíč setup (alternativa k OAuth)
+        - Linear MCP quick setup (pre-filled konfigurace)
+
 - **CustomMcp** - vytváření a správa vlastních MCP
-  - Editor s syntax highlighting
-  - Hot-reload preview
-  
+        - Editor s syntax highlighting
+        - Hot-reload preview
+
 - **DebugLogs** - přehledné zobrazení debug logů s filtrováním
-  - Filtrování podle profilu, MCP serveru, request type
-  - JSON viewer pro request/response payloads
+        - Filtrování podle profilu, MCP serveru, request type
+        - JSON viewer pro request/response payloads
 
 #### Komponenty
 
 - ProfileCard, McpServerCard
-  - Zobrazení MCP endpoint URL
-  - Quick copy button
-  - Status indikátor (online/offline)
-  
+        - Zobrazení MCP endpoint URL
+        - Quick copy button
+        - Status indikátor (online/offline)
+
 - OAuthFlowHandler
-  - OAuth consent screen redirect handling
-  - Callback processing
-  - Success/error states
-  
+        - OAuth consent screen redirect handling
+        - Callback processing
+        - Success/error states
+
 - ApiKeyInput
-  - Secure input pro API klíče
-  - Header configuration (Authorization, X-API-Key, custom)
-  - Template editor pro header values
-  
+        - Secure input pro API klíče
+        - Header configuration (Authorization, X-API-Key, custom)
+        - Template editor pro header values
+
 - DebugLogViewer s JSON viewer
 - CustomMcpEditor s syntax highlighting
 - Form komponenty z shadcn-ui
@@ -566,38 +568,42 @@ Každý profil má vlastní MCP endpointy pro použití v AI nástrojích (Curso
 ### Požadavky podle MCP specifikace (2025-06-18)
 
 1. **OAuth 2.1 compliance**
-   - Authorization Code Flow s PKCE (povinné podle OAuth 2.1)
-   - Resource Indicators (RFC 8707) - `resource` parameter v authorization a token requests
-   - Dynamic Client Registration (RFC 7591) - podpora pro automatickou registraci klientů
-   - Protected Resource Metadata (RFC 9728) - discovery mechanismus pro authorization server
-   - Authorization Server Metadata (RFC 8414) - discovery endpoint metadata
+
+            - Authorization Code Flow s PKCE (povinné podle OAuth 2.1)
+            - Resource Indicators (RFC 8707) - `resource` parameter v authorization a token requests
+            - Dynamic Client Registration (RFC 7591) - podpora pro automatickou registraci klientů
+            - Protected Resource Metadata (RFC 9728) - discovery mechanismus pro authorization server
+            - Authorization Server Metadata (RFC 8414) - discovery endpoint metadata
 
 2. **Authorization Flow kroky**
-   - MCP server vrací `401 Unauthorized` s `WWW-Authenticate` headerem obsahujícím resource metadata URL
-   - Client extrahuje resource metadata URL z headeru
-   - Client získá Protected Resource Metadata (obsahuje `authorization_servers`)
-   - Client získá Authorization Server Metadata (endpoints, capabilities)
-   - Client provede Dynamic Client Registration (pokud podporováno, jinak použije hardcoded/manuální client ID)
-   - Client generuje PKCE code_verifier a code_challenge (SHA256)
-   - Client redirectuje uživatele na authorization server s `resource` parametrem a PKCE
-   - Uživatel autorizuje aplikaci
-   - Authorization server redirectuje zpět na callback URL s authorization code
-   - Client vymění code za access token (s code_verifier, resource parametrem)
-   - Client ukládá access token a refresh token (pokud poskytnut)
-   - Client používá access token v `Authorization: Bearer` headeru pro všechny MCP requests
+
+            - MCP server vrací `401 Unauthorized` s `WWW-Authenticate` headerem obsahujícím resource metadata URL
+            - Client extrahuje resource metadata URL z headeru
+            - Client získá Protected Resource Metadata (obsahuje `authorization_servers`)
+            - Client získá Authorization Server Metadata (endpoints, capabilities)
+            - Client provede Dynamic Client Registration (pokud podporováno, jinak použije hardcoded/manuální client ID)
+            - Client generuje PKCE code_verifier a code_challenge (SHA256)
+            - Client redirectuje uživatele na authorization server s `resource` parametrem a PKCE
+            - Uživatel autorizuje aplikaci
+            - Authorization server redirectuje zpět na callback URL s authorization code
+            - Client vymění code za access token (s code_verifier, resource parametrem)
+            - Client ukládá access token a refresh token (pokud poskytnut)
+            - Client používá access token v `Authorization: Bearer` headeru pro všechny MCP requests
 
 3. **Token management**
-   - Secure storage v SQLite (encrypted pomocí Node.js crypto)
-   - Automatic refresh před expirací (s refresh tokenem)
-   - Token audience validation - token musí být vydán pro konkrétní MCP server
-   - Token rotation pro refresh tokens (podle OAuth 2.1)
+
+            - Secure storage v SQLite (encrypted pomocí Node.js crypto)
+            - Automatic refresh před expirací (s refresh tokenem)
+            - Token audience validation - token musí být vydán pro konkrétní MCP server
+            - Token rotation pro refresh tokens (podle OAuth 2.1)
 
 4. **Bezpečnostní požadavky**
-   - Všechny authorization server endpoints přes HTTPS
-   - Redirect URIs pouze localhost nebo HTTPS
-   - State parameter pro CSRF protection
-   - PKCE povinné pro všechny flows
-   - Token audience binding - prevence token passthrough
+
+            - Všechny authorization server endpoints přes HTTPS
+            - Redirect URIs pouze localhost nebo HTTPS
+            - State parameter pro CSRF protection
+            - PKCE povinné pro všechny flows
+            - Token audience binding - prevence token passthrough
 
 ### Příklad: Linear MCP setup
 
@@ -606,6 +612,7 @@ Linear MCP server podporuje dva způsoby připojení:
 #### 1. OAuth 2.1 flow (doporučeno)
 
 Podle [Linear MCP dokumentace](https://linear.app/docs/mcp):
+
 - **HTTP endpoint**: `https://mcp.linear.app/mcp`
 - **SSE endpoint**: `https://mcp.linear.app/sse`
 - OAuth 2.1 s dynamic client registration
@@ -613,6 +620,7 @@ Podle [Linear MCP dokumentace](https://linear.app/docs/mcp):
 - Token se ukládá po úspěšné autorizaci
 
 **Konfigurace v aplikaci:**
+
 ```json
 {
   "type": "remote_http", // nebo "remote_sse"
@@ -633,11 +641,13 @@ Podle [Linear MCP dokumentace](https://linear.app/docs/mcp):
 #### 2. API klíč (alternativa)
 
 Podle [Linear MCP dokumentace](https://linear.app/docs/mcp), lze použít API klíč přímo:
+
 - Přidání API klíče přes UI
 - Automatické přidání do `Authorization: Bearer <token>` headeru
 - Žádný OAuth flow potřebný
 
 **Konfigurace v aplikaci:**
+
 ```json
 {
   "type": "remote_http",
@@ -654,6 +664,7 @@ Podle [Linear MCP dokumentace](https://linear.app/docs/mcp), lze použít API kl
 ```
 
 **UI flow:**
+
 1. Uživatel přidá Linear MCP server
 2. Vybere mezi OAuth flow nebo API klíč
 3. Pokud OAuth: otevře se consent screen, po autorizaci redirect zpět do aplikace
@@ -675,18 +686,21 @@ Podle [Linear MCP dokumentace](https://linear.app/docs/mcp), lze použít API kl
 Při prvním spuštění aplikace se automaticky spustí seedy (pokud databáze je prázdná):
 
 1. **Výchozí profily**
-   - "Default" profil s příkladem MCP serverů
-   - "Development" profil pro vývoj
+
+            - "Default" profil s příkladem MCP serverů
+            - "Development" profil pro vývoj
 
 2. **Příklad MCP servery**
-   - Linear MCP (s OAuth konfigurací a setup instrukcemi)
-   - File system MCP (lokální, bez OAuth)
-   - Web search MCP (příklad vlastního MCP)
+
+            - Linear MCP (s OAuth konfigurací a setup instrukcemi)
+            - File system MCP (lokální, bez OAuth)
+            - Web search MCP (příklad vlastního MCP)
 
 3. **Konfigurační šablony**
-   - OAuth 2.1 setup šablony pro populární služby (Linear, GitHub, atd.)
-   - Příklady vlastních MCP struktur
-   - Dokumentace v databázi pro quick start
+
+            - OAuth 2.1 setup šablony pro populární služby (Linear, GitHub, atd.)
+            - Příklady vlastních MCP struktur
+            - Dokumentace v databázi pro quick start
 
 ### Seed struktura
 
@@ -756,26 +770,29 @@ export default class MyMcpServer extends McpServer {
 ### Docker setup
 
 1. **Backend Dockerfile**
-   - Multi-stage build pro optimalizaci velikosti
-   - Node.js 20+ LTS base image
-   - Production dependencies pouze
-   - SQLite databáze jako volume mount
-   - Healthcheck endpoint
+
+            - Multi-stage build pro optimalizaci velikosti
+            - Node.js 20+ LTS base image
+            - Production dependencies pouze
+            - SQLite databáze jako volume mount
+            - Healthcheck endpoint
 
 2. **Frontend Dockerfile**
-   - Multi-stage build (build + nginx serve)
-   - Vite build v build stage
-   - Nginx pro serving statických souborů
-   - Production optimalizace
+
+            - Multi-stage build (build + nginx serve)
+            - Vite build v build stage
+            - Nginx pro serving statických souborů
+            - Production optimalizace
 
 3. **Docker Compose**
-   - Backend service
-   - Frontend service
-   - Volume pro SQLite databázi
-   - Volume pro custom-mcps
-   - Environment variables
-   - Network configuration
-   - Health checks
+
+            - Backend service
+            - Frontend service
+            - Volume pro SQLite databázi
+            - Volume pro custom-mcps
+            - Environment variables
+            - Network configuration
+            - Health checks
 
 ### Docker konfigurace
 
@@ -848,6 +865,7 @@ services:
 ### Root dev script
 
 V root `package.json`:
+
 ```json
 {
   "scripts": {
@@ -865,6 +883,7 @@ V root `package.json`:
 ```
 
 Backend a frontend mají vlastní `dev` scripty s hot-reload:
+
 - **Backend**: `tsx watch` nebo `nodemon` pro TypeScript hot-reload
 - **Frontend**: Vite dev server s HMR (Hot Module Replacement)
 
@@ -908,16 +927,18 @@ Backend a frontend mají vlastní `dev` scripty s hot-reload:
 ### MCP implementace - dva přístupy
 
 1. **Jednoduchá implementace** (defaultní, doporučené)
-   - Vytvoření souboru v `custom-mcps/<name>/index.ts`
-   - Implementace třídy dědící z `McpServer` z `@local-mcp/core`
-   - Žádná nutnost vytvářet package nebo publikovat
-   - Hot-reload v dev módu
+
+            - Vytvoření souboru v `custom-mcps/<name>/index.ts`
+            - Implementace třídy dědící z `McpServer` z `@local-mcp/core`
+            - Žádná nutnost vytvářet package nebo publikovat
+            - Hot-reload v dev módu
 
 2. **Publikovatelný package** (pro sdílení nebo distribuci)
-   - Vytvoření nového package v `packages/mcp-<name>/`
-   - Plná konfigurace `package.json` s publishing
-   - Možnost publikovat na npm nebo private registry
-   - Použití v aplikaci přes workspace protocol
+
+            - Vytvoření nového package v `packages/mcp-<name>/`
+            - Plná konfigurace `package.json` s publishing
+            - Možnost publikovat na npm nebo private registry
+            - Použití v aplikaci přes workspace protocol
 
 ## Dokumentace
 
@@ -930,11 +951,13 @@ Dokumentace je rozdělena do logických sekcí pro různé typy uživatelů:
 **Cíl:** Rychlý start pro nové uživatele
 
 **Obsah:**
+
 - **installation.md** - Instalace a setup (pnpm, Docker)
 - **quick-start.md** - 5-minutový quick start guide
 - **first-profile.md** - Vytvoření prvního profilu krok za krokem
 
 **Požadavky:**
+
 - Screenshots a GIFy pro vizuální návod
 - Copy-paste ready příkazy
 - Troubleshooting sekce pro běžné problémy
@@ -944,21 +967,23 @@ Dokumentace je rozdělena do logických sekcí pro různé typy uživatelů:
 **Cíl:** Detailní návody pro všechny hlavní funkcionality
 
 **Obsah:**
+
 - **creating-profiles.md** - Jak vytvářet a spravovat profily
 - **adding-mcp-servers.md** - Přidávání externích MCP serverů
 - **oauth-setup.md** - OAuth 2.1 setup guide
-  - **linear.md** - Linear MCP setup (HTTP i SSE)
-  - **github.md** - GitHub MCP setup
-  - **custom.md** - Vlastní OAuth servery
+        - **linear.md** - Linear MCP setup (HTTP i SSE)
+        - **github.md** - GitHub MCP setup
+        - **custom.md** - Vlastní OAuth servery
 - **api-keys.md** - Nastavení API klíčů jako alternativa k OAuth
 - **custom-mcp.md** - Vytváření vlastních MCP serverů
-  - Jednoduchá implementace
-  - Publikovatelný package
-  - Best practices
+        - Jednoduchá implementace
+        - Publikovatelný package
+        - Best practices
 - **docker-deployment.md** - Docker deployment guide
 - **troubleshooting.md** - Řešení běžných problémů
 
 **Požadavky:**
+
 - Krok za krokem návody s příklady
 - Screenshots UI
 - Code příklady
@@ -969,23 +994,25 @@ Dokumentace je rozdělena do logických sekcí pro různé typy uživatelů:
 **Cíl:** Kompletní API reference
 
 **Obsah:**
+
 - **overview.md** - API přehled, autentizace, base URL
 - **profiles.md** - Profile management API
-  - CRUD operace
-  - Request/response příklady
-  - Error codes
+        - CRUD operace
+        - Request/response příklady
+        - Error codes
 - **mcp-servers.md** - MCP server management API
 - **oauth.md** - OAuth endpoints
-  - Authorization flow
-  - Callback handling
-  - Token management
+        - Authorization flow
+        - Callback handling
+        - Token management
 - **proxy-endpoints.md** - MCP proxy endpointy per profil
-  - HTTP endpoint (`/api/mcp/:profileId`)
-  - SSE endpoint (`/api/mcp/:profileId/sse`)
-  - Použití v AI nástrojích (Cursor, Claude)
+        - HTTP endpoint (`/api/mcp/:profileId`)
+        - SSE endpoint (`/api/mcp/:profileId/sse`)
+        - Použití v AI nástrojích (Cursor, Claude)
 - **debug-logs.md** - Debug logs API
 
 **Požadavky:**
+
 - Automaticky generovaná z TypeDoc komentářů
 - OpenAPI/Swagger specifikace (volitelné)
 - Request/response příklady pro každý endpoint
@@ -997,12 +1024,14 @@ Dokumentace je rozdělena do logických sekcí pro různé typy uživatelů:
 **Cíl:** Technická dokumentace pro vývojáře
 
 **Obsah:**
+
 - **overview.md** - Architektura aplikace, diagramy
 - **mcp-proxy.md** - Jak funguje MCP proxy
 - **oauth-flow.md** - OAuth 2.1 flow podle MCP standardu
 - **database-schema.md** - Databázové schéma a vztahy
 
 **Požadavky:**
+
 - Mermaid diagramy
 - Sequence diagramy pro flows
 - ER diagramy pro databázi
@@ -1013,20 +1042,22 @@ Dokumentace je rozdělena do logických sekcí pro různé typy uživatelů:
 **Cíl:** Dokumentace pro přispěvatele
 
 **Obsah:**
+
 - **setup.md** - Development environment setup
 - **tdd-workflow.md** - Jak psát testy, TDD principy
 - **contributing.md** - Contributing guidelines
-  - Code style
-  - Commit conventions
-  - PR process
+        - Code style
+        - Commit conventions
+        - PR process
 - **code-style.md** - Coding standards a conventions
 - **testing.md** - Testování guide
-  - Unit testy
-  - Integration testy
-  - E2E testy
-  - Coverage requirements
+        - Unit testy
+        - Integration testy
+        - E2E testy
+        - Coverage requirements
 
 **Požadavky:**
+
 - Clear instructions pro nové přispěvatele
 - Code examples
 - Best practices
@@ -1036,11 +1067,13 @@ Dokumentace je rozdělena do logických sekcí pro různé typy uživatelů:
 **Cíl:** Praktické příklady a use cases
 
 **Obsah:**
+
 - **simple-mcp.md** - Jednoduchý custom MCP příklad
 - **oauth-mcp.md** - Custom MCP s OAuth integrací
 - **api-integration.md** - Integrace s externími API
 
 **Požadavky:**
+
 - Kompletní working příklady
 - Copy-paste ready kód
 - Vysvětlení každého kroku
@@ -1050,13 +1083,15 @@ Dokumentace je rozdělena do logických sekcí pro různé typy uživatelů:
 #### JSDoc komentáře
 
 **Požadavky:**
+
 - Všechny public funkce, třídy, metody mají JSDoc komentáře
 - Popis parametrů, návratových hodnot, exceptions
 - Příklady použití v komentářích
 - TypeDoc generuje API dokumentaci automaticky
 
 **Příklad:**
-```typescript
+
+````typescript
 /**
  * Creates a new profile with the given name and description.
  * 
@@ -1077,7 +1112,7 @@ Dokumentace je rozdělena do logických sekcí pro různé typy uživatelů:
 async create(name: string, description?: string): Promise<Profile> {
   // Implementation
 }
-```
+````
 
 #### Inline komentáře
 
@@ -1091,6 +1126,7 @@ async create(name: string, description?: string): Promise<Profile> {
 #### Root README.md
 
 **Obsah:**
+
 - Project description
 - Quick start (5 minut)
 - Features overview
@@ -1103,6 +1139,7 @@ async create(name: string, description?: string): Promise<Profile> {
 #### Package README.md
 
 Každý package má vlastní README:
+
 - Purpose a responsibility
 - Installation
 - Usage examples
@@ -1187,19 +1224,19 @@ Každý package má vlastní README:
 ### Input validace
 
 - **Zod schémata pro všechny API endpointy**
-  - Request body validace před zpracováním
-  - Query parameter validace
-  - Path parameter validace (profileId, mcpServerId)
-  - Response validace před odesláním
-  - Type-safe validace napříč celou aplikací
+        - Request body validace před zpracováním
+        - Query parameter validace
+        - Path parameter validace (profileId, mcpServerId)
+        - Response validace před odesláním
+        - Type-safe validace napříč celou aplikací
 
 - **Konkrétní validace:**
-  - Profile names: alphanumeric + dash/underscore, max length
-  - MCP server URLs: valid URL format, HTTPS only pro remote servers
-  - OAuth config: valid authorization server URL, resource URL format
-  - API keys: format validation podle typu (Bearer token, API key pattern)
-  - Custom MCP code: syntax validation před načtením
-  - File paths: path traversal prevence (`../` blocking)
+        - Profile names: alphanumeric + dash/underscore, max length
+        - MCP server URLs: valid URL format, HTTPS only pro remote servers
+        - OAuth config: valid authorization server URL, resource URL format
+        - API keys: format validation podle typu (Bearer token, API key pattern)
+        - Custom MCP code: syntax validation před načtením
+        - File paths: path traversal prevence (`../` blocking)
 
 ### SQL injection prevence
 
@@ -1212,200 +1249,200 @@ Každý package má vlastní README:
 ### XSS (Cross-Site Scripting) prevence
 
 - **Frontend:**
-  - React automaticky escapuje HTML
-  - Sanitizace uživatelského vstupu před zobrazením
-  - Content Security Policy (CSP) headers
-  - No `dangerouslySetInnerHTML` bez sanitizace
+        - React automaticky escapuje HTML
+        - Sanitizace uživatelského vstupu před zobrazením
+        - Content Security Policy (CSP) headers
+        - No `dangerouslySetInnerHTML` bez sanitizace
 
 - **Backend:**
-  - JSON responses pouze (ne HTML injection)
-  - Proper Content-Type headers
-  - Input sanitization před uložením do databáze
+        - JSON responses pouze (ne HTML injection)
+        - Proper Content-Type headers
+        - Input sanitization před uložením do databáze
 
 ### CSRF (Cross-Site Request Forgery) prevence
 
 - **OAuth flow:**
-  - State parameter validace
-  - PKCE code_verifier validation
-  - Origin validation v callback handleru
+        - State parameter validace
+        - PKCE code_verifier validation
+        - Origin validation v callback handleru
 
 - **API endpointy:**
-  - SameSite cookies (pokud použity)
-  - Origin/Referer header validation pro kritické operace
-  - CSRF tokens pro state-changing operace (DELETE, POST, PUT)
+        - SameSite cookies (pokud použity)
+        - Origin/Referer header validation pro kritické operace
+        - CSRF tokens pro state-changing operace (DELETE, POST, PUT)
 
 ### Rate limiting
 
 - **Per-endpoint rate limiting:**
-  - MCP proxy endpointy: rate limit podle profilu
-  - OAuth endpoints: rate limit podle IP
-  - API endpoints: rate limit podle akce
-  - Debug logs endpoint: rate limit pro prevenci DoS
+        - MCP proxy endpointy: rate limit podle profilu
+        - OAuth endpoints: rate limit podle IP
+        - API endpoints: rate limit podle akce
+        - Debug logs endpoint: rate limit pro prevenci DoS
 
 - **Implementace:**
-  - `express-rate-limit` middleware
-  - Redis nebo in-memory store pro rate limit tracking
-  - Configurable limits per endpoint type
+        - `express-rate-limit` middleware
+        - Redis nebo in-memory store pro rate limit tracking
+        - Configurable limits per endpoint type
 
 ### Authentication a Authorization
 
 - **OAuth token validace:**
-  - JWT signature verification (pokud JWT)
-  - Token expiration check
-  - Token audience validation (RFC 8707)
-  - Token scope validation
-  - Secure token storage (encrypted)
+        - JWT signature verification (pokud JWT)
+        - Token expiration check
+        - Token audience validation (RFC 8707)
+        - Token scope validation
+        - Secure token storage (encrypted)
 
 - **API key validace:**
-  - Format validation před uložením
-  - Secure storage (encrypted v SQLite)
-  - Revocation support
-  - Expiration support (volitelné)
+        - Format validation před uložením
+        - Secure storage (encrypted v SQLite)
+        - Revocation support
+        - Expiration support (volitelné)
 
 - **Profile access:**
-  - Profile ID validation před přístupem
-  - Existence check před operacemi
-  - Ownership validation (pokud multi-user v budoucnu)
+        - Profile ID validation před přístupem
+        - Existence check před operacemi
+        - Ownership validation (pokud multi-user v budoucnu)
 
 ### Sandboxing vlastních MCP modulů
 
 - **Code execution isolation:**
-  - VM2 nebo isolated worker threads pro custom MCP
-  - Resource limits (CPU, memory, execution time)
-  - Network access restrictions
-  - File system access restrictions
-  - No eval() nebo Function() konstruktor
+        - VM2 nebo isolated worker threads pro custom MCP
+        - Resource limits (CPU, memory, execution time)
+        - Network access restrictions
+        - File system access restrictions
+        - No eval() nebo Function() konstruktor
 
 - **Module loading security:**
-  - Whitelist povolených imports
-  - No require() dynamických modulů
-  - Path validation před require()
-  - Sandboxed environment pro každý custom MCP
+        - Whitelist povolených imports
+        - No require() dynamických modulů
+        - Path validation před require()
+        - Sandboxed environment pro každý custom MCP
 
 ### Secure headers
 
 - **HTTP Security Headers:**
-  - `X-Content-Type-Options: nosniff`
-  - `X-Frame-Options: DENY`
-  - `X-XSS-Protection: 1; mode=block`
-  - `Strict-Transport-Security` (HSTS) pro HTTPS
-  - `Content-Security-Policy` s restriktivními pravidly
-  - `Referrer-Policy: strict-origin-when-cross-origin`
+        - `X-Content-Type-Options: nosniff`
+        - `X-Frame-Options: DENY`
+        - `X-XSS-Protection: 1; mode=block`
+        - `Strict-Transport-Security` (HSTS) pro HTTPS
+        - `Content-Security-Policy` s restriktivními pravidly
+        - `Referrer-Policy: strict-origin-when-cross-origin`
 
 ### CORS konfigurace
 
 - **Restriktivní CORS policy:**
-  - Povolené origin pouze pro lokální vývoj
-  - No wildcard origins v production
-  - Credentials pouze pro trusted origins
-  - Preflight request handling
+        - Povolené origin pouze pro lokální vývoj
+        - No wildcard origins v production
+        - Credentials pouze pro trusted origins
+        - Preflight request handling
 
 ### Environment variable validace
 
 - **Startup validace:**
-  - Required env vars check při startu
-  - Format validation (URLs, ports, secrets)
-  - Default values pouze pro non-sensitive config
-  - Error při chybějících kritických proměnných
+        - Required env vars check při startu
+        - Format validation (URLs, ports, secrets)
+        - Default values pouze pro non-sensitive config
+        - Error při chybějících kritických proměnných
 
 ### Database security
 
 - **Connection security:**
-  - SQLite file permissions (600 - read/write pouze pro owner)
-  - Database file path validation
-  - Backup encryption
+        - SQLite file permissions (600 - read/write pouze pro owner)
+        - Database file path validation
+        - Backup encryption
 
 - **Data integrity:**
-  - Foreign key constraints
-  - Unique constraints
-  - Check constraints pro data validation
-  - Transaction isolation
+        - Foreign key constraints
+        - Unique constraints
+        - Check constraints pro data validation
+        - Transaction isolation
 
 ### OAuth security
 
 - **OAuth flow security:**
-  - PKCE povinné pro všechny flows
-  - State parameter validation
-  - Redirect URI validation (whitelist)
-  - Authorization code jednorázové použití
-  - Token binding validation
+        - PKCE povinné pro všechny flows
+        - State parameter validation
+        - Redirect URI validation (whitelist)
+        - Authorization code jednorázové použití
+        - Token binding validation
 
 - **Token security:**
-  - Secure token storage (encrypted)
-  - Token rotation pro refresh tokens
-  - Token revocation support
-  - Short-lived access tokens
+        - Secure token storage (encrypted)
+        - Token rotation pro refresh tokens
+        - Token revocation support
+        - Short-lived access tokens
 
 ### API key security
 
 - **Storage:**
-  - Encryption at rest (AES-256)
-  - Encryption key management (environment variable)
-  - No plaintext storage
+        - Encryption at rest (AES-256)
+        - Encryption key management (environment variable)
+        - No plaintext storage
 
 - **Usage:**
-  - Header injection validation
-  - Template injection prevence v header values
-  - No logging API keys
+        - Header injection validation
+        - Template injection prevence v header values
+        - No logging API keys
 
 ### Logging security
 
 - **Sensitive data:**
-  - No logging passwords, API keys, access tokens
-  - Sanitized debug logs (masked tokens)
-  - PII (Personally Identifiable Information) redaction
+        - No logging passwords, API keys, access tokens
+        - Sanitized debug logs (masked tokens)
+        - PII (Personally Identifiable Information) redaction
 
 ### Error handling security
 
 - **Error messages:**
-  - No stack traces v production responses
-  - Generic error messages pro uživatele
-  - Detailed errors pouze v server logs
-  - No internal path disclosure
+        - No stack traces v production responses
+        - Generic error messages pro uživatele
+        - Detailed errors pouze v server logs
+        - No internal path disclosure
 
 ### File upload security (custom MCP)
 
 - **Validation:**
-  - File type validation (pouze .ts, .js)
-  - File size limits
-  - Filename sanitization
-  - Path traversal prevence
-  - Content validation (syntax check)
+        - File type validation (pouze .ts, .js)
+        - File size limits
+        - Filename sanitization
+        - Path traversal prevence
+        - Content validation (syntax check)
 
 ### Network security
 
 - **HTTPS enforcement:**
-  - HTTPS pouze v production
-  - Certificate validation
-  - TLS 1.2+ requirement
+        - HTTPS pouze v production
+        - Certificate validation
+        - TLS 1.2+ requirement
 
 - **Request validation:**
-  - Request size limits
-  - Timeout handling
-  - Connection limits
+        - Request size limits
+        - Timeout handling
+        - Connection limits
 
 ### Dependency security
 
 - **Package management:**
-  - Regular dependency updates
-  - Security audit (`pnpm audit`)
-  - Lock file integrity
-  - No known vulnerabilities
+        - Regular dependency updates
+        - Security audit (`pnpm audit`)
+        - Lock file integrity
+        - No known vulnerabilities
 
 ### Security testing
 
 - **Automated testing:**
-  - Input validation testy
-  - SQL injection testy
-  - XSS testy
-  - CSRF testy
-  - Rate limiting testy
-  - OAuth flow testy
+        - Input validation testy
+        - SQL injection testy
+        - XSS testy
+        - CSRF testy
+        - Rate limiting testy
+        - OAuth flow testy
 
 - **Manual security review:**
-  - Code review s security focus
-  - Penetration testing (volitelné)
-  - Security audit před release
+        - Code review s security focus
+        - Penetration testing (volitelné)
+        - Security audit před release
 
 ## Test-Driven Development (TDD)
 
@@ -1414,6 +1451,7 @@ Každý package má vlastní README:
 **Zlaté pravidlo:** Žádný kód se nesmí implementovat bez předchozího testu. Všechny testy musí projít před merge do main branchu.
 
 **Workflow:**
+
 1. **Red** - Napsat failing test
 2. **Green** - Implementovat minimální kód pro projítí testu
 3. **Refactor** - Refaktorovat kód při zachování procházejících testů
@@ -1425,10 +1463,10 @@ Každý package má vlastní README:
 - **Blokování merge** pokud coverage < 90%
 - **Coverage report** v každém PR
 - **Coverage thresholds:**
-  - Statements: 90%
-  - Branches: 90%
-  - Functions: 90%
-  - Lines: 90%
+        - Statements: 90%
+        - Branches: 90%
+        - Functions: 90%
+        - Lines: 90%
 
 ### Testovací pyramida
 
@@ -1449,6 +1487,7 @@ Každý package má vlastní README:
 **Technologie:** Vitest
 
 **Testované oblasti:**
+
 - Core abstrakce (`McpServer`, `ProxyHandler`, `ProfileManager`, `OAuthManager`, `ApiKeyManager`)
 - Database repositories (mock databáze)
 - Utility funkce
@@ -1457,6 +1496,7 @@ Každý package má vlastní README:
 - Security funkce (encryption, token validation)
 
 **Příklady:**
+
 ```typescript
 // packages/core/src/__tests__/ProfileManager.test.ts
 describe('ProfileManager', () => {
@@ -1477,6 +1517,7 @@ describe('ProfileManager', () => {
 **Technologie:** Vitest + Supertest + MSW
 
 **Testované oblasti:**
+
 - API endpointy (Express routes)
 - Database operace (skutečná SQLite test databáze)
 - OAuth flow (mock authorization server)
@@ -1485,6 +1526,7 @@ describe('ProfileManager', () => {
 - Error handling flows
 
 **Příklady:**
+
 ```typescript
 // apps/backend/src/__tests__/integration/profiles.test.ts
 describe('Profiles API Integration', () => {
@@ -1506,6 +1548,7 @@ describe('Profiles API Integration', () => {
 **Technologie:** Playwright
 
 **Testované flows:**
+
 - Onboarding flow (první spuštění, seed data)
 - Vytvoření profilu a přidání MCP serveru
 - OAuth flow (Linear MCP setup)
@@ -1515,6 +1558,7 @@ describe('Profiles API Integration', () => {
 - Přidání profilu do AI nástroje (simulace)
 
 **Příklady:**
+
 ```typescript
 // apps/frontend/e2e/profiles.spec.ts
 import { test, expect } from '@playwright/test';
@@ -1606,22 +1650,25 @@ export default defineConfig({
 ### CI/CD test pipeline
 
 **Pre-commit hooks:**
+
 - Linting (Biome)
 - Type checking (TypeScript)
 - Unit testy (Vitest)
 - Coverage check (90% minimum)
 
 **PR checks:**
+
 - Všechny unit testy
 - Všechny integration testy
 - E2E testy (Playwright)
 - Coverage report
 - **Blokování merge** pokud:
-  - Jakýkoliv test selže
-  - Coverage < 90%
-  - Type errors
+        - Jakýkoliv test selže
+        - Coverage < 90%
+        - Type errors
 
 **GitHub Actions workflow:**
+
 ```yaml
 - Run unit tests
 - Run integration tests
@@ -1669,6 +1716,7 @@ export default defineConfig({
 ### 1. **Fáze 1: Základní infrastruktura**
 
 **TDD workflow:**
+
 1. Napsat unit testy pro core abstrakce
 2. Napsat integration testy pro database vrstvu
 3. Implementovat core abstrakce (aby testy prošly)
@@ -1677,6 +1725,7 @@ export default defineConfig({
 6. **Dokumentace**: JSDoc komentáře, architecture docs, getting started guide
 
 **Implementace:**
+
 - Projekt setup (pnpm workspace + Turborepo)
 - Turborepo konfigurace a pipeline
 - Database schéma a migrační systém s verzováním
@@ -1684,6 +1733,7 @@ export default defineConfig({
 - Core abstrakce (`McpServer`, `ProxyHandler`, `ProfileManager`)
 
 **Testy:**
+
 - Unit testy pro všechny core abstrakce
 - Integration testy pro database operace
 - E2E test pro onboarding flow (seed data)
@@ -1691,6 +1741,7 @@ export default defineConfig({
 ### 2. **Fáze 2: OAuth 2.1 implementace**
 
 **TDD workflow:**
+
 1. Napsat unit testy pro OAuthManager
 2. Napsat integration testy pro OAuth flow
 3. Napsat E2E test pro OAuth consent screen flow
@@ -1699,6 +1750,7 @@ export default defineConfig({
 6. **Dokumentace**: OAuth flow guide, Linear setup guide, architecture docs
 
 **Implementace:**
+
 - OAuthManager podle MCP standardu (2025-06-18)
 - Dynamic Client Registration podpora (RFC 7591)
 - PKCE implementace (code_verifier, code_challenge)
@@ -1709,6 +1761,7 @@ export default defineConfig({
 - Secure token storage (encryption)
 
 **Testy:**
+
 - Unit testy pro OAuthManager metody
 - Integration testy pro OAuth flow (mock authorization server)
 - E2E test pro Linear OAuth setup flow
@@ -1716,6 +1769,7 @@ export default defineConfig({
 ### 3. **Fáze 3: Backend proxy**
 
 **TDD workflow:**
+
 1. Napsat unit testy pro proxy handler
 2. Napsat integration testy pro API endpointy
 3. Napsat E2E testy pro MCP endpointy per profil
@@ -1724,16 +1778,18 @@ export default defineConfig({
 6. **Dokumentace**: API dokumentace (TypeDoc + manuální), proxy endpoints guide, jak přidat profil do AI nástrojů
 
 **Implementace:**
+
 - Express server setup s hot-reload (tsx watch)
 - MCP proxy endpointy per profil (`/api/mcp/:profileId`, `/api/mcp/:profileId/sse`)
 - Proxy handler pro externí MCP (HTTP i SSE transport)
 - OAuth callback endpoints s redirect do UI
 - API klíč management a injection
-- Profil management API
+            - Profil management API
 - Token/API key injection middleware
 - Header merge strategy
 
 **Testy:**
+
 - Unit testy pro proxy handler logiku
 - Integration testy pro všechny API endpointy (Supertest)
 - E2E testy pro vytvoření profilu a použití MCP endpointu
@@ -1741,6 +1797,7 @@ export default defineConfig({
 ### 4. **Fáze 4: Custom MCP loader**
 
 **TDD workflow:**
+
 1. Napsat unit testy pro module loader
 2. Napsat integration testy pro custom MCP načítání
 3. Napsat E2E test pro vytvoření custom MCP
@@ -1749,12 +1806,14 @@ export default defineConfig({
 6. **Dokumentace**: Custom MCP guide, examples, best practices
 
 **Implementace:**
+
 - Module loader pro jednoduché MCP implementace
-- Validace a error handling
-- Integration s proxy
+            - Validace a error handling
+            - Integration s proxy
 - Hot-reload support
 
 **Testy:**
+
 - Unit testy pro module loader a validaci
 - Integration testy pro načítání custom MCP
 - E2E test pro vytvoření a použití custom MCP
@@ -1762,6 +1821,7 @@ export default defineConfig({
 ### 5. **Fáze 5: Frontend**
 
 **TDD workflow:**
+
 1. Napsat unit testy pro React komponenty
 2. Napsat integration testy pro API integraci
 3. Napsat E2E testy pro všechny user flows
@@ -1770,16 +1830,18 @@ export default defineConfig({
 6. **Dokumentace**: User guides s screenshots, UI workflow dokumentace
 
 **Implementace:**
+
 - Vite dev server setup s HMR
-- UI komponenty
+            - UI komponenty
 - OAuth flow UI (authorization redirect, callback handling, status, token management)
 - API klíč management UI
 - Profile MCP endpoint URL display a copy functionality
 - Onboarding flow s seed daty
-- API integrace
-- Debug logs viewer
+            - API integrace
+            - Debug logs viewer
 
 **Testy:**
+
 - Unit testy pro všechny React komponenty (@testing-library/react)
 - Integration testy pro API integraci (MSW mocks)
 - E2E testy pro všechny user flows (Playwright)
@@ -1787,11 +1849,13 @@ export default defineConfig({
 ### 6. **Fáze 6: Dockerizace**
 
 **TDD workflow:**
+
 1. Napsat E2E testy pro Docker setup
 2. Implementovat Docker konfiguraci
 3. Ověřit že všechny testy procházejí v Docker
 
 **Implementace:**
+
 - Backend Dockerfile (multi-stage)
 - Frontend Dockerfile (multi-stage s nginx)
 - Docker Compose konfigurace
@@ -1801,27 +1865,30 @@ export default defineConfig({
 - Production optimalizace
 
 **Testy:**
+
 - E2E testy v Docker prostředí
 - Health check testy
 
 ### 7. **Fáze 7: Polish a dokumentace**
 
 **TDD workflow:**
+
 1. Přidat testy pro edge cases
 2. Performance testy
 3. Security testy
 4. **Kompletní dokumentace** (současně s každou funkcionalitou)
 
 **Implementace:**
-- Error handling improvements
-- Performance optimalizace
+
+            - Error handling improvements
+            - Performance optimalizace
 - **Kompletní dokumentační struktura:**
-  - Getting Started guides (installation, quick-start, first-profile)
-  - User Guides (všechny hlavní funkcionality)
-  - API dokumentace (TypeDoc generovaná + manuální)
-  - Architecture dokumentace (diagramy, flows)
-  - Development dokumentace (setup, TDD, contributing)
-  - Examples (příklady pro všechny use cases)
+        - Getting Started guides (installation, quick-start, first-profile)
+        - User Guides (všechny hlavní funkcionality)
+        - API dokumentace (TypeDoc generovaná + manuální)
+        - Architecture dokumentace (diagramy, flows)
+        - Development dokumentace (setup, TDD, contributing)
+        - Examples (příklady pro všechny use cases)
 - OAuth setup guide pro různé MCP servery (Linear, GitHub, atd.)
 - Docker deployment guide
 - Turborepo workflow dokumentace
@@ -1830,6 +1897,7 @@ export default defineConfig({
 - **README soubory** pro všechny packages a apps
 
 **Dokumentační požadavky:**
+
 - Všechny guides mají screenshots/GIFy
 - Všechny API endpointy mají request/response příklady
 - Všechny code příklady jsou testované a working

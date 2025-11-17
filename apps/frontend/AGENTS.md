@@ -61,9 +61,8 @@ frontend/
 ## Dependencies
 
 - `react` (v19) - UI framework
-- `vite` - Build tool and dev server
-- `tailwindcss` - Styling
-- `shadcn-ui` - UI components
+- `vite` - Build tool and dev server (uses `@local-mcp/config/vite` for shared config)
+- `@local-mcp/ui` - Shared UI components (shadcn-ui based) with Tailwind CSS v4 configuration
 - `@tanstack/react-query` (v5) - Data fetching
 - `react-router` (v7) - Routing
 - `zustand` - State management

@@ -1,0 +1,63 @@
+{
+  "name": "local-mcp-proxy-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local MCP Proxy Server - Proxy for MCP servers with custom MCP support",
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:backend": "turbo run dev --filter=backend",
+    "dev:frontend": "turbo run dev --filter=frontend",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:unit": "turbo run test:unit",
+    "test:integration": "turbo run test:integration",
+    "test:e2e": "playwright test",
+    "test:e2e:mcp": "tsx scripts/test-with-playwright-mcp.ts",
+    "test:coverage": "turbo run test:coverage",
+    "test:watch": "turbo run test:watch",
+    "lint": "turbo run lint",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "typecheck": "turbo run typecheck",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up",
+    "docker:down": "docker-compose down",
+    "create-custom-mcp": "node scripts/create-custom-mcp.js",
+    "create-package": "node scripts/create-package.js",
+    "prepare": "husky"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "proxy",
+    "ai",
+    "claude",
+    "cursor"
+  ],
+  "author": "",
+  "license": "MIT",
+  "packageManager": "pnpm@10.22.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.5",
+    "@modelcontextprotocol/sdk": "^1.21.1",
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^24.10.1",
+    "@vitest/coverage-v8": "^4.0.8",
+    "drizzle-kit": "^0.31.6",
+    "drizzle-orm": "^0.44.7",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.6",
+    "tsx": "^4.20.6",
+    "turbo": "^2.6.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.8"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ]
+}

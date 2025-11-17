@@ -1,0 +1,5 @@
+{
+  "*.{ts,tsx}": ["biome check --write --unsafe", "biome format --write"],
+  "*.{js,jsx}": ["biome check --write --unsafe", "biome format --write"],
+  "*.{json,css,md}": ["biome format --write"]
+}

@@ -68,13 +68,15 @@ backend/
 ## Dependencies
 
 - `express` - Web framework
-- `@local-mcp/core` - Core abstractions
-- `@local-mcp/database` - Database layer
+- `@local-mcp/core` - Core abstractions (McpServer, ProxyHandler, OAuthManager, ApiKeyManager)
+- `@local-mcp/database` - Database layer (Drizzle ORM with SQLite)
 - `@local-mcp/custom-mcp-loader` - Custom MCP loader
 - `@modelcontextprotocol/sdk` - MCP SDK
 - `zod` - Validation
 - `winston` - Logging
 - `oauth4webapi` or `openid-client` - OAuth 2.1
+- `drizzle-orm` - Database ORM (DB-agnostic)
+- `better-sqlite3` - SQLite driver
 
 ## Development Rules
 

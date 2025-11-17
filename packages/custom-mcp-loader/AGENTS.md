@@ -26,23 +26,28 @@ custom-mcp-loader/
 
 ## Key Files
 
-- `src/ModuleLoader.ts` - Loads TypeScript modules from `custom-mcps/` directory
-- `src/Validator.ts` - Validates custom MCP structure using zod schemas
+- `src/ModuleLoader.ts` - Loads TypeScript modules from `custom-mcps/` directory with TypeScript compilation
+- `src/Validator.ts` - Validates custom MCP structure using zod schemas (strict validation before loading)
 
 ## Dependencies
 
 - `@local-mcp/core` - For McpServer base class
-- `zod` - Validation schemas
+- `zod` - Validation schemas (strict validation before loading)
 - `chokidar` - File watching for hot-reload
+- `tsx` or TypeScript compiler API - TypeScript compilation before loading
+- `vm2` or worker threads - Sandboxing for security
 
 ## Development Rules
 
-- Validate all modules before loading
-- Sandboxing for security (VM2 or worker threads)
-- Hot-reload support in dev mode
-- Path traversal prevention
-- Syntax validation before execution
-- Resource limits (CPU, memory, execution time)
+- **Strict validation** - Validate all modules with zod schemas before loading
+- **TypeScript compilation** - Compile TypeScript modules before execution
+- **Sandboxing** - VM2 or worker threads for security isolation
+- **Hot-reload** - File watching with chokidar in dev mode (with re-validation)
+- **Path traversal prevention** - Block `../` patterns
+- **Syntax validation** - Validate syntax before execution
+- **Resource limits** - CPU, memory, execution time limits
+- **File type validation** - Only allow .ts and .js files
+- **File size limits** - Prevent loading of oversized files
 
 ## Security Requirements
 

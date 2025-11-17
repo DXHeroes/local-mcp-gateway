@@ -55,6 +55,13 @@ Each directory has its own `AGENTS.md` with specific instructions:
 - `README.md` - Main project README
 - `CONTRIBUTING.md` - Contributing guidelines
 
+## Implementation Plans
+
+This project follows detailed implementation plans:
+
+- **[.cursor/plans/local-mcp-proxy-server-ece204be.plan.md](.cursor/plans/local-mcp-proxy-server-ece204be.plan.md)** - Main implementation plan with architecture, database schema, OAuth 2.1 implementation, and all phases
+- **[.cursor/plans/dokon-en-local-mcp-proxy-server.plan.md](.cursor/plans/dokon-en-local-mcp-proxy-server.plan.md)** - Completion plan with remaining tasks and priorities
+
 ## Important Notes
 
 - Always follow TDD: Write tests first, then implement
@@ -62,4 +69,5 @@ Each directory has its own `AGENTS.md` with specific instructions:
 - All public APIs must have JSDoc comments
 - Documentation must be updated with code changes
 - Security validations are mandatory for all inputs
+- Refer to implementation plans for detailed requirements and architecture decisions
 
