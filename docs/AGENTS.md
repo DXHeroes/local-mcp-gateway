@@ -12,41 +12,21 @@ This directory contains all project documentation: user guides, API documentatio
 
 ```
 docs/
-├── getting-started/             # Quick start guides
-├── guides/                      # User guides
-├── api/                         # API documentation
-├── architecture/                # Technical architecture
-├── development/                 # Developer documentation
-├── examples/                    # Code examples
-└── diagrams/                    # Mermaid diagrams
+├── introduction/        # Start here (What is it, Quick Start, Concepts)
+├── tutorials/           # Step-by-step learning paths
+├── how-to/             # Practical guides for specific tasks
+├── reference/           # Technical reference (API, CLI, Config)
+└── explanation/         # Deep dives and architectural concepts
 ```
-
-## Child Directories
-
-- **[getting-started/AGENTS.md](getting-started/AGENTS.md)** - Getting started guides
-- **[guides/AGENTS.md](guides/AGENTS.md)** - User guides
-- **[api/AGENTS.md](api/AGENTS.md)** - API documentation
-- **[architecture/AGENTS.md](architecture/AGENTS.md)** - Architecture docs
-- **[development/AGENTS.md](development/AGENTS.md)** - Development docs
-- **[examples/AGENTS.md](examples/AGENTS.md)** - Examples
 
 ## Documentation Rules
 
-- All documentation in Markdown
-- Use Mermaid for diagrams
-- Screenshots/GIFs for visual guides
-- Code examples must be working and tested
-- Keep documentation updated with code changes
-- Broken links are not allowed
-
-## Documentation Tools
-
-- TypeDoc - Auto-generate API docs from JSDoc
-- Mermaid - Diagrams (architecture, flows)
-- Markdownlint - Linting and consistency
+- **Diátaxis Framework**: Follow the 4-quadrant structure (Tutorials, How-to, Reference, Explanation).
+- **Visuals**: Use Mermaid for diagrams where complex flows exist.
+- **Validation**: Links must be valid relative paths.
+- **Style**: Clear, concise, and developer-focused.
 
 ## Related Files
 
-- [../README.md](../README.md) - Main README
-- [../CONTRIBUTING.md](../CONTRIBUTING.md) - Contributing guide
-
+- [README.md](./README.md) - Documentation Home
+- [../README.md](../README.md) - Project Root README
