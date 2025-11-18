@@ -418,11 +418,17 @@ class ProxyHandlerWithLogging extends ProxyHandler {
   }
 }
 
+interface ServerStatus {
+  total: number;
+  connected: number;
+  status: Record<string, boolean>;
+}
+
 /**
  * Create proxy handler for a profile
  * Loads profile, MCP servers, OAuth tokens, and API keys
  * @param profileIdentifier - Profile ID or name
- * @returns ProxyHandler and Map of server instances (serverId -> McpServer)
+ * @returns ProxyHandler, Map of server instances, and server status
  */
 async function createProxyHandlerForProfile(
   profileIdentifier: string,
@@ -430,7 +436,11 @@ async function createProxyHandlerForProfile(
   mcpServerRepository: McpServerRepository,
   oauthTokenRepository: OAuthTokenRepository,
   profileMcpServerRepository: ProfileMcpServerRepository
-): Promise<{ proxyHandler: ProxyHandler; servers: Map<string, McpServer> }> {
+): Promise<{
+  proxyHandler: ProxyHandler;
+  servers: Map<string, McpServer>;
+  serverStatus: ServerStatus;
+}> {
   // Try to find profile by ID first, then by name
   let profile = await profileRepository.findById(profileIdentifier);
   if (!profile) {
@@ -442,8 +452,14 @@ async function createProxyHandlerForProfile(
 
   // Get MCP server IDs for this profile
   const serverIds = await profileMcpServerRepository.getServerIdsForProfile(profile.id);
+  
+  // If no servers, return empty handler
   if (serverIds.length === 0) {
-    throw new Error(`No MCP servers found for profile "${profile.name}"`);
+    return {
+      proxyHandler: new ProxyHandler(),
+      servers: new Map(),
+      serverStatus: { total: 0, connected: 0, status: {} },
+    };
   }
 
   // Load MCP server entities
@@ -457,7 +473,11 @@ async function createProxyHandlerForProfile(
   );
 
   if (validServers.length === 0) {
-    throw new Error(`No valid MCP servers found for profile "${profile.name}"`);
+    return {
+      proxyHandler: new ProxyHandler(),
+      servers: new Map(),
+      serverStatus: { total: 0, connected: 0, status: {} },
+    };
   }
 
   // Load OAuth tokens for all MCP servers
@@ -484,13 +504,19 @@ async function createProxyHandlerForProfile(
     apiKeyConfigs
   );
 
-  // Initialize all servers
+  // Initialize all servers and track status
+  const status: Record<string, boolean> = {};
+  let connected = 0;
+
   for (const [serverId, server] of servers.entries()) {
     try {
       await server.initialize();
+      status[serverId] = true;
+      connected++;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error(`Failed to initialize MCP server ${serverId}:`, errorMessage);
+      status[serverId] = false;
       // Continue with other servers - but log the error for debugging
       // In production, we might want to fail fast or mark server as unavailable
     }
@@ -502,7 +528,15 @@ async function createProxyHandlerForProfile(
     proxyHandler.registerServer(serverId, server);
   }
 
-  return { proxyHandler, servers };
+  return {
+    proxyHandler,
+    servers,
+    serverStatus: {
+      total: servers.size,
+      connected,
+      status,
+    },
+  };
 }
 
 export function createProxyRoutes(
@@ -635,7 +669,7 @@ export function createProxyRoutes(
       const { profileId } = req.params; // Can be ID or name
 
       // Create proxy handler for this profile
-      const { proxyHandler } = await createProxyHandlerForProfile(
+      const { proxyHandler, serverStatus } = await createProxyHandlerForProfile(
         profileId,
         profileRepository,
         mcpServerRepository,
@@ -649,6 +683,7 @@ export function createProxyRoutes(
       res.json({
         tools,
         resources,
+        serverStatus,
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Internal error';

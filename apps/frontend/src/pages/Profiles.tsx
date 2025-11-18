@@ -13,6 +13,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  Badge,
   Button,
   Card,
   CardContent,
@@ -34,15 +35,21 @@ interface Profile {
   updatedAt: number;
 }
 
-interface ProfileWithServerCount extends Profile {
-  serverCount?: number;
+interface ServerStatus {
+  total: number;
+  connected: number;
+  status: Record<string, boolean>;
+}
+
+interface ProfileWithStatus extends Profile {
+  serverStatus?: ServerStatus;
   toolsCount?: number;
 }
 
 import { API_URL } from '../config/api';
 
 export default function ProfilesPage() {
-  const [profiles, setProfiles] = useState<ProfileWithServerCount[]>([]);
+  const [profiles, setProfiles] = useState<ProfileWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -64,40 +71,30 @@ export default function ProfilesPage() {
       }
       const data = await response.json();
 
-      // Fetch server count and tools count for each profile
-      const profilesWithCounts = await Promise.all(
+      // Fetch server status and tools count for each profile
+      const profilesWithStatus = await Promise.all(
         data.map(async (profile: Profile) => {
-          let serverCount = 0;
+          let serverStatus: ServerStatus = { total: 0, connected: 0, status: {} };
           let toolsCount = 0;
 
           try {
-            const serversResponse = await fetch(`${API_URL}/api/profiles/${profile.id}/servers`);
-            if (serversResponse.ok) {
-              const serversData = await serversResponse.json();
-              serverCount = serversData.serverIds?.length || 0;
+            const infoResponse = await fetch(`${API_URL}/api/mcp/${profile.name}/info`);
+            if (infoResponse.ok) {
+              const infoData = await infoResponse.json();
+              toolsCount = Array.isArray(infoData.tools) ? infoData.tools.length : 0;
+              if (infoData.serverStatus) {
+                serverStatus = infoData.serverStatus;
+              }
             }
           } catch {
             // Ignore errors
           }
 
-          // Fetch tools count if profile has servers
-          if (serverCount > 0) {
-            try {
-              const infoResponse = await fetch(`${API_URL}/api/mcp/${profile.name}/info`);
-              if (infoResponse.ok) {
-                const infoData = await infoResponse.json();
-                toolsCount = Array.isArray(infoData.tools) ? infoData.tools.length : 0;
-              }
-            } catch {
-              // Ignore errors - server might not be initialized yet
-            }
-          }
-
-          return { ...profile, serverCount, toolsCount };
+          return { ...profile, serverStatus, toolsCount };
         })
       );
 
-      setProfiles(profilesWithCounts);
+      setProfiles(profilesWithStatus);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -344,6 +341,18 @@ export default function ProfilesPage() {
     setEditingProfile(null);
   };
 
+  const getServerBadgeVariant = (status?: ServerStatus) => {
+    if (!status || status.total === 0) return 'destructive';
+    if (status.connected === 0 && status.total > 0) return 'destructive';
+    if (status.connected < status.total) return 'warning';
+    return 'success';
+  };
+
+  const getServerBadgeText = (status?: ServerStatus) => {
+    if (!status || status.total === 0) return 'MCP Servers: 0';
+    return `MCP Servers: ${status.connected}/${status.total}`;
+  };
+
   if (loading) {
     return <div className="p-6">Loading profiles...</div>;
   }
@@ -401,20 +410,14 @@ export default function ProfilesPage() {
                   <p className="mt-2 text-sm text-muted-foreground">{profile.description}</p>
                 )}
                 <div className="mt-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">MCP Servers:</p>
-                    <span className="text-xs px-2 py-1 bg-muted rounded">
-                      {profile.serverCount ?? 0} server{(profile.serverCount ?? 0) !== 1 ? 's' : ''}
-                    </span>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant={getServerBadgeVariant(profile.serverStatus)}>
+                      {getServerBadgeText(profile.serverStatus)}
+                    </Badge>
+                    <Badge variant={getServerBadgeVariant(profile.serverStatus)}>
+                      Tools: {profile.toolsCount || 0}
+                    </Badge>
                   </div>
-                  {profile.toolsCount !== undefined && (
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs text-muted-foreground">Tools:</p>
-                      <span className="text-xs px-2 py-1 bg-muted rounded">
-                        {profile.toolsCount} tool{profile.toolsCount !== 1 ? 's' : ''}
-                      </span>
-                    </div>
-                  )}
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">MCP Endpoint:</p>
                     <div className="flex items-center gap-2">
