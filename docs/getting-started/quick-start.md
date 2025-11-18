@@ -23,6 +23,14 @@ pnpm dev
 - Backend: http://localhost:3001
 - Frontend: http://localhost:3000
 
+**Secure HTTPS Mode (Recommended for Claude Desktop):**
+
+```bash
+pnpm dev:https
+```
+
+This starts a secure public tunnel (via `localtunnel`) to your local backend. Use the displayed `https://....loca.lt` URL in your MCP clients.
+
 ### Production Mode
 
 ```bash
@@ -67,11 +75,27 @@ Your profile will have its own MCP endpoint:
 
 ## Using Profiles in AI Tools
 
-Add your profile's MCP endpoint to your AI tool (e.g., Cursor, Claude Desktop):
+### 1. Configure Endpoint
 
+Add your profile's MCP endpoint to your AI tool (Claude Desktop).
+
+**Standard (Local):**
 ```
 http://localhost:3001/api/mcp/my-profile
 ```
 
-The AI tool will be able to use all tools and resources from MCP servers in that profile.
+**HTTPS (Tunnel - Required for some tools):**
+1. Run `pnpm dev:https`
+2. Copy the public URL (e.g. `https://blue-sky.loca.lt`)
+3. Use: `https://blue-sky.loca.lt/api/mcp/my-profile`
 
+### 2. Provide AI Context (Prompt)
+
+To help the AI understand what tools are available:
+
+1.  Go to the Profile detail page in the frontend.
+2.  Click **"AI Prompt"** to expand the section.
+3.  Click **"Copy"** to get a TOON-formatted prompt containing all available tools and their schemas.
+4.  Paste this into your AI chat (Cursor Chat, Claude).
+
+This ensures the AI knows exactly which tools it can call and how.

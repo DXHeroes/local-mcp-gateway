@@ -238,6 +238,7 @@ export default function ProfilesPage() {
   };
 
   const getFullEndpointUrl = (profileName: string): string => {
+    // Use API_URL if defined (e.g. via env var or Vite proxy target), otherwise default to current origin
     const baseUrl = API_URL || window.location.origin;
     return `${baseUrl}/api/mcp/${profileName}`;
   };

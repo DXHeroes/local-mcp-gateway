@@ -5,6 +5,7 @@
   "description": "Local MCP Proxy Server - Proxy for MCP servers with custom MCP support",
   "scripts": {
     "dev": "turbo run dev",
+    "dev:https": "turbo run dev:https",
     "dev:backend": "turbo run dev --filter=backend",
     "dev:frontend": "turbo run dev --filter=frontend",
     "build": "turbo run build",

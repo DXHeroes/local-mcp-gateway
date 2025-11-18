@@ -77,6 +77,7 @@ backend/
 - `oauth4webapi` or `openid-client` - OAuth 2.1
 - `drizzle-orm` - Database ORM (DB-agnostic)
 - `better-sqlite3` - SQLite driver
+- `localtunnel` - HTTPS tunneling for development
 
 ## Development Rules
 

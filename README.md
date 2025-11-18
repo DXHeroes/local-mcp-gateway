@@ -31,6 +31,20 @@ pnpm dev
 - Backend: http://localhost:3001
 - Frontend: http://localhost:3000
 
+**For Claude Desktop (HTTPS):**
+
+Start with HTTPS tunnel (using `localtunnel`):
+
+```bash
+pnpm dev:https
+```
+
+- Backend: http://localhost:3001
+- HTTPS Tunnel: Public URL (displayed in console) -> http://localhost:3001
+- Frontend: http://localhost:3000 (configured to show the HTTPS tunnel URL)
+
+Use the HTTPS tunnel URL in your `mcp.json` configuration to avoid SSL certificate errors in Claude Desktop.
+
 ### Building
 
 ```bash
@@ -56,6 +70,19 @@ pnpm test:e2e
 pnpm test:coverage
 ```
 
+## Integration with Claude Desktop
+
+1.  Run `pnpm dev:https`
+2.  Copy the public HTTPS URL from the terminal (e.g., `https://blue-sky-42.loca.lt`)
+3.  Configure your `mcp.json`:
+    ```json
+    "My Profile": {
+      "type": "http",
+      "url": "https://blue-sky-42.loca.lt/api/mcp/my-profile"
+    }
+    ```
+4.  **AI Prompt**: In the frontend (Profile page), copy the "AI Prompt" (TOON format) and paste it into your chat to give the AI full context about available tools.
+
 ## Project Structure
 
 ```
@@ -79,6 +106,8 @@ local_mcp_ui/
 - ✅ API key management
 - ✅ MCP proxy endpoints per profile
 - ✅ Debug logging
+- ✅ **HTTPS Tunneling** for Claude Desktop
+- ✅ **AI Prompt Generation** (TOON format) for easy context sharing
 - 🔄 Custom MCP loader (in progress)
 - 🔄 Full test coverage (in progress)
 - 🔄 Complete documentation (in progress)
@@ -86,4 +115,3 @@ local_mcp_ui/
 ## License
 
 MIT
-

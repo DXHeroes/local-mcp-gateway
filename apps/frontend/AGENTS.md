@@ -66,6 +66,7 @@ frontend/
 - `@tanstack/react-query` (v5) - Data fetching
 - `react-router` (v7) - Routing
 - `zustand` - State management
+- `@toon-format/toon` - TOON format generator for AI prompts
 
 ## Development Rules
 
