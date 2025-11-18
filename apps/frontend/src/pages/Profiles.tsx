@@ -20,8 +20,10 @@ import {
   CardTitle,
   useToast,
 } from '@local-mcp/ui';
+import { ChevronDown, ChevronUp, Copy, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import ProfileForm from '../components/ProfileForm';
+import { generateToonPrompt } from '../utils/promptGenerator';
 
 // Profile type will be imported from API response
 interface Profile {
@@ -48,6 +50,10 @@ export default function ProfilesPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [profileToDelete, setProfileToDelete] = useState<Profile | null>(null);
   const { toast } = useToast();
+
+  const [prompts, setPrompts] = useState<Record<string, string>>({});
+  const [loadingPrompts, setLoadingPrompts] = useState<Record<string, boolean>>({});
+  const [expandedPrompts, setExpandedPrompts] = useState<Record<string, boolean>>({});
 
   const fetchProfiles = useCallback(async () => {
     try {
@@ -255,6 +261,73 @@ export default function ProfilesPage() {
     }
   };
 
+  const getPrompt = async (profile: Profile) => {
+    if (prompts[profile.id]) return prompts[profile.id];
+
+    setLoadingPrompts((prev) => ({ ...prev, [profile.id]: true }));
+    try {
+      const endpoint = getFullEndpointUrl(profile.name);
+      const response = await fetch(`${endpoint}/info`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch tools info');
+      }
+      const data = await response.json();
+      const tools = Array.isArray(data.tools) ? data.tools : [];
+
+      const toonPrompt = generateToonPrompt(profile.name, endpoint, tools);
+
+      setPrompts((prev) => ({ ...prev, [profile.id]: toonPrompt }));
+      return toonPrompt;
+    } catch (err) {
+      console.error('Failed to generate prompt:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate AI prompt',
+        variant: 'destructive',
+      });
+      return null;
+    } finally {
+      setLoadingPrompts((prev) => ({ ...prev, [profile.id]: false }));
+    }
+  };
+
+  const togglePrompt = async (profile: Profile) => {
+    const isExpanded = !expandedPrompts[profile.id];
+    setExpandedPrompts((prev) => ({ ...prev, [profile.id]: isExpanded }));
+
+    if (isExpanded && !prompts[profile.id]) {
+      await getPrompt(profile);
+    }
+  };
+
+  const copyPrompt = async (profile: Profile, e: React.MouseEvent) => {
+    e.stopPropagation();
+    let prompt = prompts[profile.id];
+    if (!prompt) {
+      const result = await getPrompt(profile);
+      if (result) {
+        prompt = result;
+      }
+    }
+
+    if (prompt) {
+      try {
+        await navigator.clipboard.writeText(prompt);
+        toast({
+          title: 'Copied!',
+          description: 'AI Prompt copied to clipboard',
+          variant: 'default',
+        });
+      } catch {
+        toast({
+          title: 'Failed',
+          description: 'Failed to copy to clipboard',
+          variant: 'destructive',
+        });
+      }
+    }
+  };
+
   const openCreateForm = () => {
     setEditingProfile(null);
     setIsFormOpen(true);
@@ -356,6 +429,52 @@ export default function ProfilesPage() {
                         Copy
                       </Button>
                     </div>
+                  </div>
+
+                  <div className="pt-2 border-t">
+                    <div className="flex items-center justify-between mb-1">
+                      <button
+                        type="button"
+                        onClick={() => togglePrompt(profile)}
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors font-medium"
+                      >
+                        {expandedPrompts[profile.id] ? (
+                          <ChevronUp className="h-3 w-3" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3" />
+                        )}
+                        AI Prompt
+                      </button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2"
+                        onClick={(e) => copyPrompt(profile, e)}
+                        disabled={loadingPrompts[profile.id]}
+                        aria-label="Copy AI prompt"
+                      >
+                        {loadingPrompts[profile.id] ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Copy className="h-3 w-3" />
+                        )}
+                        <span className="ml-1 text-xs">Copy</span>
+                      </Button>
+                    </div>
+                    {expandedPrompts[profile.id] && (
+                      <div className="relative mt-1">
+                        {loadingPrompts[profile.id] ? (
+                          <div className="flex items-center justify-center p-4 bg-muted rounded text-xs text-muted-foreground">
+                            <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                            Generating prompt...
+                          </div>
+                        ) : (
+                          <pre className="text-[10px] bg-muted p-2 rounded overflow-x-auto max-h-40 whitespace-pre-wrap font-mono">
+                            {prompts[profile.id] || 'No tools available'}
+                          </pre>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>

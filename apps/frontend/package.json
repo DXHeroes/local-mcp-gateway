@@ -20,6 +20,7 @@
     "@local-mcp/config": "workspace:*",
     "@local-mcp/ui": "workspace:*",
     "@tanstack/react-query": "^5.90.8",
+    "@toon-format/toon": "^1.0.0",
     "lucide-react": "^0.553.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
