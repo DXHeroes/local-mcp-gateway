@@ -7,8 +7,8 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "dev:https": "tsx watch src/index.ts & tsx watch src/dev-https.ts",
-    "build": "tsc",
-    "start": "node dist/index.js",
+    "build": "tsdown",
+    "start": "node dist/index.mjs",
     "test": "vitest run --passWithNoTests",
     "test:unit": "vitest run --dir __tests__/unit --passWithNoTests",
     "test:integration": "vitest run --dir __tests__/integration --passWithNoTests",
@@ -44,6 +44,7 @@
     "http-proxy": "^1.18.1",
     "localtunnel": "^2.0.2",
     "supertest": "^7.1.4",
+    "tsdown": "^0.16.5",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "vitest": "^4.0.8"

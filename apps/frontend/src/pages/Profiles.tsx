@@ -39,7 +39,7 @@ interface ProfileWithServerCount extends Profile {
   toolsCount?: number;
 }
 
-const API_URL = '';
+import { API_URL } from '../config/api';
 
 export default function ProfilesPage() {
   const [profiles, setProfiles] = useState<ProfileWithServerCount[]>([]);

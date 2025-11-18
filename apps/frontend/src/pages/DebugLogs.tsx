@@ -27,7 +27,7 @@ interface McpServer {
   name: string;
 }
 
-const API_URL = '';
+import { API_URL } from '../config/api';
 
 export default function DebugLogsPage() {
   const [logs, setLogs] = useState<DebugLog[]>([]);

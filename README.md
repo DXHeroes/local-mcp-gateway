@@ -70,6 +70,43 @@ pnpm test:e2e
 pnpm test:coverage
 ```
 
+## Production Usage
+
+### Running Locally (Bare Metal)
+
+To run the production build locally:
+
+```bash
+pnpm start
+```
+
+This will:
+1. Build the application.
+2. Start the backend on http://localhost:3001.
+3. Start the frontend on http://localhost:3000.
+
+**Data Persistence:**
+Data is stored in `~/.local-mcp-data` (your home directory) to ensure it persists across restarts and updates.
+
+### Running with Docker
+
+To run using Docker (recommended for long-term use):
+
+```bash
+pnpm docker:up
+# or
+docker-compose up -d
+```
+
+This provides:
+- **Frontend**: http://localhost (Port 80) and https://localhost (Port 443)
+- **Backend**: http://localhost:3001
+- **Data Persistence**: Volumes mapped to `~/.local-mcp-data`.
+- **HTTPS**: Self-signed certificates are automatically generated in `~/.local-mcp-data/certs`.
+
+**Note on HTTPS**:
+Since self-signed certificates are used, you will need to accept the security warning in your browser or configure your system to trust `localhost.crt`.
+
 ## Integration with Claude Desktop
 
 1.  Run `pnpm dev:https`

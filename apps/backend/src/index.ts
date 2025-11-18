@@ -2,10 +2,10 @@
  * Backend entry point
  */
 
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
+import { homedir } from 'node:os';
 // Database is imported from @local-mcp/database package
 // better-sqlite3 is a dependency of @local-mcp/database
-import { fileURLToPath } from 'node:url';
 import { ApiKeyManager, OAuthManager, ProfileManager } from '@local-mcp/core';
 import {
   createDatabase,
@@ -32,15 +32,13 @@ import { createOAuthRoutes } from './routes/oauth.js';
 import { createProfileRoutes } from './routes/profiles.js';
 import { createProxyRoutes } from './routes/proxy.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
 // Validate environment variables
 const env = getEnv();
 
 const app = express();
 const PORT = env.PORT;
-const DATABASE_PATH = env.DATABASE_PATH || join(__dirname, '../../../../data/local-mcp.db');
+const DATABASE_PATH =
+  env.DATABASE_PATH || join(homedir(), '.local-mcp-data', 'local-mcp.db');
 
 // Initialize database
 async function initializeDatabase() {

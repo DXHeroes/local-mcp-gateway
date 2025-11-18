@@ -23,13 +23,22 @@ RUN pnpm --filter frontend build
 # Production stage
 FROM nginx:alpine
 
+# Install openssl for cert generation
+RUN apk add --no-cache openssl
+
 # Copy built files
 COPY --from=builder /app/apps/frontend/dist /usr/share/nginx/html
 
 # Copy nginx config
-COPY apps/frontend/nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx/docker.conf /etc/nginx/conf.d/default.conf
+
+# Copy entrypoint
+COPY scripts/docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 EXPOSE 80
+EXPOSE 443
 
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
 

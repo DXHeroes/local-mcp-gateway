@@ -9,6 +9,7 @@
     "dev:backend": "turbo run dev --filter=backend",
     "dev:frontend": "turbo run dev --filter=frontend",
     "build": "turbo run build",
+    "start": "pnpm build && concurrently \"pnpm --filter backend start\" \"pnpm --filter frontend start\"",
     "test": "turbo run test",
     "test:unit": "turbo run test:unit",
     "test:integration": "turbo run test:integration",
@@ -25,7 +26,8 @@
     "docker:down": "docker-compose down",
     "create-custom-mcp": "node scripts/create-custom-mcp.js",
     "create-package": "node scripts/create-package.js",
-    "prepare": "husky"
+    "db:seed": "pnpm --filter @local-mcp/database seed",
+    "db:reset": "rm -f ~/.local-mcp-data/local-mcp.db && pnpm db:seed"
   },
   "keywords": [
     "mcp",
@@ -48,6 +50,7 @@
     "@playwright/test": "^1.56.1",
     "@types/node": "^24.10.1",
     "@vitest/coverage-v8": "^4.0.8",
+    "concurrently": "^9.2.1",
     "drizzle-kit": "^0.31.6",
     "drizzle-orm": "^0.44.7",
     "husky": "^9.1.7",

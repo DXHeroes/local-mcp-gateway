@@ -9,6 +9,7 @@
     "dev:https": "VITE_API_URL=https://localhost:3002 vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "start": "serve -s dist -l 3000",
     "test": "vitest run --passWithNoTests --exclude '**/e2e/**'",
     "test:unit": "vitest run --dir __tests__/unit",
     "test:integration": "vitest run --dir __tests__/integration",
@@ -42,6 +43,7 @@
     "jsdom": "^27.2.0",
     "msw": "^2.12.1",
     "postcss": "^8.5.6",
+    "serve": "^14.2.5",
     "typescript": "^5.9.3",
     "vite": "^7.2.2",
     "vitest": "^4.0.8"

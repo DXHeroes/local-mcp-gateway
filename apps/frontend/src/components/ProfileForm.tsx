@@ -47,7 +47,7 @@ interface ProfileFormProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-const API_URL = '';
+import { API_URL } from '../config/api';
 
 export default function ProfileForm({
   profile,

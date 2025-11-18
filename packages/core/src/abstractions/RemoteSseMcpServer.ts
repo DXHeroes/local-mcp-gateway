@@ -16,7 +16,7 @@ import type {
   McpTool,
   RemoteSseMcpConfig,
 } from '../types/mcp.js';
-import { McpServer } from './McpServer';
+import { McpServer } from './McpServer.js';
 
 /**
  * SSE client interface for making requests
