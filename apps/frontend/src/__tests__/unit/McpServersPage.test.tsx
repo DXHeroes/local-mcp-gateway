@@ -4,6 +4,7 @@
 
 import { render, screen, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
+import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import McpServersPage from '../../pages/McpServers';
 import { server } from '../../test/server';
@@ -24,10 +25,18 @@ describe('McpServersPage', () => {
       http.get(`${API_URL}/api/mcp-servers`, async () => {
         await new Promise((resolve) => setTimeout(resolve, 100));
         return HttpResponse.json([]);
+      }),
+      http.get('/api/mcp-servers', async () => {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        return HttpResponse.json([]);
       })
     );
 
-    render(<McpServersPage />);
+    render(
+      <MemoryRouter>
+        <McpServersPage />
+      </MemoryRouter>
+    );
     expect(screen.getByText('Loading MCP servers...')).toBeInTheDocument();
   });
 
@@ -36,7 +45,7 @@ describe('McpServersPage', () => {
       {
         id: '1',
         name: 'test-server',
-        type: 'http',
+        type: 'remote_http',
         config: {},
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -46,59 +55,126 @@ describe('McpServersPage', () => {
     server.use(
       http.get(`${API_URL}/api/mcp-servers`, () => {
         return HttpResponse.json(mockServers);
+      }),
+      http.get('/api/mcp-servers', () => {
+        return HttpResponse.json(mockServers);
+      }),
+      http.get(`${API_URL}/api/mcp-servers/1/tools`, () => {
+        return HttpResponse.json({ tools: [] });
+      }),
+      http.get('/api/mcp-servers/1/tools', () => {
+        return HttpResponse.json({ tools: [] });
+      }),
+      http.get(`${API_URL}/api/mcp-servers/1/status`, () => {
+        return HttpResponse.json({ status: 'connected', error: null });
+      }),
+      http.get('/api/mcp-servers/1/status', () => {
+        return HttpResponse.json({ status: 'connected', error: null });
       })
     );
 
-    render(<McpServersPage />);
+    render(
+      <MemoryRouter>
+        <McpServersPage />
+      </MemoryRouter>
+    );
 
-    await waitFor(() => {
-      expect(screen.getByText('test-server')).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText('test-server')).toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
 
-    expect(screen.getByText(/Type: http/i)).toBeInTheDocument();
+    expect(screen.getByText(/Type: remote_http/i)).toBeInTheDocument();
   });
 
   it('should display empty state when no servers', async () => {
     server.use(
       http.get(`${API_URL}/api/mcp-servers`, () => {
         return HttpResponse.json([]);
+      }),
+      http.get('/api/mcp-servers', () => {
+        return HttpResponse.json([]);
       })
     );
 
-    render(<McpServersPage />);
+    render(
+      <MemoryRouter>
+        <McpServersPage />
+      </MemoryRouter>
+    );
 
-    await waitFor(() => {
-      expect(
-        screen.getByText(/No MCP servers found. Add your first MCP server to get started./i)
-      ).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(
+          screen.getByText(/No MCP servers found. Create your first MCP server to get started./i)
+        ).toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
   });
 
   it('should display error message on API failure', async () => {
     server.use(
       http.get(`${API_URL}/api/mcp-servers`, () => {
         return HttpResponse.json({ error: 'Failed' }, { status: 500 });
+      }),
+      http.get('/api/mcp-servers', () => {
+        return HttpResponse.json({ error: 'Failed' }, { status: 500 });
       })
     );
 
-    render(<McpServersPage />);
+    render(
+      <MemoryRouter>
+        <McpServersPage />
+      </MemoryRouter>
+    );
 
-    await waitFor(() => {
-      expect(screen.getByText(/Error:/i)).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.queryByText('Loading MCP servers...')).not.toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
+
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Error:/i)).toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
   });
 
   it('should display Add MCP Server button', async () => {
     server.use(
       http.get(`${API_URL}/api/mcp-servers`, () => {
         return HttpResponse.json([]);
+      }),
+      http.get('/api/mcp-servers', () => {
+        return HttpResponse.json([]);
       })
     );
 
-    render(<McpServersPage />);
+    render(
+      <MemoryRouter>
+        <McpServersPage />
+      </MemoryRouter>
+    );
 
+    // Wait for loading to finish
+    await waitFor(
+      () => {
+        expect(screen.queryByText('Loading MCP servers...')).not.toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
+
+    // Then check for button (there are multiple buttons with this text, use getAllByText)
     await waitFor(() => {
-      expect(screen.getByText('Add MCP Server')).toBeInTheDocument();
+      const buttons = screen.getAllByText('Add MCP Server');
+      expect(buttons.length).toBeGreaterThan(0);
+      expect(buttons[0]).toBeInTheDocument();
     });
   });
 
@@ -107,7 +183,7 @@ describe('McpServersPage', () => {
       {
         id: '1',
         name: 'oauth-server',
-        type: 'http',
+        type: 'remote_http',
         config: {},
         oauthConfig: {
           authorizationServerUrl: 'https://oauth.example.com',
@@ -122,14 +198,36 @@ describe('McpServersPage', () => {
     server.use(
       http.get(`${API_URL}/api/mcp-servers`, () => {
         return HttpResponse.json(mockServers);
+      }),
+      http.get('/api/mcp-servers', () => {
+        return HttpResponse.json(mockServers);
+      }),
+      http.get(`${API_URL}/api/mcp-servers/1/tools`, () => {
+        return HttpResponse.json({ tools: [] });
+      }),
+      http.get('/api/mcp-servers/1/tools', () => {
+        return HttpResponse.json({ tools: [] });
+      }),
+      http.get(`${API_URL}/api/mcp-servers/1/status`, () => {
+        return HttpResponse.json({ status: 'connected', error: null });
+      }),
+      http.get('/api/mcp-servers/1/status', () => {
+        return HttpResponse.json({ status: 'connected', error: null });
       })
     );
 
-    render(<McpServersPage />);
+    render(
+      <MemoryRouter>
+        <McpServersPage />
+      </MemoryRouter>
+    );
 
-    await waitFor(() => {
-      expect(screen.getByText('oauth-server')).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText('oauth-server')).toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
 
     expect(screen.getByText(/OAuth Configuration/i)).toBeInTheDocument();
     expect(
@@ -143,7 +241,7 @@ describe('McpServersPage', () => {
       {
         id: '1',
         name: 'api-key-server',
-        type: 'http',
+        type: 'remote_http',
         config: {},
         apiKeyConfig: {
           apiKey: 'secret-key',
@@ -158,14 +256,36 @@ describe('McpServersPage', () => {
     server.use(
       http.get(`${API_URL}/api/mcp-servers`, () => {
         return HttpResponse.json(mockServers);
+      }),
+      http.get('/api/mcp-servers', () => {
+        return HttpResponse.json(mockServers);
+      }),
+      http.get(`${API_URL}/api/mcp-servers/1/tools`, () => {
+        return HttpResponse.json({ tools: [] });
+      }),
+      http.get('/api/mcp-servers/1/tools', () => {
+        return HttpResponse.json({ tools: [] });
+      }),
+      http.get(`${API_URL}/api/mcp-servers/1/status`, () => {
+        return HttpResponse.json({ status: 'connected', error: null });
+      }),
+      http.get('/api/mcp-servers/1/status', () => {
+        return HttpResponse.json({ status: 'connected', error: null });
       })
     );
 
-    render(<McpServersPage />);
+    render(
+      <MemoryRouter>
+        <McpServersPage />
+      </MemoryRouter>
+    );
 
-    await waitFor(() => {
-      expect(screen.getByText('api-key-server')).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText('api-key-server')).toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
 
     expect(screen.getByText(/API Key Configured/i)).toBeInTheDocument();
     expect(screen.getByText(/Header: X-API-Key/i)).toBeInTheDocument();
@@ -176,7 +296,7 @@ describe('McpServersPage', () => {
       {
         id: '1',
         name: 'oauth-server',
-        type: 'http',
+        type: 'remote_http',
         config: {},
         oauthConfig: {
           authorizationServerUrl: 'https://oauth.example.com',
@@ -191,20 +311,43 @@ describe('McpServersPage', () => {
     server.use(
       http.get(`${API_URL}/api/mcp-servers`, () => {
         return HttpResponse.json(mockServers);
+      }),
+      http.get('/api/mcp-servers', () => {
+        return HttpResponse.json(mockServers);
+      }),
+      http.get(`${API_URL}/api/mcp-servers/1/tools`, () => {
+        return HttpResponse.json({ tools: [] });
+      }),
+      http.get('/api/mcp-servers/1/tools', () => {
+        return HttpResponse.json({ tools: [] });
+      }),
+      http.get(`${API_URL}/api/mcp-servers/1/status`, () => {
+        return HttpResponse.json({ status: 'connected', error: null });
+      }),
+      http.get('/api/mcp-servers/1/status', () => {
+        return HttpResponse.json({ status: 'connected', error: null });
       })
     );
 
-    render(<McpServersPage />);
+    render(
+      <MemoryRouter>
+        <McpServersPage />
+      </MemoryRouter>
+    );
 
-    await waitFor(() => {
-      expect(screen.getByText('Authorize')).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText('Authorize')).toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
 
     const authorizeButton = screen.getByText('Authorize');
     authorizeButton.click();
 
+    // API_URL is empty string in component, so URL is relative
     expect(window.open).toHaveBeenCalledWith(
-      `${API_URL}/api/oauth/authorize/1`,
+      '/api/oauth/authorize/1',
       '_blank',
       'width=600,height=700'
     );

@@ -157,7 +157,24 @@ class DefaultSseClient implements SseClient {
           }
         }
       } catch (error) {
-        emitter.emit('error', error);
+        // Ignore expected errors (stream closed, terminated, etc.)
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorCode = error instanceof Error && 'code' in error ? String(error.code) : '';
+
+        const isExpectedError =
+          errorMessage.includes('terminated') ||
+          errorMessage.includes('Body Timeout Error') ||
+          errorMessage.includes('other side closed') ||
+          errorCode === 'UND_ERR_SOCKET' ||
+          errorCode === 'UND_ERR_BODY_TIMEOUT';
+
+        if (!isExpectedError) {
+          // Only emit unexpected errors
+          emitter.emit('error', error);
+        } else {
+          // For expected errors, just emit close event
+          emitter.emit('close');
+        }
       }
     };
 
@@ -487,7 +504,24 @@ export class RemoteSseMcpServer extends McpServer {
             }
           }
         } catch (error) {
-          emitter.emit('error', error);
+          // Ignore expected errors (stream closed, terminated, etc.)
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorCode = error instanceof Error && 'code' in error ? String(error.code) : '';
+
+          const isExpectedError =
+            errorMessage.includes('terminated') ||
+            errorMessage.includes('Body Timeout Error') ||
+            errorMessage.includes('other side closed') ||
+            errorCode === 'UND_ERR_SOCKET' ||
+            errorCode === 'UND_ERR_BODY_TIMEOUT';
+
+          if (!isExpectedError) {
+            // Only emit unexpected errors
+            emitter.emit('error', error);
+          } else {
+            // For expected errors, just emit close event
+            emitter.emit('close');
+          }
         }
       };
 
@@ -656,12 +690,38 @@ export class RemoteSseMcpServer extends McpServer {
     if (!this.emitter) return;
 
     this.emitter.on('error', (error) => {
-      this.isConnected = false;
-      console.error('SSE connection error:', error);
+      // Ignore certain errors that are expected/normal:
+      // - "terminated" - connection was closed (normal for SSE streams)
+      // - "Body Timeout Error" - can happen with long-lived SSE streams
+      // - Socket closed errors - server may close connection normally
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorCode = error instanceof Error && 'code' in error ? String(error.code) : '';
+
+      const isExpectedError =
+        errorMessage.includes('terminated') ||
+        errorMessage.includes('Body Timeout Error') ||
+        errorMessage.includes('other side closed') ||
+        errorCode === 'UND_ERR_SOCKET' ||
+        errorCode === 'UND_ERR_BODY_TIMEOUT';
+
+      if (isExpectedError) {
+        // These are expected - SSE streams can be closed by server or timeout
+        // Just mark as disconnected, don't log as error
+        this.isConnected = false;
+        console.log(
+          '[RemoteSseMcpServer] SSE stream closed (expected):',
+          errorMessage.substring(0, 100)
+        );
+      } else {
+        // Unexpected errors should be logged
+        this.isConnected = false;
+        console.error('[RemoteSseMcpServer] SSE connection error:', error);
+      }
     });
 
     this.emitter.on('close', () => {
       this.isConnected = false;
+      console.log('[RemoteSseMcpServer] SSE stream closed normally');
     });
   }
 

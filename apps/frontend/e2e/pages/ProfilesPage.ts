@@ -50,4 +50,34 @@ export class ProfilesPage {
     const card = this.getProfileCard(profileName);
     return card.locator('code').filter({ hasText: profileName }).first();
   }
+
+  async fillProfileForm(name: string, description?: string) {
+    // Wait for form dialog to appear
+    await this.page.waitForSelector('input[name="name"], input[placeholder*="name" i]', {
+      timeout: 5000,
+    });
+
+    // Fill name field
+    const nameInput = this.page.locator('input[name="name"], input[placeholder*="name" i]').first();
+    await nameInput.fill(name);
+
+    // Fill description if provided
+    if (description) {
+      const descInput = this.page
+        .locator('textarea[name="description"], textarea[placeholder*="description" i]')
+        .first();
+      await descInput.fill(description);
+    }
+  }
+
+  async submitProfileForm() {
+    // Find and click submit button (Create or Update)
+    const submitButton = this.page
+      .getByRole('button', { name: /create|update|save/i })
+      .filter({ hasText: /create|update|save/i })
+      .first();
+    await submitButton.click();
+    // Wait for form to close
+    await this.page.waitForTimeout(500);
+  }
 }

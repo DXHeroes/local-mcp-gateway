@@ -3,37 +3,30 @@
  */
 
 import { render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { HttpResponse, http } from 'msw';
+import { beforeEach, describe, expect, it } from 'vitest';
 import DebugLogsPage from '../../pages/DebugLogs';
+import { server } from '../../test/server';
 
-// Mock fetch globally
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
+const API_URL = 'http://localhost:3001';
 
 describe('DebugLogsPage', () => {
   beforeEach(() => {
-    mockFetch.mockClear();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
+    server.resetHandlers();
   });
 
   it('should render the debug logs page', async () => {
-    // Mock API responses
-    mockFetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => [],
+    server.use(
+      http.get(`${API_URL}/api/profiles`, () => {
+        return HttpResponse.json([]);
+      }),
+      http.get(`${API_URL}/api/mcp-servers`, () => {
+        return HttpResponse.json([]);
+      }),
+      http.get(`${API_URL}/api/debug/logs`, () => {
+        return HttpResponse.json([]);
       })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => [],
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => [],
-      });
+    );
 
     render(<DebugLogsPage />);
 
@@ -46,20 +39,17 @@ describe('DebugLogsPage', () => {
   });
 
   it('should display placeholder message when no logs', async () => {
-    // Mock API responses
-    mockFetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => [],
+    server.use(
+      http.get(`${API_URL}/api/profiles`, () => {
+        return HttpResponse.json([]);
+      }),
+      http.get(`${API_URL}/api/mcp-servers`, () => {
+        return HttpResponse.json([]);
+      }),
+      http.get(`${API_URL}/api/debug/logs`, () => {
+        return HttpResponse.json([]);
       })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => [],
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => [],
-      });
+    );
 
     render(<DebugLogsPage />);
 
@@ -68,6 +58,8 @@ describe('DebugLogsPage', () => {
       expect(screen.queryByText('Loading debug logs...')).not.toBeInTheDocument();
     });
 
-    expect(screen.getByText('No debug logs found.')).toBeInTheDocument();
+    expect(
+      screen.getByText(/No debug logs found. Debug logs viewer will display logs here when they are available./i)
+    ).toBeInTheDocument();
   });
 });

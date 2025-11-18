@@ -64,4 +64,63 @@ export class McpServersPage {
     const card = this.getServerCard(serverName);
     await card.getByRole('button', { name: /delete/i }).click();
   }
+
+  async fillServerForm(data: {
+    name: string;
+    type: 'remote_http' | 'remote_sse';
+    url: string;
+    apiKey?: string;
+    apiKeyHeaderName?: string;
+  }) {
+    // Wait for form dialog to appear
+    await this.page.waitForSelector('input[name="name"], input[placeholder*="name" i]', {
+      timeout: 5000,
+    });
+
+    // Fill name field
+    const nameInput = this.page.locator('input[name="name"], input[placeholder*="name" i]').first();
+    await nameInput.fill(data.name);
+
+    // Select server type
+    const typeSelect = this.page.locator('button:has-text("Type"), select[name="type"]').first();
+    await typeSelect.click();
+    await this.page.waitForTimeout(200);
+    await this.page.getByRole('option', { name: data.type, exact: false }).click();
+
+    // Fill URL field
+    const urlInput = this.page.locator('input[name="url"], input[placeholder*="url" i]').first();
+    await urlInput.fill(data.url);
+
+    // Fill API key if provided
+    if (data.apiKey) {
+      // Select API Key authentication
+      const authRadio = this.page.getByRole('radio', { name: /api key/i });
+      await authRadio.click();
+      await this.page.waitForTimeout(200);
+
+      // Fill API key fields
+      const apiKeyInput = this.page
+        .locator('input[name="apiKey"], input[placeholder*="api key" i]')
+        .first();
+      await apiKeyInput.fill(data.apiKey);
+
+      if (data.apiKeyHeaderName) {
+        const headerNameInput = this.page
+          .locator('input[name="headerName"], input[placeholder*="header" i]')
+          .first();
+        await headerNameInput.fill(data.apiKeyHeaderName);
+      }
+    }
+  }
+
+  async submitServerForm() {
+    // Find and click submit button (Create or Update)
+    const submitButton = this.page
+      .getByRole('button', { name: /create|update|save/i })
+      .filter({ hasText: /create|update|save/i })
+      .first();
+    await submitButton.click();
+    // Wait for form to close
+    await this.page.waitForTimeout(500);
+  }
 }

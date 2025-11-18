@@ -3,7 +3,7 @@
  */
 
 import { existsSync, rmSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ProfileManager } from '@local-mcp/core';
 import {
@@ -14,12 +14,12 @@ import {
 } from '@local-mcp/database';
 import express from 'express';
 import request from 'supertest';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createProfileRoutes } from '../../src/routes/profiles.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const TEST_DB_PATH = join(__dirname, '../../../test-db.sqlite');
+const TEST_DB_PATH = join(__dirname, `../../../test-db-${basename(__filename, '.test.ts')}.sqlite`);
 
 describe('Profile API Integration Tests', () => {
   let app: express.Application;
@@ -27,9 +27,17 @@ describe('Profile API Integration Tests', () => {
   let rawDb: ReturnType<typeof createRawDatabase>;
 
   beforeEach(async () => {
+    // Set environment variables for tests
+    vi.stubEnv('NODE_ENV', 'test');
+    vi.stubEnv('LOG_LEVEL', 'error');
+
     // Clean up test database
     if (existsSync(TEST_DB_PATH)) {
-      rmSync(TEST_DB_PATH);
+      try {
+        rmSync(TEST_DB_PATH, { force: true });
+      } catch {
+        // Ignore cleanup errors
+      }
     }
 
     // Run migrations
@@ -49,12 +57,21 @@ describe('Profile API Integration Tests', () => {
   });
 
   afterEach(() => {
-    if (rawDb) {
-      rawDb.close();
+    try {
+      if (rawDb) {
+        rawDb.close();
+      }
+    } catch {
+      // Ignore cleanup errors
     }
-    if (existsSync(TEST_DB_PATH)) {
-      rmSync(TEST_DB_PATH);
+    try {
+      if (existsSync(TEST_DB_PATH)) {
+        rmSync(TEST_DB_PATH, { force: true });
+      }
+    } catch {
+      // Ignore cleanup errors
     }
+    vi.unstubAllEnvs();
   });
 
   describe('POST /api/profiles', () => {

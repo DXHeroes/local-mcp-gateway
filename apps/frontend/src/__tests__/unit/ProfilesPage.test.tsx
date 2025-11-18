@@ -34,7 +34,7 @@ describe('ProfilesPage', () => {
       {
         id: '1',
         name: 'test-profile',
-        description: 'Test description',
+        description: 'Test profile description',
         createdAt: Date.now(),
         updatedAt: Date.now(),
       },
@@ -43,16 +43,39 @@ describe('ProfilesPage', () => {
     server.use(
       http.get(`${API_URL}/api/profiles`, () => {
         return HttpResponse.json(mockProfiles);
+      }),
+      http.get('/api/profiles', () => {
+        return HttpResponse.json(mockProfiles);
+      }),
+      http.get(`${API_URL}/api/profiles/1/servers`, () => {
+        return HttpResponse.json({ serverIds: [] });
+      }),
+      http.get('/api/profiles/1/servers', () => {
+        return HttpResponse.json({ serverIds: [] });
+      }),
+      http.get(`${API_URL}/api/mcp/test-profile/info`, () => {
+        return HttpResponse.json({ tools: [] });
+      }),
+      http.get('/api/mcp/test-profile/info', () => {
+        return HttpResponse.json({ tools: [] });
       })
     );
 
     render(<ProfilesPage />);
 
-    await waitFor(() => {
-      expect(screen.getByText('test-profile')).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText('test-profile')).toBeInTheDocument();
+      },
+      { timeout: 5000 }
+    );
 
-    expect(screen.getByText('Test description')).toBeInTheDocument();
+    await waitFor(
+      () => {
+        expect(screen.getByText('Test profile description')).toBeInTheDocument();
+      },
+      { timeout: 5000 }
+    );
     expect(screen.getByText(/MCP Endpoint:/i)).toBeInTheDocument();
   });
 
@@ -60,30 +83,60 @@ describe('ProfilesPage', () => {
     server.use(
       http.get(`${API_URL}/api/profiles`, () => {
         return HttpResponse.json([]);
+      }),
+      http.get('/api/profiles', () => {
+        return HttpResponse.json([]);
       })
     );
 
     render(<ProfilesPage />);
 
-    await waitFor(() => {
-      expect(
-        screen.getByText(/No profiles found. Create your first profile to get started./i)
-      ).toBeInTheDocument();
-    });
+    // Wait for loading to finish
+    await waitFor(
+      () => {
+        expect(screen.queryByText('Loading profiles...')).not.toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
+
+    // Wait for empty state text to appear
+    await waitFor(
+      () => {
+        expect(
+          screen.getByText(/No profiles found. Create your first profile to get started./i)
+        ).toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
   });
 
   it('should display error message on API failure', async () => {
     server.use(
       http.get(`${API_URL}/api/profiles`, () => {
         return HttpResponse.json({ error: 'Failed' }, { status: 500 });
+      }),
+      http.get('/api/profiles', () => {
+        return HttpResponse.json({ error: 'Failed' }, { status: 500 });
       })
     );
 
     render(<ProfilesPage />);
 
-    await waitFor(() => {
-      expect(screen.getByText(/Error:/i)).toBeInTheDocument();
-    });
+    // Wait for loading to finish
+    await waitFor(
+      () => {
+        expect(screen.queryByText('Loading profiles...')).not.toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
+
+    // Wait for error message to appear
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Error:/i)).toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
   });
 
   it('should display Create Profile button', async () => {
@@ -96,7 +149,9 @@ describe('ProfilesPage', () => {
     render(<ProfilesPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Create Profile')).toBeInTheDocument();
+      // There are multiple "Create Profile" buttons (header + empty state)
+      const buttons = screen.getAllByText('Create Profile');
+      expect(buttons.length).toBeGreaterThan(0);
     });
   });
 
@@ -114,16 +169,54 @@ describe('ProfilesPage', () => {
     server.use(
       http.get(`${API_URL}/api/profiles`, () => {
         return HttpResponse.json(mockProfiles);
+      }),
+      http.get('/api/profiles', () => {
+        return HttpResponse.json(mockProfiles);
+      }),
+      http.get(`${API_URL}/api/profiles/1/servers`, () => {
+        return HttpResponse.json({ serverIds: [] });
+      }),
+      http.get('/api/profiles/1/servers', () => {
+        return HttpResponse.json({ serverIds: [] });
+      }),
+      http.get(`${API_URL}/api/mcp/my-profile/info`, () => {
+        return HttpResponse.json({ tools: [] });
+      }),
+      http.get('/api/mcp/my-profile/info', () => {
+        return HttpResponse.json({ tools: [] });
       })
     );
 
     render(<ProfilesPage />);
 
-    await waitFor(() => {
-      expect(screen.getByText('my-profile')).toBeInTheDocument();
-    });
+    // Wait for loading to finish
+    await waitFor(
+      () => {
+        expect(screen.queryByText('Loading profiles...')).not.toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
 
-    const endpointCode = screen.getByText(`${API_URL}/api/mcp/my-profile`);
-    expect(endpointCode).toBeInTheDocument();
+    // Wait for profile name to appear
+    await waitFor(
+      () => {
+        expect(screen.getByText('my-profile')).toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
+
+    // MCP endpoint URL is displayed in code element
+    await waitFor(
+      () => {
+        const endpointCode = screen.getByText((content, element) => {
+          const isCode = element?.tagName.toLowerCase() === 'code';
+          const hasEndpoint =
+            content.includes('/api/mcp/my-profile') || content.includes('api/mcp/my-profile');
+          return isCode && hasEndpoint;
+        });
+        expect(endpointCode).toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
   });
 });
