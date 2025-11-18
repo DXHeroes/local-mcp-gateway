@@ -602,9 +602,11 @@ describe('MCP Server Routes Unit Tests', () => {
       const { McpServerFactory } = await import('@local-mcp/core');
       const mockServerInstance = {
         initialize: vi.fn().mockResolvedValue(undefined),
-        listTools: vi.fn().mockResolvedValue([
-          { name: 'test-tool', description: 'A test tool', inputSchema: { type: 'object' } },
-        ]),
+        listTools: vi
+          .fn()
+          .mockResolvedValue([
+            { name: 'test-tool', description: 'A test tool', inputSchema: { type: 'object' } },
+          ]),
       };
       vi.mocked(McpServerFactory.createAsync).mockResolvedValue(mockServerInstance as never);
 
@@ -837,9 +839,11 @@ describe('MCP Server Routes Unit Tests', () => {
       const { McpServerFactory } = await import('@local-mcp/core');
       const mockServerInstance = {
         initialize: vi.fn().mockResolvedValue(undefined),
-        listTools: vi.fn().mockResolvedValue([
-          { name: 'test-tool', description: 'A test tool', inputSchema: { type: 'object' } },
-        ]),
+        listTools: vi
+          .fn()
+          .mockResolvedValue([
+            { name: 'test-tool', description: 'A test tool', inputSchema: { type: 'object' } },
+          ]),
         listResources: vi.fn().mockResolvedValue([]),
       };
       vi.mocked(McpServerFactory.createAsync).mockResolvedValue(mockServerInstance as never);
@@ -1261,4 +1265,3 @@ describe('MCP Server Routes Unit Tests', () => {
     });
   });
 });
-

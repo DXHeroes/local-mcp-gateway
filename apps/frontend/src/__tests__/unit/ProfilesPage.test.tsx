@@ -2,8 +2,13 @@
  * Tests for ProfilesPage component
  */
 
+/// <reference types="@testing-library/jest-dom" />
+
 import { render, screen, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
+// React import needed for JSX (even with new JSX transform)
+// biome-ignore lint/correctness/noUnusedImports: JSX requires React in scope
+import React from 'react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import ProfilesPage from '../../pages/Profiles';
 import { server } from '../../test/server';

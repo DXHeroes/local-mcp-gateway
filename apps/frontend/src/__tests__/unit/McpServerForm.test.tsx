@@ -2,8 +2,13 @@
  * Tests for McpServerForm component
  */
 
+/// <reference types="@testing-library/jest-dom" />
+
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+// React import needed for JSX (even with new JSX transform)
+// biome-ignore lint/correctness/noUnusedImports: JSX requires React in scope
+import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import McpServerForm from '../../components/McpServerForm';
 
@@ -114,7 +119,9 @@ describe('McpServerForm', () => {
 
     await waitFor(
       () => {
-        const dialog = container.querySelector('[role="dialog"]') || document.body.querySelector('[role="dialog"]');
+        const dialog =
+          container.querySelector('[role="dialog"]') ||
+          document.body.querySelector('[role="dialog"]');
         expect(dialog).toBeInTheDocument();
       },
       { timeout: 5000 }
@@ -159,7 +166,9 @@ describe('McpServerForm', () => {
 
     await waitFor(
       () => {
-        const dialog = container.querySelector('[role="dialog"]') || document.body.querySelector('[role="dialog"]');
+        const dialog =
+          container.querySelector('[role="dialog"]') ||
+          document.body.querySelector('[role="dialog"]');
         expect(dialog).toBeInTheDocument();
       },
       { timeout: 5000 }
@@ -196,7 +205,9 @@ describe('McpServerForm', () => {
 
     await waitFor(
       () => {
-        const dialog = container.querySelector('[role="dialog"]') || document.body.querySelector('[role="dialog"]');
+        const dialog =
+          container.querySelector('[role="dialog"]') ||
+          document.body.querySelector('[role="dialog"]');
         expect(dialog).toBeInTheDocument();
       },
       { timeout: 5000 }
@@ -234,7 +245,9 @@ describe('McpServerForm', () => {
 
     await waitFor(
       () => {
-        const dialog = container.querySelector('[role="dialog"]') || document.body.querySelector('[role="dialog"]');
+        const dialog =
+          container.querySelector('[role="dialog"]') ||
+          document.body.querySelector('[role="dialog"]');
         expect(dialog).toBeInTheDocument();
       },
       { timeout: 5000 }
@@ -325,7 +338,9 @@ describe('McpServerForm', () => {
     await waitFor(
       async () => {
         const alert = await screen.findByRole('alert', {}, { timeout: 5000 });
-        expect(alert).toHaveTextContent(/OAuth authorization server URL is required when OAuth is enabled/i);
+        expect(alert).toHaveTextContent(
+          /OAuth authorization server URL is required when OAuth is enabled/i
+        );
       },
       { timeout: 5000 }
     );
@@ -398,7 +413,9 @@ describe('McpServerForm', () => {
     await waitFor(
       async () => {
         const alert = await screen.findByRole('alert', {}, { timeout: 5000 });
-        expect(alert).toHaveTextContent(/API key is required when API key authentication is enabled/i);
+        expect(alert).toHaveTextContent(
+          /API key is required when API key authentication is enabled/i
+        );
       },
       { timeout: 5000 }
     );
@@ -743,4 +760,3 @@ describe('McpServerForm', () => {
     expect(authUrlInput.value).toBe('https://oauth.example.com');
   });
 });
-

@@ -285,9 +285,7 @@ test.describe('Profile-MCP Server Assignment', () => {
 
     // Verify server was removed
     await page.waitForTimeout(500);
-    profileServersResponse = await page.request.get(
-      `${API_URL}/api/profiles/${profileId}/servers`
-    );
+    profileServersResponse = await page.request.get(`${API_URL}/api/profiles/${profileId}/servers`);
     expect(profileServersResponse.ok()).toBe(true);
     profileServers = await profileServersResponse.json();
     expect(profileServers.serverIds).not.toContain(server.id);
@@ -363,4 +361,3 @@ test.describe('Profile-MCP Server Assignment', () => {
     expect(infoData.tools.length).toBeGreaterThanOrEqual(2);
   });
 });
-

@@ -377,9 +377,7 @@ describe('OAuth Routes Unit Tests', () => {
         await handler(mockReq as Request, mockRes as Response);
 
         expect(mockRes.status).toHaveBeenCalledWith(400);
-        expect(mockRes.send).toHaveBeenCalledWith(
-          expect.stringContaining('Token exchange failed')
-        );
+        expect(mockRes.send).toHaveBeenCalledWith(expect.stringContaining('Token exchange failed'));
       } else {
         throw new Error('Handler not found');
       }
@@ -658,4 +656,3 @@ describe('OAuth Routes Unit Tests', () => {
     });
   });
 });
-

@@ -29,10 +29,7 @@ describe('Request ID Middleware Unit Tests', () => {
     expect(mockReq.headers['x-request-id']).toBeDefined();
     expect(typeof mockReq.headers['x-request-id']).toBe('string');
     expect(mockReq.headers['x-request-id']!.length).toBeGreaterThan(0);
-    expect(mockRes.setHeader).toHaveBeenCalledWith(
-      'X-Request-ID',
-      mockReq.headers['x-request-id']
-    );
+    expect(mockRes.setHeader).toHaveBeenCalledWith('X-Request-ID', mockReq.headers['x-request-id']);
     expect(mockNext).toHaveBeenCalled();
   });
 
@@ -52,10 +49,7 @@ describe('Request ID Middleware Unit Tests', () => {
   it('should set response header with request ID', () => {
     requestIdMiddleware(mockReq as Request, mockRes as Response, mockNext);
 
-    expect(mockRes.setHeader).toHaveBeenCalledWith(
-      'X-Request-ID',
-      expect.any(String)
-    );
+    expect(mockRes.setHeader).toHaveBeenCalledWith('X-Request-ID', expect.any(String));
   });
 
   it('should call next()', () => {
@@ -64,4 +58,3 @@ describe('Request ID Middleware Unit Tests', () => {
     expect(mockNext).toHaveBeenCalled();
   });
 });
-

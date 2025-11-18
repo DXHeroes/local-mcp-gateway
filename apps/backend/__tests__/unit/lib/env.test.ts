@@ -78,4 +78,3 @@ describe('Env Unit Tests', () => {
     expect(() => getEnv()).toThrow('Invalid environment variables');
   });
 });
-

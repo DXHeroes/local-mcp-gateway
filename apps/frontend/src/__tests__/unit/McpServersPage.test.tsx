@@ -2,9 +2,14 @@
  * Tests for McpServersPage component
  */
 
+/// <reference types="@testing-library/jest-dom" />
+
 import { render, screen, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { MemoryRouter } from 'react-router';
+// React import needed for JSX (even with new JSX transform)
+// biome-ignore lint/correctness/noUnusedImports: JSX requires React in scope
+import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import McpServersPage from '../../pages/McpServers';
 import { server } from '../../test/server';

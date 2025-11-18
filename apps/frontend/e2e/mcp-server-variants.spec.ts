@@ -289,4 +289,3 @@ test.describe('MCP Server Variants', () => {
     expect(getResponse.status()).toBe(404);
   });
 });
-

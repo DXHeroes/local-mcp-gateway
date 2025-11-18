@@ -56,7 +56,11 @@ describe('OAuth API Integration Tests', () => {
         codeChallenge: 'test-code-challenge',
       }),
       generateState: vi.fn().mockReturnValue('test-random-state'),
-      buildAuthorizationUrl: vi.fn().mockReturnValue('https://oauth.example.com/authorize?client_id=test&redirect_uri=callback&state=test&code_challenge=test'),
+      buildAuthorizationUrl: vi
+        .fn()
+        .mockReturnValue(
+          'https://oauth.example.com/authorize?client_id=test&redirect_uri=callback&state=test&code_challenge=test'
+        ),
       exchangeAuthorizationCode: vi.fn().mockResolvedValue({
         accessToken: 'test-access-token',
         refreshToken: 'test-refresh-token',
@@ -103,9 +107,7 @@ describe('OAuth API Integration Tests', () => {
 
   describe('GET /api/oauth/authorize/:mcpServerId', () => {
     it('should return 404 for non-existent server', async () => {
-      await request(app)
-        .get('/api/oauth/authorize/non-existent')
-        .expect(404);
+      await request(app).get('/api/oauth/authorize/non-existent').expect(404);
     });
 
     it('should return 400 for server without OAuth config', async () => {
@@ -116,9 +118,7 @@ describe('OAuth API Integration Tests', () => {
         config: { url: 'https://example.com/mcp' },
       });
 
-      const response = await request(app)
-        .get(`/api/oauth/authorize/${server.id}`)
-        .expect(400);
+      const response = await request(app).get(`/api/oauth/authorize/${server.id}`).expect(400);
 
       expect(response.body.error).toContain('OAuth configuration');
     });
@@ -137,9 +137,7 @@ describe('OAuth API Integration Tests', () => {
         },
       });
 
-      const response = await request(app)
-        .get(`/api/oauth/authorize/${server.id}`)
-        .expect(400);
+      const response = await request(app).get(`/api/oauth/authorize/${server.id}`).expect(400);
 
       expect(response.body.error).toContain('client ID');
     });
@@ -158,9 +156,7 @@ describe('OAuth API Integration Tests', () => {
         },
       });
 
-      const response = await request(app)
-        .get(`/api/oauth/authorize/${server.id}`)
-        .expect(302);
+      const response = await request(app).get(`/api/oauth/authorize/${server.id}`).expect(302);
 
       expect(response.headers.location).toContain('oauth.example.com');
       expect(mockOAuthManager.generatePKCE).toHaveBeenCalled();
@@ -170,17 +166,13 @@ describe('OAuth API Integration Tests', () => {
 
   describe('GET /api/oauth/callback', () => {
     it('should return 400 if code is missing', async () => {
-      const response = await request(app)
-        .get('/api/oauth/callback')
-        .expect(400);
+      const response = await request(app).get('/api/oauth/callback').expect(400);
 
       expect(response.body.error).toContain('Missing required OAuth parameters');
     });
 
     it('should return 400 if state is missing', async () => {
-      const response = await request(app)
-        .get('/api/oauth/callback?code=test-code')
-        .expect(400);
+      const response = await request(app).get('/api/oauth/callback?code=test-code').expect(400);
 
       expect(response.body.error).toContain('Missing required OAuth parameters');
     });
@@ -219,9 +211,7 @@ describe('OAuth API Integration Tests', () => {
 
   describe('POST /api/oauth/refresh/:mcpServerId', () => {
     it('should return 404 for non-existent server', async () => {
-      await request(app)
-        .post('/api/oauth/refresh/non-existent')
-        .expect(404);
+      await request(app).post('/api/oauth/refresh/non-existent').expect(404);
     });
 
     it('should return 404 for server without OAuth config', async () => {
@@ -232,9 +222,7 @@ describe('OAuth API Integration Tests', () => {
         config: { url: 'https://example.com/mcp' },
       });
 
-      await request(app)
-        .post(`/api/oauth/refresh/${server.id}`)
-        .expect(404);
+      await request(app).post(`/api/oauth/refresh/${server.id}`).expect(404);
     });
 
     it('should return 400 if no refresh token exists', async () => {
@@ -254,9 +242,7 @@ describe('OAuth API Integration Tests', () => {
       // Mock getToken to return null for this test
       vi.mocked(mockOAuthManager.getToken).mockResolvedValueOnce(null);
 
-      const response = await request(app)
-        .post(`/api/oauth/refresh/${server.id}`)
-        .expect(400);
+      const response = await request(app).post(`/api/oauth/refresh/${server.id}`).expect(400);
 
       expect(response.body.error).toContain('No refresh token');
     });
@@ -275,12 +261,9 @@ describe('OAuth API Integration Tests', () => {
         },
       });
 
-      const response = await request(app)
-        .post(`/api/oauth/refresh/${server.id}`)
-        .expect(400);
+      const response = await request(app).post(`/api/oauth/refresh/${server.id}`).expect(400);
 
       expect(response.body.error).toContain('Client ID');
     });
   });
 });
-

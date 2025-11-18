@@ -24,7 +24,7 @@ describe('Rate Limiting Middleware Unit Tests', () => {
     // apiLimiter is a rate limit middleware function
     // We can verify it's configured by checking it's a function
     expect(typeof apiLimiter).toBe('function');
-    
+
     // Verify it has the expected properties from express-rate-limit
     // The actual configuration is set at module load time based on NODE_ENV
     expect(apiLimiter).toBeDefined();
@@ -33,7 +33,7 @@ describe('Rate Limiting Middleware Unit Tests', () => {
   it('should have correct configuration for mcpProxyLimiter', () => {
     // mcpProxyLimiter is a rate limit middleware function
     expect(typeof mcpProxyLimiter).toBe('function');
-    
+
     // Verify it's configured
     expect(mcpProxyLimiter).toBeDefined();
   });
@@ -49,10 +49,9 @@ describe('Rate Limiting Middleware Unit Tests', () => {
     // We can't easily test the skip function directly, but we can verify the limiters are configured
     expect(apiLimiter).toBeDefined();
     expect(mcpProxyLimiter).toBeDefined();
-    
+
     // Verify they are functions (middleware)
     expect(typeof apiLimiter).toBe('function');
     expect(typeof mcpProxyLimiter).toBe('function');
   });
 });
-

@@ -323,14 +323,9 @@ describe('MCP Server API Integration Tests', () => {
         })
         .expect(201);
 
-      await request(app)
-        .delete(`/api/mcp-servers/${createResponse.body.id}`)
-        .expect(204);
+      await request(app).delete(`/api/mcp-servers/${createResponse.body.id}`).expect(204);
 
-      await request(app)
-        .get(`/api/mcp-servers/${createResponse.body.id}`)
-        .expect(404);
+      await request(app).get(`/api/mcp-servers/${createResponse.body.id}`).expect(404);
     });
   });
 });
-

@@ -2,9 +2,14 @@
  * Tests for ProfileForm component
  */
 
+/// <reference types="@testing-library/jest-dom" />
+
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
+// React import needed for JSX (even with new JSX transform)
+// biome-ignore lint/correctness/noUnusedImports: JSX requires React in scope
+import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ProfileForm from '../../components/ProfileForm';
 import { server } from '../../test/server';
@@ -44,7 +49,7 @@ describe('ProfileForm', () => {
       })
     );
 
-    const { container } = render(
+    render(
       <ProfileForm
         profile={null}
         onSave={mockOnSave}
@@ -94,7 +99,7 @@ describe('ProfileForm', () => {
       })
     );
 
-    const { container } = render(
+    render(
       <ProfileForm
         profile={mockProfile}
         onSave={mockOnSave}
@@ -138,7 +143,7 @@ describe('ProfileForm', () => {
       })
     );
 
-    const { container } = render(
+    render(
       <ProfileForm
         profile={null}
         onSave={mockOnSave}
@@ -181,7 +186,7 @@ describe('ProfileForm', () => {
       })
     );
 
-    const { container } = render(
+    render(
       <ProfileForm
         profile={null}
         onSave={mockOnSave}
@@ -226,7 +231,7 @@ describe('ProfileForm', () => {
 
     mockOnSave.mockResolvedValue(undefined);
 
-    const { container } = render(
+    render(
       <ProfileForm
         profile={null}
         onSave={mockOnSave}
@@ -272,7 +277,7 @@ describe('ProfileForm', () => {
       })
     );
 
-    const { container } = render(
+    render(
       <ProfileForm
         profile={null}
         onSave={mockOnSave}
@@ -320,7 +325,7 @@ describe('ProfileForm', () => {
       })
     );
 
-    const { container } = render(
+    render(
       <ProfileForm
         profile={null}
         onSave={mockOnSave}
@@ -363,7 +368,7 @@ describe('ProfileForm', () => {
 
     mockOnSave.mockResolvedValue(undefined);
 
-    const { container } = render(
+    render(
       <ProfileForm
         profile={null}
         onSave={mockOnSave}
@@ -417,7 +422,7 @@ describe('ProfileForm', () => {
 
     mockOnSave.mockRejectedValue(new Error('Failed to save profile'));
 
-    const { container } = render(
+    render(
       <ProfileForm
         profile={null}
         onSave={mockOnSave}
@@ -482,7 +487,7 @@ describe('ProfileForm', () => {
       })
     );
 
-    const { container } = render(
+    render(
       <ProfileForm
         profile={mockProfile}
         onSave={mockOnSave}

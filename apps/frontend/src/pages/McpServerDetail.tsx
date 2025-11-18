@@ -281,7 +281,7 @@ export default function McpServerDetailPage() {
                   {tool.description && (
                     <p className="text-sm text-muted-foreground mt-1">{tool.description}</p>
                   )}
-                  {tool.inputSchema && (
+                  {tool.inputSchema != null && (
                     <details className="mt-2">
                       <summary className="text-sm text-muted-foreground cursor-pointer">
                         View input schema

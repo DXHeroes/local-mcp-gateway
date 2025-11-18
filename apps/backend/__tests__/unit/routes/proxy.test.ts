@@ -120,9 +120,11 @@ describe('Proxy Routes Unit Tests', () => {
       const { McpServerFactory } = await import('@local-mcp/core');
       const mockServer = {
         initialize: vi.fn().mockResolvedValue(undefined),
-        listTools: vi.fn().mockResolvedValue([
-          { name: 'test-tool', description: 'A test tool', inputSchema: { type: 'object' } },
-        ]),
+        listTools: vi
+          .fn()
+          .mockResolvedValue([
+            { name: 'test-tool', description: 'A test tool', inputSchema: { type: 'object' } },
+          ]),
         listResources: vi.fn().mockResolvedValue([]),
         callTool: vi.fn().mockResolvedValue({ content: [{ type: 'text', text: 'Result' }] }),
         handleRequest: vi.fn().mockResolvedValue({
@@ -250,7 +252,9 @@ describe('Proxy Routes Unit Tests', () => {
         jsonrpc: '2.0',
         id: 1,
         result: {
-          tools: [{ name: 'test-tool', description: 'A test tool', inputSchema: { type: 'object' } }],
+          tools: [
+            { name: 'test-tool', description: 'A test tool', inputSchema: { type: 'object' } },
+          ],
         },
       });
 
@@ -596,9 +600,9 @@ describe('Proxy Routes Unit Tests', () => {
 
       // Mock ProxyHandler.handleRequest to throw error when all servers fail
       const originalHandleRequest = ProxyHandler.prototype.handleRequest;
-      ProxyHandler.prototype.handleRequest = vi.fn().mockRejectedValue(
-        new Error('Failed to initialize servers: server-1, server-2')
-      );
+      ProxyHandler.prototype.handleRequest = vi
+        .fn()
+        .mockRejectedValue(new Error('Failed to initialize servers: server-1, server-2'));
 
       mockReq.params = { profileId: 'profile-1' };
       mockReq.body = {
@@ -918,9 +922,7 @@ describe('Proxy Routes Unit Tests', () => {
         jsonrpc: '2.0',
         id: 1,
         result: {
-          resources: [
-            { uri: 'resource://test', name: 'Test Resource', mimeType: 'text/plain' },
-          ],
+          resources: [{ uri: 'resource://test', name: 'Test Resource', mimeType: 'text/plain' }],
         },
       });
 
@@ -1059,9 +1061,11 @@ describe('Proxy Routes Unit Tests', () => {
       // Mock ProxyHandler.handleRequest to throw error for non-existent tool
       const { ProxyHandler } = await import('@local-mcp/core');
       const originalHandleRequest = ProxyHandler.prototype.handleRequest;
-      ProxyHandler.prototype.handleRequest = vi.fn().mockRejectedValue(
-        new Error('Tool "non-existent-tool" not found in any registered server')
-      );
+      ProxyHandler.prototype.handleRequest = vi
+        .fn()
+        .mockRejectedValue(
+          new Error('Tool "non-existent-tool" not found in any registered server')
+        );
 
       mockReq.params = { profileId: 'profile-1' };
       mockReq.body = {
@@ -1152,9 +1156,11 @@ describe('Proxy Routes Unit Tests', () => {
       // Mock ProxyHandler.handleRequest to throw error for non-existent resource
       const { ProxyHandler } = await import('@local-mcp/core');
       const originalHandleRequest = ProxyHandler.prototype.handleRequest;
-      ProxyHandler.prototype.handleRequest = vi.fn().mockRejectedValue(
-        new Error('Resource "resource://non-existent" not found in any registered server')
-      );
+      ProxyHandler.prototype.handleRequest = vi
+        .fn()
+        .mockRejectedValue(
+          new Error('Resource "resource://non-existent" not found in any registered server')
+        );
 
       mockReq.params = { profileId: 'profile-1' };
       mockReq.body = {
@@ -1484,12 +1490,16 @@ describe('Proxy Routes Unit Tests', () => {
       const { McpServerFactory } = await import('@local-mcp/core');
       const mockServer = {
         initialize: vi.fn().mockResolvedValue(undefined),
-        listTools: vi.fn().mockResolvedValue([
-          { name: 'test-tool', description: 'A test tool', inputSchema: { type: 'object' } },
-        ]),
-        listResources: vi.fn().mockResolvedValue([
-          { uri: 'resource://test', name: 'Test Resource', mimeType: 'text/plain' },
-        ]),
+        listTools: vi
+          .fn()
+          .mockResolvedValue([
+            { name: 'test-tool', description: 'A test tool', inputSchema: { type: 'object' } },
+          ]),
+        listResources: vi
+          .fn()
+          .mockResolvedValue([
+            { uri: 'resource://test', name: 'Test Resource', mimeType: 'text/plain' },
+          ]),
         callTool: vi.fn(),
         handleRequest: vi.fn(),
       };
@@ -1542,12 +1552,16 @@ describe('Proxy Routes Unit Tests', () => {
       const { McpServerFactory } = await import('@local-mcp/core');
       const mockServer = {
         initialize: vi.fn().mockResolvedValue(undefined),
-        listTools: vi.fn().mockResolvedValue([
-          { name: 'test-tool', description: 'A test tool', inputSchema: { type: 'object' } },
-        ]),
-        listResources: vi.fn().mockResolvedValue([
-          { uri: 'resource://test', name: 'Test Resource', mimeType: 'text/plain' },
-        ]),
+        listTools: vi
+          .fn()
+          .mockResolvedValue([
+            { name: 'test-tool', description: 'A test tool', inputSchema: { type: 'object' } },
+          ]),
+        listResources: vi
+          .fn()
+          .mockResolvedValue([
+            { uri: 'resource://test', name: 'Test Resource', mimeType: 'text/plain' },
+          ]),
         callTool: vi.fn(),
         handleRequest: vi.fn(),
       };
@@ -1608,9 +1622,17 @@ describe('Proxy Routes Unit Tests', () => {
 
       const { McpServerFactory } = await import('@local-mcp/core');
       // Create mutable tool objects so ProxyHandlerWithLogging can modify them
-      const tool1 = { name: 'duplicate-tool', description: 'Tool from server 1', inputSchema: { type: 'object' } };
-      const tool2 = { name: 'duplicate-tool', description: 'Tool from server 2', inputSchema: { type: 'object' } };
-      
+      const tool1 = {
+        name: 'duplicate-tool',
+        description: 'Tool from server 1',
+        inputSchema: { type: 'object' },
+      };
+      const tool2 = {
+        name: 'duplicate-tool',
+        description: 'Tool from server 2',
+        inputSchema: { type: 'object' },
+      };
+
       const mockServer1 = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi.fn().mockResolvedValue([tool1]),
@@ -1699,9 +1721,15 @@ describe('Proxy Routes Unit Tests', () => {
       };
       const mockServer2 = {
         initialize: vi.fn().mockResolvedValue(undefined),
-        listTools: vi.fn().mockResolvedValue([
-          { name: 'working-tool', description: 'Tool from server 2', inputSchema: { type: 'object' } },
-        ]),
+        listTools: vi
+          .fn()
+          .mockResolvedValue([
+            {
+              name: 'working-tool',
+              description: 'Tool from server 2',
+              inputSchema: { type: 'object' },
+            },
+          ]),
         listResources: vi.fn().mockResolvedValue([]),
         callTool: vi.fn(),
         handleRequest: vi.fn(),
@@ -1722,9 +1750,7 @@ describe('Proxy Routes Unit Tests', () => {
 
         // Should still return tools from server 2, even though server 1 failed
         expect(mockRes.json).toHaveBeenCalledWith({
-          tools: expect.arrayContaining([
-            expect.objectContaining({ name: 'working-tool' }),
-          ]),
+          tools: expect.arrayContaining([expect.objectContaining({ name: 'working-tool' })]),
           resources: expect.any(Array),
         });
       } else {
@@ -1778,9 +1804,11 @@ describe('Proxy Routes Unit Tests', () => {
       const mockServer2 = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi.fn().mockResolvedValue([]),
-        listResources: vi.fn().mockResolvedValue([
-          { uri: 'resource://test', name: 'Test Resource', mimeType: 'text/plain' },
-        ]),
+        listResources: vi
+          .fn()
+          .mockResolvedValue([
+            { uri: 'resource://test', name: 'Test Resource', mimeType: 'text/plain' },
+          ]),
         callTool: vi.fn(),
         handleRequest: vi.fn(),
       };
@@ -1801,9 +1829,7 @@ describe('Proxy Routes Unit Tests', () => {
         // Should still return resources from server 2, even though server 1 failed
         expect(mockRes.json).toHaveBeenCalledWith({
           tools: expect.any(Array),
-          resources: expect.arrayContaining([
-            expect.objectContaining({ uri: 'resource://test' }),
-          ]),
+          resources: expect.arrayContaining([expect.objectContaining({ uri: 'resource://test' })]),
         });
       } else {
         throw new Error('Handler not found');
@@ -2322,4 +2348,3 @@ describe('Proxy Routes Unit Tests', () => {
     });
   });
 });
-

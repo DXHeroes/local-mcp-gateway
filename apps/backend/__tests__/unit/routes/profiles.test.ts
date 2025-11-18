@@ -284,9 +284,7 @@ describe('Profile Routes Unit Tests', () => {
 
       mockReq.params = { id: '1' };
       vi.mocked(mockProfileManager.getById).mockResolvedValue(profile as never);
-      vi.mocked(mockProfileMcpServerRepository.getServerIdsForProfile).mockResolvedValue(
-        serverIds
-      );
+      vi.mocked(mockProfileMcpServerRepository.getServerIdsForProfile).mockResolvedValue(serverIds);
 
       await router.stack[6].route.stack[0].handle(mockReq as Request, mockRes as Response);
 
@@ -338,4 +336,3 @@ describe('Profile Routes Unit Tests', () => {
     });
   });
 });
-

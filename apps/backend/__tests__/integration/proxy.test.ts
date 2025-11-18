@@ -334,9 +334,7 @@ describe('Proxy API Integration Tests', () => {
         mcpServerId: server.id,
       });
 
-      const response = await request(app)
-        .get(`/api/mcp/${profile.id}/info`)
-        .expect(200);
+      const response = await request(app).get(`/api/mcp/${profile.id}/info`).expect(200);
 
       expect(response.body).toHaveProperty('tools');
       expect(response.body).toHaveProperty('resources');
@@ -372,10 +370,7 @@ describe('Proxy API Integration Tests', () => {
       // SSE endpoint keeps connection open, so we just verify it doesn't error immediately
       // Full SSE stream testing would require more complex setup
       try {
-        await request(app)
-          .get(`/api/mcp/${profile.id}/sse`)
-          .timeout(100)
-          .expect(200);
+        await request(app).get(`/api/mcp/${profile.id}/sse`).timeout(100).expect(200);
       } catch (err: unknown) {
         // Timeout is expected for SSE connections that stay open
         const error = err as { code?: string; message?: string };
@@ -389,4 +384,3 @@ describe('Proxy API Integration Tests', () => {
     }, 2000);
   });
 });
-

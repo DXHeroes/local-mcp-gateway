@@ -2,8 +2,13 @@
  * Tests for Layout component
  */
 
+/// <reference types="@testing-library/jest-dom" />
+
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router';
+// React import needed for JSX (even with new JSX transform)
+// biome-ignore lint/correctness/noUnusedImports: JSX requires React in scope
+import React from 'react';
 import { describe, expect, it } from 'vitest';
 import Layout from '../../components/Layout';
 

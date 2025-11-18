@@ -236,9 +236,7 @@ describe('Debug API Integration Tests', () => {
         errorMessage: 'Error',
       });
 
-      const response = await request(app)
-        .get('/api/debug/logs?status=error')
-        .expect(200);
+      const response = await request(app).get('/api/debug/logs?status=error').expect(200);
 
       expect(response.body).toHaveLength(1);
       expect(response.body[0].status).toBe('error');
@@ -268,9 +266,7 @@ describe('Debug API Integration Tests', () => {
         status: 'success',
       });
 
-      const response = await request(app)
-        .get(`/api/debug/logs/${log.id}`)
-        .expect(200);
+      const response = await request(app).get(`/api/debug/logs/${log.id}`).expect(200);
 
       expect(response.body.id).toBe(log.id);
       expect(response.body.requestType).toBe('tools/list');
@@ -282,4 +278,3 @@ describe('Debug API Integration Tests', () => {
     });
   });
 });
-

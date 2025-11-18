@@ -65,7 +65,7 @@ describe('Logger Unit Tests', () => {
 
     vi.resetModules();
     const { logger } = await import('../../../src/lib/logger.js');
-    
+
     // Logger should be configured (transports should be silent)
     expect(logger).toBeDefined();
     expect(logger.transports).toBeDefined();
@@ -79,4 +79,3 @@ describe('Logger Unit Tests', () => {
     expect(logger.defaultMeta.service).toBe('local-mcp-proxy-server');
   });
 });
-

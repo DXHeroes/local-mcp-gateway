@@ -2,6 +2,13 @@
  * Vitest setup file
  */
 
+/// <reference types="vitest/globals" />
+/// <reference types="@testing-library/jest-dom" />
+
+import '@testing-library/jest-dom/vitest';
+import { afterAll, afterEach, beforeAll, vi } from 'vitest';
+import { server } from './server';
+
 // Mock ResizeObserver before any imports
 global.ResizeObserver = class ResizeObserver {
   observe() {
@@ -22,10 +29,6 @@ global.Element.prototype.releasePointerCapture = vi.fn();
 
 // Mock scrollIntoView for Radix UI Select
 global.Element.prototype.scrollIntoView = vi.fn();
-
-import '@testing-library/jest-dom';
-import { afterAll, afterEach, beforeAll, vi } from 'vitest';
-import { server } from './server';
 
 // Start server before all tests
 beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }));

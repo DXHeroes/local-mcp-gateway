@@ -4,10 +4,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { EventEmitter } from 'node:events';
-import {
-  RemoteSseMcpServer,
-  type SseClient,
-} from '../../src/abstractions/RemoteSseMcpServer.js';
+import { RemoteSseMcpServer, type SseClient } from '../../src/abstractions/RemoteSseMcpServer.js';
 import type { OAuthToken } from '../../src/types/database.js';
 import type {
   ApiKeyConfig,
@@ -138,7 +135,7 @@ describe('RemoteSseMcpServer', () => {
       global.fetch = vi.fn().mockImplementation(async (url: string, options?: RequestInit) => {
         // Check if URL ends with /mcp (for JSON-RPC requests) or /sse (for SSE stream)
         const isMcpEndpoint = url.includes('/mcp') && !url.includes('/sse');
-        
+
         if (options?.method === 'POST') {
           const body = options.body as string;
           const request = JSON.parse(body) as JsonRpcRequest;
@@ -952,7 +949,7 @@ describe('RemoteSseMcpServer', () => {
       // After initialization, resources might be empty array, so we need to call listResources again
       // Clear cache to force a new request
       (server as unknown as { cachedResources: McpResource[] | null }).cachedResources = null;
-      
+
       // Mock fetch for the explicit listResources call
       global.fetch = vi.fn().mockImplementation(async (_url: string, options?: RequestInit) => {
         if (options?.method === 'POST') {
@@ -1012,7 +1009,7 @@ describe('RemoteSseMcpServer', () => {
           },
         };
       });
-      
+
       const resources = await server.listResources();
       expect(Array.isArray(resources)).toBe(true);
       expect(resources.length).toBe(1);
@@ -1416,4 +1413,3 @@ describe('RemoteSseMcpServer', () => {
     });
   });
 });
-
