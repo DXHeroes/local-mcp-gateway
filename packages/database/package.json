@@ -1,8 +1,15 @@
 {
   "name": "@dxheroes/local-mcp-database",
   "version": "0.1.0",
-  "type": "module",
-  "description": "SQLite database layer with migrations and repositories",
+  "description": "Database layer for MCP server management using SQLite and Drizzle ORM",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DXHeroes/local-mcp-gateway.git",
+    "directory": "packages/database"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {

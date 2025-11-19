@@ -1,0 +1,7 @@
+{
+  "packages/config": "0.1.0",
+  "packages/core": "0.1.0",
+  "packages/database": "0.1.0",
+  "packages/custom-mcp-loader": "0.1.0",
+  "packages/ui": "0.1.0"
+}

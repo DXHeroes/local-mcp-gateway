@@ -3,6 +3,14 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Shared UI components based on shadcn-ui",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DXHeroes/local-mcp-gateway.git",
+    "directory": "packages/ui"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
