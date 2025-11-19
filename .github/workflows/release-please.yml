@@ -6,6 +6,7 @@ on:
       - main
 
 permissions:
+  id-token: write  # Required for OIDC
   contents: write
   pull-requests: write
 
@@ -47,8 +48,6 @@ jobs:
       - name: Publish packages
         if: ${{ steps.release.outputs.releases_created }}
         run: pnpm publish -r --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish-docker:
     name: Publish Docker Images (Production)
