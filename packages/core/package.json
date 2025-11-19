@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/local-mcp-core",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "Core abstractions and utilities for MCP server management",
   "repository": {

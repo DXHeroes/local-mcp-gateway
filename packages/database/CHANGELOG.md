@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/DXHeroes/local-mcp-gateway/compare/local-mcp-database-v0.1.1...local-mcp-database-v0.1.2) (2025-11-19)
+
+
+### Bug Fixes
+
+* update test setups and type imports, and add a new `check` script ([a5fe692](https://github.com/DXHeroes/local-mcp-gateway/commit/a5fe692fca5c803da78e52255a43a96bd1e97ab9))
+
 ## [0.1.1](https://github.com/DXHeroes/local-mcp-gateway/compare/local-mcp-database-v0.1.0...local-mcp-database-v0.1.1) (2025-11-19)
 
 
