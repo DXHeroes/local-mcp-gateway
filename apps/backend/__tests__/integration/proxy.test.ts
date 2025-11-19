@@ -152,7 +152,7 @@ describe('Proxy API Integration Tests', () => {
       const server = await mcpServerRepository.create({
         name: 'test-server',
         type: 'remote_http',
-        config: { url: 'https://example.com/mcp' },
+        config: { url: 'https://example.com/mcp', transport: 'sse' },
       });
 
       await profileMcpServerRepository.addServerToProfile({
@@ -183,9 +183,9 @@ describe('Proxy API Integration Tests', () => {
           id: 1,
           method: 'tools/list',
         })
-        .expect(500);
+        .expect(200);
 
-      expect(response.body.error.message).toContain('No MCP servers');
+      expect(response.body.result.tools).toEqual([]);
     });
 
     it('should handle tools/list request', async () => {
@@ -198,7 +198,7 @@ describe('Proxy API Integration Tests', () => {
       const server = await mcpServerRepository.create({
         name: 'test-server',
         type: 'remote_http',
-        config: { url: 'https://example.com/mcp' },
+        config: { url: 'https://example.com/mcp', transport: 'sse' },
       });
 
       // Assign server to profile
@@ -232,7 +232,7 @@ describe('Proxy API Integration Tests', () => {
       const server = await mcpServerRepository.create({
         name: 'test-server',
         type: 'remote_http',
-        config: { url: 'https://example.com/mcp' },
+        config: { url: 'https://example.com/mcp', transport: 'sse' },
       });
 
       // Assign server to profile
@@ -273,7 +273,7 @@ describe('Proxy API Integration Tests', () => {
       const server = await mcpServerRepository.create({
         name: 'test-server',
         type: 'remote_http',
-        config: { url: 'https://example.com/mcp' },
+        config: { url: 'https://example.com/mcp', transport: 'sse' },
       });
 
       // Assign server to profile
@@ -325,7 +325,7 @@ describe('Proxy API Integration Tests', () => {
       const server = await mcpServerRepository.create({
         name: 'test-server',
         type: 'remote_http',
-        config: { url: 'https://example.com/mcp' },
+        config: { url: 'https://example.com/mcp', transport: 'sse' },
       });
 
       // Assign server to profile
@@ -358,7 +358,7 @@ describe('Proxy API Integration Tests', () => {
       const server = await mcpServerRepository.create({
         name: 'test-server',
         type: 'remote_http',
-        config: { url: 'https://example.com/mcp' },
+        config: { url: 'https://example.com/mcp', transport: 'sse' },
       });
 
       // Assign server to profile

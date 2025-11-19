@@ -81,7 +81,7 @@ describe('ProfilesPage', () => {
       },
       { timeout: 5000 }
     );
-    expect(screen.getByText(/MCP Endpoint:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Gateway Endpoint:/i)).toBeInTheDocument();
   });
 
   it('should display empty state when no profiles', async () => {

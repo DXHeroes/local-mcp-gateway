@@ -9,7 +9,7 @@ import type {
   ProfileMcpServerRepository,
   ProfileRepository,
 } from '@local-mcp/database';
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createProxyRoutes } from '../../../src/routes/proxy.js';
 
@@ -898,13 +898,12 @@ describe('Proxy Routes Unit Tests', () => {
       if (handler) {
         await handler(mockReq as Request, mockRes as Response);
 
-        expect(mockRes.status).toHaveBeenCalledWith(500);
         expect(mockRes.json).toHaveBeenCalledWith(
           expect.objectContaining({
             jsonrpc: '2.0',
-            error: expect.objectContaining({
-              message: expect.stringContaining('No MCP servers'),
-            }),
+            result: {
+              tools: [],
+            },
           })
         );
       } else {
@@ -1519,6 +1518,7 @@ describe('Proxy Routes Unit Tests', () => {
         expect(mockRes.json).toHaveBeenCalledWith({
           tools: expect.any(Array),
           resources: expect.any(Array),
+          serverStatus: expect.any(Object),
         });
       } else {
         throw new Error('Handler not found');
@@ -1579,6 +1579,7 @@ describe('Proxy Routes Unit Tests', () => {
         expect(mockRes.json).toHaveBeenCalledWith({
           tools: expect.any(Array),
           resources: expect.any(Array),
+          serverStatus: expect.any(Object),
         });
       } else {
         throw new Error('Handler not found');
@@ -1721,15 +1722,13 @@ describe('Proxy Routes Unit Tests', () => {
       };
       const mockServer2 = {
         initialize: vi.fn().mockResolvedValue(undefined),
-        listTools: vi
-          .fn()
-          .mockResolvedValue([
-            {
-              name: 'working-tool',
-              description: 'Tool from server 2',
-              inputSchema: { type: 'object' },
-            },
-          ]),
+        listTools: vi.fn().mockResolvedValue([
+          {
+            name: 'working-tool',
+            description: 'Tool from server 2',
+            inputSchema: { type: 'object' },
+          },
+        ]),
         listResources: vi.fn().mockResolvedValue([]),
         callTool: vi.fn(),
         handleRequest: vi.fn(),
@@ -1752,6 +1751,7 @@ describe('Proxy Routes Unit Tests', () => {
         expect(mockRes.json).toHaveBeenCalledWith({
           tools: expect.arrayContaining([expect.objectContaining({ name: 'working-tool' })]),
           resources: expect.any(Array),
+          serverStatus: expect.any(Object),
         });
       } else {
         throw new Error('Handler not found');
@@ -1830,6 +1830,7 @@ describe('Proxy Routes Unit Tests', () => {
         expect(mockRes.json).toHaveBeenCalledWith({
           tools: expect.any(Array),
           resources: expect.arrayContaining([expect.objectContaining({ uri: 'resource://test' })]),
+          serverStatus: expect.any(Object),
         });
       } else {
         throw new Error('Handler not found');
@@ -1860,13 +1861,12 @@ describe('Proxy Routes Unit Tests', () => {
       if (handler) {
         await handler(mockReq as Request, mockRes as Response);
 
-        expect(mockRes.status).toHaveBeenCalledWith(500);
         expect(mockRes.json).toHaveBeenCalledWith(
           expect.objectContaining({
             jsonrpc: '2.0',
-            error: expect.objectContaining({
-              message: expect.stringContaining('No MCP servers found'),
-            }),
+            result: {
+              tools: [],
+            },
           })
         );
       } else {
@@ -1904,13 +1904,12 @@ describe('Proxy Routes Unit Tests', () => {
       if (handler) {
         await handler(mockReq as Request, mockRes as Response);
 
-        expect(mockRes.status).toHaveBeenCalledWith(500);
         expect(mockRes.json).toHaveBeenCalledWith(
           expect.objectContaining({
             jsonrpc: '2.0',
-            error: expect.objectContaining({
-              message: expect.stringContaining('No valid MCP servers found'),
-            }),
+            result: {
+              tools: [],
+            },
           })
         );
       } else {

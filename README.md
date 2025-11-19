@@ -1,4 +1,4 @@
-# Local MCP Proxy Server
+# Local MCP Gateway
 
 A local proxy server for MCP (Model Context Protocol) servers that allows you to:
 - Add external MCP servers as proxies
@@ -86,7 +86,7 @@ This will:
 3. Start the frontend on http://localhost:3000.
 
 **Data Persistence:**
-Data is stored in `~/.local-mcp-data` (your home directory) to ensure it persists across restarts and updates.
+Data is stored in `~/.local-mcp-gateway-data` (your home directory) to ensure it persists across restarts and updates.
 
 ### Running with Docker
 
@@ -101,8 +101,8 @@ docker-compose up -d
 This provides:
 - **Frontend**: http://localhost (Port 80) and https://localhost (Port 443)
 - **Backend**: http://localhost:3001
-- **Data Persistence**: Volumes mapped to `~/.local-mcp-data`.
-- **HTTPS**: Self-signed certificates are automatically generated in `~/.local-mcp-data/certs`.
+- **Data Persistence**: Volumes mapped to `~/.local-mcp-gateway-data`.
+- **HTTPS**: Self-signed certificates are automatically generated in `~/.local-mcp-gateway-data/certs`.
 
 **Note on HTTPS**:
 Since self-signed certificates are used, you will need to accept the security warning in your browser or configure your system to trust `localhost.crt`.

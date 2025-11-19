@@ -16,7 +16,7 @@ export const logger = winston.createLogger({
     isDevelopment ? winston.format.colorize() : winston.format.json()
   ),
   defaultMeta: {
-    service: 'local-mcp-proxy-server',
+    service: 'local-mcp-gateway',
   },
   transports: [
     // Write all logs to console

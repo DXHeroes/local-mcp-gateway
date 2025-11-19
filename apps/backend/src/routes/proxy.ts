@@ -351,7 +351,7 @@ class ProxyHandlerWithLogging extends ProxyHandler {
           ...(hasLogging && { logging: {} }),
         },
         serverInfo: {
-          name: 'local-mcp-proxy',
+          name: 'context-hub',
           version: '1.0.0',
         },
       };
@@ -452,7 +452,7 @@ async function createProxyHandlerForProfile(
 
   // Get MCP server IDs for this profile
   const serverIds = await profileMcpServerRepository.getServerIdsForProfile(profile.id);
-  
+
   // If no servers, return empty handler
   if (serverIds.length === 0) {
     return {

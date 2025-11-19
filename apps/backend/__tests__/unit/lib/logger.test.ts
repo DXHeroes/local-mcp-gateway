@@ -76,6 +76,6 @@ describe('Logger Unit Tests', () => {
   it('should have default meta with service name', async () => {
     const { logger } = await import('../../../src/lib/logger.js');
     expect(logger.defaultMeta).toBeDefined();
-    expect(logger.defaultMeta.service).toBe('local-mcp-proxy-server');
+    expect(logger.defaultMeta.service).toBe('local-mcp-gateway');
   });
 });

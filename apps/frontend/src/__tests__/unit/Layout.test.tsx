@@ -5,10 +5,10 @@
 /// <reference types="@testing-library/jest-dom" />
 
 import { render, screen } from '@testing-library/react';
-import { BrowserRouter } from 'react-router';
 // React import needed for JSX (even with new JSX transform)
 // biome-ignore lint/correctness/noUnusedImports: JSX requires React in scope
 import React from 'react';
+import { BrowserRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import Layout from '../../components/Layout';
 
@@ -22,7 +22,7 @@ describe('Layout', () => {
       </BrowserRouter>
     );
 
-    expect(screen.getByText('Local MCP Proxy')).toBeInTheDocument();
+    expect(screen.getByText('Local MCP Gateway')).toBeInTheDocument();
     expect(screen.getByText('Profiles')).toBeInTheDocument();
     expect(screen.getByText('MCP Servers')).toBeInTheDocument();
     expect(screen.getByText('Debug Logs')).toBeInTheDocument();

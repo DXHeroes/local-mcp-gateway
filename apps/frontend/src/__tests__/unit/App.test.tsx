@@ -16,7 +16,7 @@ describe('App', () => {
     render(<App />);
 
     // Check if navigation is rendered
-    expect(screen.getByText('Local MCP Proxy')).toBeInTheDocument();
+    expect(screen.getByText('Local MCP Gateway')).toBeInTheDocument();
     expect(screen.getByText('Profiles')).toBeInTheDocument();
     expect(screen.getByText('MCP Servers')).toBeInTheDocument();
     expect(screen.getByText('Debug Logs')).toBeInTheDocument();

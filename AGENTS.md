@@ -9,7 +9,7 @@ This is the root directory of the Local MCP Proxy Server monorepo. This applicat
 This is a **pnpm workspace + Turborepo** monorepo with the following structure:
 
 ```
-local_mcp_ui/
+# Local MCP Gateway/
 ├── packages/          # Shared packages
 ├── apps/              # Applications (backend, frontend)
 ├── custom-mcps/        # User-created custom MCP servers

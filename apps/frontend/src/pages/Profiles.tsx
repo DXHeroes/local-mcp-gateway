@@ -246,7 +246,7 @@ export default function ProfilesPage() {
       await navigator.clipboard.writeText(endpoint);
       toast({
         title: 'Copied!',
-        description: 'MCP endpoint copied to clipboard',
+        description: 'Gateway endpoint copied to clipboard',
         variant: 'default',
       });
     } catch (err) {
@@ -419,7 +419,7 @@ export default function ProfilesPage() {
                     </Badge>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">MCP Endpoint:</p>
+                    <p className="text-xs text-muted-foreground mb-1">Gateway Endpoint:</p>
                     <div className="flex items-center gap-2">
                       <code className="text-xs bg-muted px-2 py-1 rounded flex-1 break-all">
                         {getFullEndpointUrl(profile.name)}
