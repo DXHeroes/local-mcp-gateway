@@ -2,7 +2,7 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
-  "description": "React 19 frontend for MCP proxy server",
+  "description": "React 19 frontend for Local MCP Gateway",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -19,8 +19,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@local-mcp/config": "workspace:*",
-    "@local-mcp/ui": "workspace:*",
+    "@dxheroes/local-mcp-config": "workspace:*",
+    "@dxheroes/local-mcp-ui": "workspace:*",
     "@tanstack/react-query": "^5.90.8",
     "@toon-format/toon": "^1.0.0",
     "lucide-react": "^0.553.0",

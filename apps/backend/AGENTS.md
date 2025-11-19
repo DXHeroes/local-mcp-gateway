@@ -68,9 +68,9 @@ backend/
 ## Dependencies
 
 - `express` - Web framework
-- `@local-mcp/core` - Core abstractions (McpServer, ProxyHandler, OAuthManager, ApiKeyManager)
-- `@local-mcp/database` - Database layer (Drizzle ORM with SQLite)
-- `@local-mcp/custom-mcp-loader` - Custom MCP loader
+- `@dxheroes/local-mcp-core` - Core abstractions (McpServer, ProxyHandler, OAuthManager, ApiKeyManager)
+- `@dxheroes/local-mcp-database` - Database layer (Drizzle ORM with SQLite)
+- `@dxheroes/local-mcp-custom-mcp-loader` - Custom MCP loader
 - `@modelcontextprotocol/sdk` - MCP SDK
 - `zod` - Validation
 - `winston` - Logging

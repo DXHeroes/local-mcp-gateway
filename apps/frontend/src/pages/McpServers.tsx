@@ -2,7 +2,14 @@
  * MCP Servers page
  */
 
-import { Alert, AlertDescription, Button, Card, CardHeader, CardTitle } from '@local-mcp/ui';
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  Card,
+  CardHeader,
+  CardTitle,
+} from '@dxheroes/local-mcp-ui';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import McpServerForm from '../components/McpServerForm';

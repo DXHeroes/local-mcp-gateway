@@ -24,7 +24,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@local-mcp/ui';
+} from '@dxheroes/local-mcp-ui';
 import { useEffect, useState } from 'react';
 
 interface McpServer {

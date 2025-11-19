@@ -5,7 +5,7 @@
 import { existsSync, rmSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { McpServerFactory, OAuthDiscoveryService } from '@local-mcp/core';
+import { McpServerFactory, OAuthDiscoveryService } from '@dxheroes/local-mcp-core';
 import {
   createDatabase,
   createRawDatabase,
@@ -14,7 +14,7 @@ import {
   OAuthTokenRepository,
   ProfileRepository,
   runMigrations,
-} from '@local-mcp/database';
+} from '@dxheroes/local-mcp-database';
 import express from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -25,8 +25,8 @@ const __dirname = dirname(__filename);
 const TEST_DB_PATH = join(__dirname, `../../../test-db-${basename(__filename, '.test.ts')}.sqlite`);
 
 // Mock OAuthDiscoveryService
-vi.mock('@local-mcp/core', async () => {
-  const actual = await vi.importActual('@local-mcp/core');
+vi.mock('@dxheroes/local-mcp-core', async () => {
+  const actual = await vi.importActual('@dxheroes/local-mcp-core');
   return {
     ...actual,
     OAuthDiscoveryService: class {

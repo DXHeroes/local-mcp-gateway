@@ -7,7 +7,7 @@ import { unlinkSync } from 'node:fs';
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import { createDatabase, createRawDatabase, runMigrations } from '../../src/index.js';
 import { McpServerRepository } from '../../src/repositories/McpServerRepository.js';
-import type { OAuthConfig, ApiKeyConfig } from '@local-mcp/core';
+import type { OAuthConfig, ApiKeyConfig } from '@dxheroes/local-mcp-core';
 import { ProfileRepository } from '../../src/repositories/ProfileRepository.js';
 import { ProfileMcpServerRepository } from '../../src/repositories/ProfileMcpServerRepository.js';
 

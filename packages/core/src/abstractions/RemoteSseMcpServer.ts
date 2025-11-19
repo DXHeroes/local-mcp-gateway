@@ -398,7 +398,7 @@ export class RemoteSseMcpServer extends McpServer {
         protocolVersion: '2025-06-18',
         capabilities: {},
         clientInfo: {
-          name: 'local-mcp-proxy',
+          name: 'local-mcp-gateway',
           version: '1.0.0',
         },
       },

@@ -21,7 +21,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@local-mcp/ui';
+} from '@dxheroes/local-mcp-ui';
 import { Info } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 

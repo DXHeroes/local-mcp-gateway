@@ -14,3 +14,7 @@ export const sharedViteConfig: Partial<UserConfig> = {
     // Common aliases can be added here
   },
 };
+
+export function createViteConfig(): Partial<UserConfig> {
+  return { ...sharedViteConfig };
+}

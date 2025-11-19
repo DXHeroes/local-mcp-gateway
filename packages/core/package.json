@@ -1,8 +1,8 @@
 {
-  "name": "@local-mcp/core",
+  "name": "@dxheroes/local-mcp-core",
   "version": "0.1.0",
   "type": "module",
-  "description": "Core abstractions and types for MCP proxy server",
+  "description": "Core abstractions and types for Local MCP Gateway",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -23,17 +23,18 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@local-mcp/config": "workspace:*",
+    "@dxheroes/local-mcp-config": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.21.1",
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@dxheroes/local-mcp-config": "workspace:*",
     "@types/node": "^24.10.1",
     "tsdown": "^0.16.5",
     "typescript": "^5.9.3",
     "vitest": "^4.0.8"
   },
   "peerDependencies": {
-    "@local-mcp/database": "workspace:*"
+    "@dxheroes/local-mcp-database": "workspace:*"
   }
 }

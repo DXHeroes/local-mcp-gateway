@@ -1,5 +1,5 @@
 {
-  "name": "@local-mcp/database",
+  "name": "@dxheroes/local-mcp-database",
   "version": "0.1.0",
   "type": "module",
   "description": "SQLite database layer with migrations and repositories",
@@ -19,13 +19,13 @@
     "seed": "tsx src/seeds/seed-runner.ts"
   },
   "dependencies": {
-    "@local-mcp/config": "workspace:*",
     "better-sqlite3": "^12.4.1",
     "drizzle-kit": "^0.31.6",
     "drizzle-orm": "^0.44.7",
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@dxheroes/local-mcp-config": "workspace:*",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.10.1",
     "tsx": "^4.20.6",
@@ -33,6 +33,6 @@
     "vitest": "^4.0.8"
   },
   "peerDependencies": {
-    "@local-mcp/core": "workspace:*"
+    "@dxheroes/local-mcp-core": "workspace:*"
   }
 }

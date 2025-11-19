@@ -2,11 +2,11 @@
  * Backend entry point
  */
 
-import { join } from 'node:path';
 import { homedir } from 'node:os';
-// Database is imported from @local-mcp/database package
-// better-sqlite3 is a dependency of @local-mcp/database
-import { ApiKeyManager, OAuthManager, ProfileManager } from '@local-mcp/core';
+import { join } from 'node:path';
+// Database is imported from @dxheroes/local-mcp-database package
+// better-sqlite3 is a dependency of @dxheroes/local-mcp-database
+import { ApiKeyManager, OAuthManager, ProfileManager } from '@dxheroes/local-mcp-core';
 import {
   createDatabase,
   DebugLogRepository,
@@ -16,7 +16,7 @@ import {
   ProfileRepository,
   runMigrations,
   runSeeds,
-} from '@local-mcp/database';
+} from '@dxheroes/local-mcp-database';
 import compression from 'compression';
 import cors from 'cors';
 import express from 'express';
@@ -37,8 +37,7 @@ const env = getEnv();
 
 const app = express();
 const PORT = env.PORT;
-const DATABASE_PATH =
-  env.DATABASE_PATH || join(homedir(), '.local-mcp-data', 'local-mcp.db');
+const DATABASE_PATH = env.DATABASE_PATH || join(homedir(), '.local-mcp-data', 'local-mcp.db');
 
 // Initialize database
 async function initializeDatabase() {

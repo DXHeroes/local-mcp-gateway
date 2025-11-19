@@ -12,7 +12,7 @@ import {
   McpServerRepository,
   ProfileRepository,
   runMigrations,
-} from '@local-mcp/database';
+} from '@dxheroes/local-mcp-database';
 import express from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

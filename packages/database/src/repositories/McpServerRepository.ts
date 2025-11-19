@@ -10,7 +10,7 @@ import type {
   McpServerEntity,
   McpServerType,
   OAuthConfig,
-} from '@local-mcp/core';
+} from '@dxheroes/local-mcp-core';
 import { eq } from 'drizzle-orm';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { mcpServers, profileMcpServers } from '../schema.js';

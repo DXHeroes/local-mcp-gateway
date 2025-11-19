@@ -4,7 +4,7 @@
  * Database operations for profiles using Drizzle ORM
  */
 
-import type { Profile, ProfileCreateInput, ProfileUpdateInput } from '@local-mcp/core';
+import type { Profile, ProfileCreateInput, ProfileUpdateInput } from '@dxheroes/local-mcp-core';
 import { eq } from 'drizzle-orm';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { profiles } from '../schema.js';

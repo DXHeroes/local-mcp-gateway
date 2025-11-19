@@ -1,8 +1,8 @@
-# Root Directory - Local MCP Proxy Server
+# Root Directory - Local MCP Gateway
 
 ## Purpose
 
-This is the root directory of the Local MCP Proxy Server monorepo. This application serves as a local MCP proxy server that allows adding external MCP servers and creating custom MCP implementations.
+This is the root directory of the Local MCP Gateway monorepo. This application serves as a local MCP gateway that allows adding external MCP servers and creating custom MCP implementations.
 
 ## Project Structure
 
@@ -54,13 +54,6 @@ Each directory has its own `AGENTS.md` with specific instructions:
 - `.env.example` - Environment variables template
 - `README.md` - Main project README
 - `CONTRIBUTING.md` - Contributing guidelines
-
-## Implementation Plans
-
-This project follows detailed implementation plans:
-
-- **[.cursor/plans/local-mcp-proxy-server-ece204be.plan.md](.cursor/plans/local-mcp-proxy-server-ece204be.plan.md)** - Main implementation plan with architecture, database schema, OAuth 2.1 implementation, and all phases
-- **[.cursor/plans/dokon-en-local-mcp-proxy-server.plan.md](.cursor/plans/dokon-en-local-mcp-proxy-server.plan.md)** - Completion plan with remaining tasks and priorities
 
 ## Important Notes
 

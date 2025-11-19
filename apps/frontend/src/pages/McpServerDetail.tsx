@@ -11,7 +11,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from '@local-mcp/ui';
+} from '@dxheroes/local-mcp-ui';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 

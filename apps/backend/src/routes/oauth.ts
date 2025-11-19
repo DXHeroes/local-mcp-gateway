@@ -4,8 +4,8 @@
  * Handles OAuth 2.1 flows for MCP servers
  */
 
-import type { OAuthManager } from '@local-mcp/core';
-import type { McpServerRepository } from '@local-mcp/database';
+import type { OAuthManager } from '@dxheroes/local-mcp-core';
+import type { McpServerRepository } from '@dxheroes/local-mcp-database';
 import { Router } from 'express';
 
 export function createOAuthRoutes(

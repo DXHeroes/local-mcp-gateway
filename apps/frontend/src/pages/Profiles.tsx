@@ -20,7 +20,7 @@ import {
   CardHeader,
   CardTitle,
   useToast,
-} from '@local-mcp/ui';
+} from '@dxheroes/local-mcp-ui';
 import { ChevronDown, ChevronUp, Copy, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import ProfileForm from '../components/ProfileForm';

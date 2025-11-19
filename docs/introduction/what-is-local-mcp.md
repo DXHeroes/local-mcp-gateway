@@ -15,7 +15,7 @@ This application acts as a **smart middleware**:
 2.  **Profile Management**: Create profiles like "Work", "Creative", or "Debug" and switch context instantly.
 3.  **Auth Handling**: It handles OAuth flows (e.g., "Login with Linear") and securely stores API keys, injecting them into requests automatically.
 4.  **Developer Experience**:
-    - **HTTPS Tunnels**: One-click secure connection for Claude Code.
+    - **HTTPS Tunnels**: One-click HTTPS connection for tools that require it (e.g. Claude).
     - **TOON Prompts**: Copy-pasteable context that teaches the AI how to use your tools perfectly.
     - **Debug Logging**: See exactly what the AI is sending and receiving.
 

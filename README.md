@@ -1,18 +1,31 @@
 # Local MCP Gateway
 
-A local proxy server for MCP (Model Context Protocol) servers that allows you to:
-- Add external MCP servers as proxies
-- Create custom MCP implementations
-- Manage profiles (named sets of MCP servers)
-- Handle OAuth 2.1 flows for MCP servers
-- Manage API keys for MCP servers
+A **Local MCP Gateway** for MCP (Model Context Protocol) servers that allows you to:
+
+-   **Aggregate multiple MCP servers** into a single endpoint
+-   **Create custom MCP servers** using TypeScript
+-   **Manage servers via a Web UI**
+-   **Inspect MCP traffic** with built-in debug logs
+-   **Secure your servers** with API keys and OAuth 2.1
+
+![Local MCP Gateway Dashboard](docs/images/dashboard-preview.png)
+
+## Features
+
+-   🚀 **Proxy & Aggregator**: Combine multiple MCP servers (stdio, SSE, remote) into one
+-   🛠️ **Custom MCP Support**: Write your own MCP servers in TypeScript with hot-reload
+-   🔒 **Security**: Built-in API Key management and OAuth 2.1 support
+-   📊 **Observability**: Real-time request/response logging and inspection
+-   🖥️ **Web Interface**: Modern UI to manage servers, profiles, and logs
+-   🐳 **Docker Ready**: Easy deployment with Docker Compose
 
 ## Quick Start
 
 ### Prerequisites
 
-- Node.js 20+
-- pnpm 9+
+-   Node.js 20+
+-   pnpm 9+
+-   Docker (optional, for containerized deployment)
 
 ### Installation
 
@@ -123,7 +136,7 @@ Since self-signed certificates are used, you will need to accept the security wa
 ## Project Structure
 
 ```
-local_mcp_ui/
+local_mcp_gateway/
 ├── packages/          # Shared packages
 │   ├── core/         # Core abstractions
 │   ├── database/     # Database layer

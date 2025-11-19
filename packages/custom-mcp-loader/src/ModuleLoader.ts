@@ -7,7 +7,7 @@
 
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import type { McpServer } from '@local-mcp/core';
+import type { McpServer } from '@dxheroes/local-mcp-core';
 import type { FSWatcher } from 'chokidar';
 import chokidar from 'chokidar';
 
@@ -53,7 +53,7 @@ export async function loadCustomMcpModule(modulePath: string): Promise<McpServer
     const module = await import(`file://${indexFile}`);
 
     // Import McpServer class to check instanceof
-    const { McpServer: McpServerClass } = await import('@local-mcp/core');
+    const { McpServer: McpServerClass } = await import('@dxheroes/local-mcp-core');
 
     // Find exported class extending McpServer
     const exports = Object.values(module);

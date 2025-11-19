@@ -8,7 +8,7 @@ import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import { createDatabase, createRawDatabase, runMigrations } from '../../src/index.js';
 import { OAuthTokenRepository } from '../../src/repositories/OAuthTokenRepository.js';
 import { McpServerRepository } from '../../src/repositories/McpServerRepository.js';
-import type { OAuthToken } from '@local-mcp/core';
+import type { OAuthToken } from '@dxheroes/local-mcp-core';
 
 describe('OAuthTokenRepository', () => {
   let db: ReturnType<typeof createDatabase>;

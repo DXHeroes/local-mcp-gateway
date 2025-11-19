@@ -53,16 +53,16 @@ importers:
 
   apps/backend:
     dependencies:
-      '@local-mcp/config':
+      '@dxheroes/local-mcp-config':
         specifier: workspace:*
         version: link:../../packages/config
-      '@local-mcp/core':
+      '@dxheroes/local-mcp-core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@local-mcp/custom-mcp-loader':
+      '@dxheroes/local-mcp-custom-mcp-loader':
         specifier: workspace:*
         version: link:../../packages/custom-mcp-loader
-      '@local-mcp/database':
+      '@dxheroes/local-mcp-database':
         specifier: workspace:*
         version: link:../../packages/database
       '@modelcontextprotocol/sdk':
@@ -90,6 +90,9 @@ importers:
         specifier: ^4.1.12
         version: 4.1.12
     devDependencies:
+      '@types/better-sqlite3':
+        specifier: ^7.6.13
+        version: 7.6.13
       '@types/compression':
         specifier: ^1.8.1
         version: 1.8.1
@@ -141,10 +144,10 @@ importers:
 
   apps/frontend:
     dependencies:
-      '@local-mcp/config':
+      '@dxheroes/local-mcp-config':
         specifier: workspace:*
         version: link:../../packages/config
-      '@local-mcp/ui':
+      '@dxheroes/local-mcp-ui':
         specifier: workspace:*
         version: link:../../packages/ui
       '@tanstack/react-query':
@@ -238,10 +241,10 @@ importers:
 
   packages/core:
     dependencies:
-      '@local-mcp/config':
+      '@dxheroes/local-mcp-config':
         specifier: workspace:*
         version: link:../config
-      '@local-mcp/database':
+      '@dxheroes/local-mcp-database':
         specifier: workspace:*
         version: link:../database
       '@modelcontextprotocol/sdk':
@@ -266,10 +269,10 @@ importers:
 
   packages/custom-mcp-loader:
     dependencies:
-      '@local-mcp/config':
+      '@dxheroes/local-mcp-config':
         specifier: workspace:*
         version: link:../config
-      '@local-mcp/core':
+      '@dxheroes/local-mcp-core':
         specifier: workspace:*
         version: link:../core
       chokidar:
@@ -294,10 +297,7 @@ importers:
 
   packages/database:
     dependencies:
-      '@local-mcp/config':
-        specifier: workspace:*
-        version: link:../config
-      '@local-mcp/core':
+      '@dxheroes/local-mcp-core':
         specifier: workspace:*
         version: link:../core
       better-sqlite3:
@@ -313,6 +313,9 @@ importers:
         specifier: ^4.1.12
         version: 4.1.12
     devDependencies:
+      '@dxheroes/local-mcp-config':
+        specifier: workspace:*
+        version: link:../config
       '@types/better-sqlite3':
         specifier: ^7.6.13
         version: 7.6.13
@@ -331,7 +334,7 @@ importers:
 
   packages/ui:
     dependencies:
-      '@local-mcp/config':
+      '@dxheroes/local-mcp-config':
         specifier: workspace:*
         version: link:../config
       '@radix-ui/react-alert-dialog':

@@ -4,7 +4,7 @@
  * Provides API endpoints for querying debug logs
  */
 
-import type { DebugLogRepository } from '@local-mcp/database';
+import type { DebugLogRepository } from '@dxheroes/local-mcp-database';
 import { Router } from 'express';
 import { z } from 'zod';
 

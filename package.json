@@ -1,8 +1,8 @@
 {
-  "name": "local-mcp-proxy-server",
+  "name": "local-mcp-gateway",
   "version": "0.1.0",
   "private": true,
-  "description": "Local MCP Proxy Server - Proxy for MCP servers with custom MCP support",
+  "description": "Local MCP Gateway - Gateway for MCP servers with custom MCP support",
   "scripts": {
     "dev": "turbo run dev",
     "dev:https": "turbo run dev:https",
@@ -27,12 +27,13 @@
     "create-custom-mcp": "node scripts/create-custom-mcp.js",
     "create-package": "node scripts/create-package.js",
     "db:seed": "pnpm --filter @local-mcp/database seed",
-    "db:reset": "rm -f ~/.local-mcp-data/local-mcp.db && pnpm db:seed"
+    "db:reset": "rm -f ~/.local-mcp-gateway-data/local-mcp-gateway.db && pnpm db:seed"
   },
   "keywords": [
     "mcp",
     "model-context-protocol",
     "proxy",
+    "gateway",
     "ai",
     "claude",
     "cursor"

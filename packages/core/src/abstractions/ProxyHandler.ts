@@ -270,7 +270,7 @@ export class ProxyHandler {
               ...(hasLogging && { logging: {} }),
             },
             serverInfo: {
-              name: 'local-mcp-proxy',
+              name: 'local-mcp-gateway',
               version: '1.0.0',
             },
           };

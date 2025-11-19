@@ -8,14 +8,14 @@ import type {
   OAuthTokenRepository,
   ProfileMcpServerRepository,
   ProfileRepository,
-} from '@local-mcp/database';
+} from '@dxheroes/local-mcp-database';
 import type { Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createProxyRoutes } from '../../../src/routes/proxy.js';
 
 // Mock ProxyHandler and McpServerFactory
-vi.mock('@local-mcp/core', async () => {
-  const actual = await vi.importActual('@local-mcp/core');
+vi.mock('@dxheroes/local-mcp-core', async () => {
+  const actual = await vi.importActual('@dxheroes/local-mcp-core');
   return {
     ...actual,
     // Keep actual ProxyHandler for ProxyHandlerWithLogging to extend
@@ -117,7 +117,7 @@ describe('Proxy Routes Unit Tests', () => {
       vi.mocked(mockMcpServerRepository.findById).mockResolvedValue(serverEntity as never);
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       const mockServer = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi
@@ -207,7 +207,7 @@ describe('Proxy Routes Unit Tests', () => {
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
       // Mock McpServerFactory to return a mock server
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       const mockServer = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi.fn(),
@@ -246,7 +246,7 @@ describe('Proxy Routes Unit Tests', () => {
       const { mockServer } = await setupSuccessfulProfile();
 
       // Mock ProxyHandler.handleRequest to return tools/list response
-      const { ProxyHandler } = await import('@local-mcp/core');
+      const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
       const originalHandleRequest = ProxyHandler.prototype.handleRequest;
       ProxyHandler.prototype.handleRequest = vi.fn().mockResolvedValue({
         jsonrpc: '2.0',
@@ -293,7 +293,7 @@ describe('Proxy Routes Unit Tests', () => {
       const { mockServer } = await setupSuccessfulProfile();
 
       // Mock ProxyHandler.handleRequest for initialize
-      const { ProxyHandler } = await import('@local-mcp/core');
+      const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
       const originalHandleRequest = ProxyHandler.prototype.handleRequest;
       ProxyHandler.prototype.handleRequest = vi.fn().mockResolvedValue({
         jsonrpc: '2.0',
@@ -374,7 +374,7 @@ describe('Proxy Routes Unit Tests', () => {
         .mockResolvedValueOnce(serverEntity2 as never);
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
-      const { McpServerFactory, ProxyHandler } = await import('@local-mcp/core');
+      const { McpServerFactory, ProxyHandler } = await import('@dxheroes/local-mcp-core');
       const mockServer1 = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi.fn().mockResolvedValue([]),
@@ -423,7 +423,7 @@ describe('Proxy Routes Unit Tests', () => {
             tools: { listChanged: false },
             resources: { subscribe: false, listChanged: false },
           },
-          serverInfo: { name: 'local-mcp-proxy', version: '1.0.0' },
+          serverInfo: { name: 'local-mcp-gateway', version: '1.0.0' },
         },
       });
 
@@ -479,7 +479,7 @@ describe('Proxy Routes Unit Tests', () => {
         // No handleRequest method
       };
 
-      const { McpServerFactory, ProxyHandler } = await import('@local-mcp/core');
+      const { McpServerFactory, ProxyHandler } = await import('@dxheroes/local-mcp-core');
       vi.mocked(McpServerFactory.createMultipleAsync).mockResolvedValue(
         new Map([['server-1', mockServerWithoutHandleRequest as never]])
       );
@@ -568,7 +568,7 @@ describe('Proxy Routes Unit Tests', () => {
         .mockResolvedValueOnce(serverEntity2 as never);
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
-      const { McpServerFactory, ProxyHandler } = await import('@local-mcp/core');
+      const { McpServerFactory, ProxyHandler } = await import('@dxheroes/local-mcp-core');
       const mockServer1 = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi.fn().mockResolvedValue([]),
@@ -673,7 +673,7 @@ describe('Proxy Routes Unit Tests', () => {
         .mockResolvedValueOnce(serverEntity2 as never);
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
-      const { McpServerFactory, ProxyHandler } = await import('@local-mcp/core');
+      const { McpServerFactory, ProxyHandler } = await import('@dxheroes/local-mcp-core');
       const mockServer1 = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi.fn().mockResolvedValue([]),
@@ -724,7 +724,7 @@ describe('Proxy Routes Unit Tests', () => {
             prompts: {},
             logging: {},
           },
-          serverInfo: { name: 'local-mcp-proxy', version: '1.0.0' },
+          serverInfo: { name: 'local-mcp-gateway', version: '1.0.0' },
         },
       });
 
@@ -774,7 +774,7 @@ describe('Proxy Routes Unit Tests', () => {
       const { mockServer } = await setupSuccessfulProfile();
 
       // Mock ProxyHandler.handleRequest to return undefined (notification)
-      const { ProxyHandler } = await import('@local-mcp/core');
+      const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
       const originalHandleRequest = ProxyHandler.prototype.handleRequest;
       ProxyHandler.prototype.handleRequest = vi.fn().mockResolvedValue(undefined);
 
@@ -832,7 +832,7 @@ describe('Proxy Routes Unit Tests', () => {
       vi.mocked(mockMcpServerRepository.findById).mockResolvedValue(serverEntity as never);
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
-      const { McpServerFactory, ProxyHandler } = await import('@local-mcp/core');
+      const { McpServerFactory, ProxyHandler } = await import('@dxheroes/local-mcp-core');
       const mockServer = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi.fn().mockResolvedValue([]),
@@ -915,7 +915,7 @@ describe('Proxy Routes Unit Tests', () => {
       const { mockServer } = await setupSuccessfulProfile();
 
       // Mock ProxyHandler.handleRequest to return resources/list response
-      const { ProxyHandler } = await import('@local-mcp/core');
+      const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
       const originalHandleRequest = ProxyHandler.prototype.handleRequest;
       ProxyHandler.prototype.handleRequest = vi.fn().mockResolvedValue({
         jsonrpc: '2.0',
@@ -960,7 +960,7 @@ describe('Proxy Routes Unit Tests', () => {
       const { mockServer } = await setupSuccessfulProfile();
 
       // Mock ProxyHandler.handleRequest to return tools/call response
-      const { ProxyHandler } = await import('@local-mcp/core');
+      const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
       const originalHandleRequest = ProxyHandler.prototype.handleRequest;
       ProxyHandler.prototype.handleRequest = vi.fn().mockResolvedValue({
         jsonrpc: '2.0',
@@ -1009,7 +1009,7 @@ describe('Proxy Routes Unit Tests', () => {
       const { mockServer } = await setupSuccessfulProfile();
 
       // Mock ProxyHandler.handleRequest to return tools/call response for prefixed tool
-      const { ProxyHandler } = await import('@local-mcp/core');
+      const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
       const originalHandleRequest = ProxyHandler.prototype.handleRequest;
       ProxyHandler.prototype.handleRequest = vi.fn().mockResolvedValue({
         jsonrpc: '2.0',
@@ -1058,7 +1058,7 @@ describe('Proxy Routes Unit Tests', () => {
       const { mockServer } = await setupSuccessfulProfile();
 
       // Mock ProxyHandler.handleRequest to throw error for non-existent tool
-      const { ProxyHandler } = await import('@local-mcp/core');
+      const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
       const originalHandleRequest = ProxyHandler.prototype.handleRequest;
       ProxyHandler.prototype.handleRequest = vi
         .fn()
@@ -1105,7 +1105,7 @@ describe('Proxy Routes Unit Tests', () => {
       const { mockServer } = await setupSuccessfulProfile();
 
       // Mock ProxyHandler.handleRequest to return resources/read response
-      const { ProxyHandler } = await import('@local-mcp/core');
+      const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
       const originalHandleRequest = ProxyHandler.prototype.handleRequest;
       ProxyHandler.prototype.handleRequest = vi.fn().mockResolvedValue({
         jsonrpc: '2.0',
@@ -1153,7 +1153,7 @@ describe('Proxy Routes Unit Tests', () => {
       const { mockServer } = await setupSuccessfulProfile();
 
       // Mock ProxyHandler.handleRequest to throw error for non-existent resource
-      const { ProxyHandler } = await import('@local-mcp/core');
+      const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
       const originalHandleRequest = ProxyHandler.prototype.handleRequest;
       ProxyHandler.prototype.handleRequest = vi
         .fn()
@@ -1199,7 +1199,7 @@ describe('Proxy Routes Unit Tests', () => {
       const { mockServer } = await setupSuccessfulProfile();
 
       // Mock ProxyHandler.handleRequest to return error response
-      const { ProxyHandler } = await import('@local-mcp/core');
+      const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
       const originalHandleRequest = ProxyHandler.prototype.handleRequest;
       ProxyHandler.prototype.handleRequest = vi.fn().mockResolvedValue({
         jsonrpc: '2.0',
@@ -1273,7 +1273,7 @@ describe('Proxy Routes Unit Tests', () => {
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
       // Mock McpServerFactory to throw error
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       vi.mocked(McpServerFactory.createMultipleAsync).mockRejectedValue(
         new Error('Failed to create server')
       );
@@ -1354,7 +1354,7 @@ describe('Proxy Routes Unit Tests', () => {
       vi.mocked(mockMcpServerRepository.findById).mockResolvedValue(serverEntity as never);
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       const mockServer = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi.fn().mockResolvedValue([]),
@@ -1410,7 +1410,7 @@ describe('Proxy Routes Unit Tests', () => {
       vi.mocked(mockMcpServerRepository.findById).mockResolvedValue(serverEntity as never);
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       const mockServer = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi.fn().mockResolvedValue([]),
@@ -1486,7 +1486,7 @@ describe('Proxy Routes Unit Tests', () => {
       vi.mocked(mockMcpServerRepository.findById).mockResolvedValue(serverEntity as never);
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       const mockServer = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi
@@ -1549,7 +1549,7 @@ describe('Proxy Routes Unit Tests', () => {
       vi.mocked(mockMcpServerRepository.findById).mockResolvedValue(serverEntity as never);
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       const mockServer = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi
@@ -1621,7 +1621,7 @@ describe('Proxy Routes Unit Tests', () => {
         .mockResolvedValueOnce(serverEntity2 as never);
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       // Create mutable tool objects so ProxyHandlerWithLogging can modify them
       const tool1 = {
         name: 'duplicate-tool',
@@ -1712,7 +1712,7 @@ describe('Proxy Routes Unit Tests', () => {
         .mockResolvedValueOnce(serverEntity2 as never);
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       const mockServer1 = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi.fn().mockRejectedValue(new Error('Server 1 error')),
@@ -1793,7 +1793,7 @@ describe('Proxy Routes Unit Tests', () => {
         .mockResolvedValueOnce(serverEntity2 as never);
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       const mockServer1 = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi.fn().mockResolvedValue([]),
@@ -1946,7 +1946,7 @@ describe('Proxy Routes Unit Tests', () => {
       vi.mocked(mockMcpServerRepository.findById).mockResolvedValue(serverEntity as never);
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       const mockServer = {
         initialize: vi.fn().mockRejectedValue(new Error('Initialization failed')),
         listTools: vi.fn().mockResolvedValue([]),
@@ -1959,7 +1959,7 @@ describe('Proxy Routes Unit Tests', () => {
       );
 
       // Mock ProxyHandler.handleRequest to return tools/list response
-      const { ProxyHandler } = await import('@local-mcp/core');
+      const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
       const originalHandleRequest = ProxyHandler.prototype.handleRequest;
       ProxyHandler.prototype.handleRequest = vi.fn().mockResolvedValue({
         jsonrpc: '2.0',
@@ -2008,7 +2008,7 @@ describe('Proxy Routes Unit Tests', () => {
       vi.mocked(mockDebugLogRepository.create).mockRejectedValue(new Error('Log creation failed'));
 
       // Mock ProxyHandler.handleRequest
-      const { ProxyHandler } = await import('@local-mcp/core');
+      const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
       const originalHandleRequest = ProxyHandler.prototype.handleRequest;
       ProxyHandler.prototype.handleRequest = vi.fn().mockResolvedValue({
         jsonrpc: '2.0',
@@ -2030,7 +2030,7 @@ describe('Proxy Routes Unit Tests', () => {
       vi.mocked(mockMcpServerRepository.findById).mockResolvedValue(serverEntity as never);
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       const mockServer = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi.fn().mockResolvedValue([]),
@@ -2098,7 +2098,7 @@ describe('Proxy Routes Unit Tests', () => {
       vi.mocked(mockMcpServerRepository.findById).mockResolvedValue(serverEntity as never);
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       const mockServer = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi.fn().mockResolvedValue([]),
@@ -2167,7 +2167,7 @@ describe('Proxy Routes Unit Tests', () => {
       vi.mocked(mockMcpServerRepository.findById).mockResolvedValue(serverEntity as never);
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       const mockServer = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi.fn().mockResolvedValue([]),
@@ -2234,7 +2234,7 @@ describe('Proxy Routes Unit Tests', () => {
       vi.mocked(mockMcpServerRepository.findById).mockResolvedValue(serverEntity as never);
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       const mockServer = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi.fn().mockResolvedValue([]),
@@ -2290,7 +2290,7 @@ describe('Proxy Routes Unit Tests', () => {
       vi.mocked(mockDebugLogRepository.update).mockRejectedValue(new Error('Log update failed'));
 
       // Mock ProxyHandler.handleRequest
-      const { ProxyHandler } = await import('@local-mcp/core');
+      const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
       const originalHandleRequest = ProxyHandler.prototype.handleRequest;
       ProxyHandler.prototype.handleRequest = vi.fn().mockResolvedValue({
         jsonrpc: '2.0',
@@ -2312,7 +2312,7 @@ describe('Proxy Routes Unit Tests', () => {
       vi.mocked(mockMcpServerRepository.findById).mockResolvedValue(serverEntity as never);
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       const mockServer = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi.fn().mockResolvedValue([]),

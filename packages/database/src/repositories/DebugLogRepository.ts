@@ -4,7 +4,7 @@
  * Database operations for debug logs using Drizzle ORM
  */
 
-import type { DebugLog } from '@local-mcp/core';
+import type { DebugLog } from '@dxheroes/local-mcp-core';
 import { and, desc, eq } from 'drizzle-orm';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { debugLogs } from '../schema.js';

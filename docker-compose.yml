@@ -8,12 +8,12 @@ services:
     ports:
       - "3001:3001"
     volumes:
-      - ${HOME}/.local-mcp-data:/app/data
+      - ${HOME}/.local-mcp-gateway-data:/app/data
       - ./custom-mcps:/app/custom-mcps
     environment:
       - NODE_ENV=production
       - PORT=3001
-      - DATABASE_PATH=/app/data/local-mcp.db
+      - DATABASE_PATH=/app/data/local-mcp-gateway.db
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
@@ -28,7 +28,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ${HOME}/.local-mcp-data/certs:/etc/nginx/certs
+      - ${HOME}/.local-mcp-gateway-data/certs:/etc/nginx/certs
     depends_on:
       - backend
     environment:

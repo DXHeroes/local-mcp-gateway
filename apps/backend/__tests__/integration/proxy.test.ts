@@ -5,8 +5,8 @@
 import { existsSync, rmSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { McpServer, McpTool } from '@local-mcp/core';
-import { McpServerFactory } from '@local-mcp/core';
+import type { McpServer, McpTool } from '@dxheroes/local-mcp-core';
+import { McpServerFactory } from '@dxheroes/local-mcp-core';
 import {
   createDatabase,
   createRawDatabase,
@@ -16,7 +16,7 @@ import {
   ProfileMcpServerRepository,
   ProfileRepository,
   runMigrations,
-} from '@local-mcp/database';
+} from '@dxheroes/local-mcp-database';
 import express from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

@@ -1,17 +1,40 @@
 {
-  "name": "@local-mcp/config",
+  "name": "@dxheroes/local-mcp-config",
   "version": "0.1.0",
   "type": "module",
   "description": "Shared configuration for TypeScript, Vitest, and Vite",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.mts",
   "exports": {
-    "./vitest": "./src/vitest.ts",
-    "./typescript": "./src/typescript.ts",
-    "./vite": "./src/vite.ts",
-    "./tsdown": "./src/tsdown.ts"
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.mts"
+    },
+    "./vitest": {
+      "import": "./dist/vitest.mjs",
+      "require": "./dist/vitest.cjs",
+      "types": "./dist/vitest.d.mts"
+    },
+    "./typescript": {
+      "import": "./dist/typescript.mjs",
+      "require": "./dist/typescript.cjs",
+      "types": "./dist/typescript.d.mts"
+    },
+    "./vite": {
+      "import": "./dist/vite.mjs",
+      "require": "./dist/vite.cjs",
+      "types": "./dist/vite.d.mts"
+    },
+    "./tsdown": {
+      "import": "./dist/tsdown.mjs",
+      "require": "./dist/tsdown.cjs",
+      "types": "./dist/tsdown.d.mts"
+    }
   },
   "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

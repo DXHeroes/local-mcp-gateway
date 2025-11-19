@@ -39,6 +39,6 @@ Business logic handlers for processing requests and generating responses.
 
 ## Dependencies
 
-- `@local-mcp/core` - ProfileManager, OAuthManager, ApiKeyManager, ProxyHandler
-- `@local-mcp/database` - Repositories
+- `@dxheroes/local-mcp-core` - ProfileManager, OAuthManager, ApiKeyManager, ProxyHandler
+- `@dxheroes/local-mcp-database` - Repositories
 

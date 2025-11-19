@@ -1,6 +1,4 @@
-import { sharedVitestConfig } from '@local-mcp/config/vitest';
-import { defineConfig } from 'vitest/config';
+import { createVitestConfig } from '@dxheroes/local-mcp-config/vitest';
+import { defineConfig, mergeConfig } from 'vitest/config';
 
-export default defineConfig({
-  ...sharedVitestConfig,
-});
+export default mergeConfig(createVitestConfig(), defineConfig({}));

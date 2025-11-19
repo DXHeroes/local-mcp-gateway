@@ -1,5 +1,5 @@
 {
-  "name": "@local-mcp/custom-mcp-loader",
+  "name": "@dxheroes/local-mcp-custom-mcp-loader",
   "version": "0.1.0",
   "type": "module",
   "description": "Dynamic loader for custom MCP servers",
@@ -17,17 +17,19 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@local-mcp/config": "workspace:*",
+    "@dxheroes/local-mcp-config": "workspace:*",
+    "@dxheroes/local-mcp-core": "workspace:*",
     "chokidar": "^4.0.3",
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@dxheroes/local-mcp-config": "workspace:*",
     "@types/chokidar": "^2.1.7",
     "@types/node": "^24.10.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.8"
   },
   "peerDependencies": {
-    "@local-mcp/core": "workspace:*"
+    "@dxheroes/local-mcp-core": "workspace:*"
   }
 }

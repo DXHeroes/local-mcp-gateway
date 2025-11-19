@@ -2,7 +2,7 @@
  * React Error Boundary component
  */
 
-import { Alert, AlertDescription, AlertTitle, Button } from '@local-mcp/ui';
+import { Alert, AlertDescription, AlertTitle, Button } from '@dxheroes/local-mcp-ui';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 
 interface Props {

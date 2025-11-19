@@ -2,14 +2,14 @@
  * MCP Server routes
  */
 
-import type { ApiKeyConfig, McpServerConfig, McpServerType, OAuthConfig } from '@local-mcp/core';
-import { McpServerFactory, OAuthDiscoveryService } from '@local-mcp/core';
+import type { ApiKeyConfig, McpServerConfig, McpServerType, OAuthConfig } from '@dxheroes/local-mcp-core';
+import { McpServerFactory, OAuthDiscoveryService } from '@dxheroes/local-mcp-core';
 import type {
   DebugLogRepository,
   McpServerRepository,
   OAuthTokenRepository,
   ProfileRepository,
-} from '@local-mcp/database';
+} from '@dxheroes/local-mcp-database';
 import { Router } from 'express';
 import { z } from 'zod';
 import { sanitizePayload } from '../middleware/debug-logger';

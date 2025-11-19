@@ -7,7 +7,7 @@ import type {
   McpServerRepository,
   OAuthTokenRepository,
   ProfileRepository,
-} from '@local-mcp/database';
+} from '@dxheroes/local-mcp-database';
 import { Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMcpServerRoutes } from '../../../src/routes/mcp-servers.js';
@@ -17,8 +17,8 @@ const mockDiscoverFromResourceMetadata = vi.fn();
 const mockDiscoverFromServerUrl = vi.fn();
 const mockRegisterClient = vi.fn();
 
-vi.mock('@local-mcp/core', async () => {
-  const actual = await vi.importActual('@local-mcp/core');
+vi.mock('@dxheroes/local-mcp-core', async () => {
+  const actual = await vi.importActual('@dxheroes/local-mcp-core');
   return {
     ...actual,
     McpServerFactory: {
@@ -599,7 +599,7 @@ describe('MCP Server Routes Unit Tests', () => {
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
       // Mock McpServerFactory
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       const mockServerInstance = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi
@@ -652,7 +652,7 @@ describe('MCP Server Routes Unit Tests', () => {
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
       // Mock McpServerFactory to throw error
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       vi.mocked(McpServerFactory.createAsync).mockRejectedValue(new Error('Connection failed'));
 
       // Mock debug log
@@ -696,7 +696,7 @@ describe('MCP Server Routes Unit Tests', () => {
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
       // Mock McpServerFactory to throw OAUTH_REQUIRED error
-      const { McpServerFactory, OAuthDiscoveryService } = await import('@local-mcp/core');
+      const { McpServerFactory, OAuthDiscoveryService } = await import('@dxheroes/local-mcp-core');
       vi.mocked(McpServerFactory.createAsync).mockRejectedValue(
         new Error('OAUTH_REQUIRED:https://example.com/.well-known/oauth-resource-metadata')
       );
@@ -761,7 +761,7 @@ describe('MCP Server Routes Unit Tests', () => {
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
       // Mock McpServerFactory to throw OAUTH_REQUIRED error (without resource metadata URL)
-      const { McpServerFactory, OAuthDiscoveryService } = await import('@local-mcp/core');
+      const { McpServerFactory, OAuthDiscoveryService } = await import('@dxheroes/local-mcp-core');
       vi.mocked(McpServerFactory.createAsync).mockRejectedValue(
         new Error('OAUTH_REQUIRED: Server requires OAuth authentication')
       );
@@ -836,7 +836,7 @@ describe('MCP Server Routes Unit Tests', () => {
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
       // Mock McpServerFactory
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       const mockServerInstance = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi
@@ -887,7 +887,7 @@ describe('MCP Server Routes Unit Tests', () => {
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
       // Mock McpServerFactory to throw error
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       vi.mocked(McpServerFactory.createAsync).mockRejectedValue(new Error('Connection failed'));
 
       // Mock debug log
@@ -931,7 +931,7 @@ describe('MCP Server Routes Unit Tests', () => {
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
       // Mock McpServerFactory to throw OAUTH_REQUIRED error
-      const { McpServerFactory, OAuthDiscoveryService } = await import('@local-mcp/core');
+      const { McpServerFactory, OAuthDiscoveryService } = await import('@dxheroes/local-mcp-core');
       vi.mocked(McpServerFactory.createAsync).mockRejectedValue(
         new Error('OAUTH_REQUIRED:https://example.com/.well-known/oauth-resource-metadata')
       );
@@ -997,7 +997,7 @@ describe('MCP Server Routes Unit Tests', () => {
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
       // Mock McpServerFactory to throw OAUTH_REQUIRED error (without resource metadata URL)
-      const { McpServerFactory, OAuthDiscoveryService } = await import('@local-mcp/core');
+      const { McpServerFactory, OAuthDiscoveryService } = await import('@dxheroes/local-mcp-core');
       vi.mocked(McpServerFactory.createAsync).mockRejectedValue(
         new Error('OAUTH_REQUIRED: Server requires OAuth authentication')
       );
@@ -1064,7 +1064,7 @@ describe('MCP Server Routes Unit Tests', () => {
       vi.mocked(mockMcpServerRepository.findById).mockResolvedValue(server as never);
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       const mockServerInstance = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi.fn().mockResolvedValue([]),
@@ -1123,7 +1123,7 @@ describe('MCP Server Routes Unit Tests', () => {
       vi.mocked(mockMcpServerRepository.findById).mockResolvedValue(server as never);
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       const mockServerInstance = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi.fn().mockResolvedValue([]),
@@ -1184,7 +1184,7 @@ describe('MCP Server Routes Unit Tests', () => {
       vi.mocked(mockMcpServerRepository.findById).mockResolvedValue(server as never);
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       const mockServerInstance = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi.fn().mockResolvedValue([]),
@@ -1242,7 +1242,7 @@ describe('MCP Server Routes Unit Tests', () => {
       vi.mocked(mockMcpServerRepository.findById).mockResolvedValue(server as never);
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
-      const { McpServerFactory } = await import('@local-mcp/core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       const mockServerInstance = {
         initialize: vi.fn().mockResolvedValue(undefined),
         listTools: vi.fn().mockResolvedValue([]),

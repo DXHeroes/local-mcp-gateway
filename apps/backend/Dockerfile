@@ -7,7 +7,7 @@ WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Copy workspace files
-COPY pnpm-workspace.yaml package.json turbo.json ./
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json turbo.json tsconfig.json ./
 COPY packages ./packages
 COPY apps/backend ./apps/backend
 
@@ -15,9 +15,9 @@ COPY apps/backend ./apps/backend
 RUN pnpm install --frozen-lockfile
 
 # Build packages
-RUN pnpm --filter "@local-mcp/core" build
-RUN pnpm --filter "@local-mcp/database" build
-RUN pnpm --filter "@local-mcp/custom-mcp-loader" build
+RUN pnpm --filter "@dxheroes/local-mcp-core" build
+RUN pnpm --filter "@dxheroes/local-mcp-database" build
+RUN pnpm --filter "@dxheroes/local-mcp-custom-mcp-loader" build
 
 # Build backend
 RUN pnpm --filter backend build
@@ -31,7 +31,7 @@ WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Copy package files
-COPY pnpm-workspace.yaml package.json ./
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 COPY packages/core/package.json ./packages/core/
 COPY packages/database/package.json ./packages/database/
 COPY packages/custom-mcp-loader/package.json ./packages/custom-mcp-loader/

@@ -2,8 +2,8 @@
  * Profile routes
  */
 
-import type { ProfileManager } from '@local-mcp/core';
-import type { ProfileMcpServerRepository } from '@local-mcp/database';
+import type { ProfileManager } from '@dxheroes/local-mcp-core';
+import type { ProfileMcpServerRepository } from '@dxheroes/local-mcp-database';
 import { Router } from 'express';
 import { z } from 'zod';
 

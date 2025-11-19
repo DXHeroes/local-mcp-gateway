@@ -1,4 +1,4 @@
-import { createTsdownConfig } from '@local-mcp/config/tsdown';
+import { createTsdownConfig } from '@dxheroes/local-mcp-config/tsdown';
 
 export default createTsdownConfig({
   entry: ['./src/index.ts'],

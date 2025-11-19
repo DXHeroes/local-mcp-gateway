@@ -1,14 +1,17 @@
 import path from 'node:path';
+import { createViteConfig } from '@dxheroes/local-mcp-config';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
 
-export default defineConfig({
+export default createViteConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@local-mcp/ui/styles': path.resolve(__dirname, '../../packages/ui/src/styles/globals.css'),
+      '@dxheroes/local-mcp-ui/styles': path.resolve(
+        __dirname,
+        '../../packages/ui/src/styles/globals.css'
+      ),
     },
   },
   server: {

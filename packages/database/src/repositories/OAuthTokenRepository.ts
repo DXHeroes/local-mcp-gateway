@@ -4,7 +4,7 @@
  * Database operations for OAuth tokens using Drizzle ORM
  */
 
-import type { OAuthToken } from '@local-mcp/core';
+import type { OAuthToken } from '@dxheroes/local-mcp-core';
 import { eq } from 'drizzle-orm';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { oauthTokens } from '../schema.js';

@@ -2,7 +2,7 @@
  * Unit tests for debug routes
  */
 
-import type { DebugLogRepository } from '@local-mcp/database';
+import type { DebugLogRepository } from '@dxheroes/local-mcp-database';
 import { Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDebugRoutes } from '../../../src/routes/debug.js';

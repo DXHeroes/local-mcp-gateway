@@ -11,15 +11,15 @@ import type {
   McpServer,
   McpTool,
   OAuthToken,
-} from '@local-mcp/core';
-import { McpServerFactory, ProxyHandler } from '@local-mcp/core';
+} from '@dxheroes/local-mcp-core';
+import { ProxyHandler, McpServerFactory } from '@dxheroes/local-mcp-core';
 import type {
   DebugLogRepository,
   McpServerRepository,
   OAuthTokenRepository,
   ProfileMcpServerRepository,
   ProfileRepository,
-} from '@local-mcp/database';
+} from '@dxheroes/local-mcp-database';
 import { Router } from 'express';
 import { z } from 'zod';
 import { sanitizePayload } from '../middleware/debug-logger.js';

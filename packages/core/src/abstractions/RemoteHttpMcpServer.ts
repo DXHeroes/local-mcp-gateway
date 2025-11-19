@@ -132,7 +132,7 @@ export class RemoteHttpMcpServer extends McpServer {
           protocolVersion: '2025-06-18',
           capabilities: {},
           clientInfo: {
-            name: 'local-mcp-proxy',
+            name: 'local-mcp-gateway',
             version: '1.0.0',
           },
         },
@@ -537,7 +537,7 @@ export class RemoteHttpMcpServer extends McpServer {
               protocolVersion: '2025-06-18',
               capabilities: {},
               serverInfo: {
-                name: 'local-mcp-proxy',
+                name: 'local-mcp-gateway',
                 version: '1.0.0',
               },
             },

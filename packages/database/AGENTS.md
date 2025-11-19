@@ -107,7 +107,7 @@ This package uses **Drizzle ORM** instead of raw SQL for better type safety and 
 ## Usage Example
 
 ```typescript
-import { ProfileRepository } from '@local-mcp/database';
+import { ProfileRepository } from '@dxheroes/local-mcp-database';
 
 const repo = new ProfileRepository(db);
 const profile = await repo.create({

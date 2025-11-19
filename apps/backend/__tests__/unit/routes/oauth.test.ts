@@ -2,8 +2,8 @@
  * Unit tests for OAuth routes
  */
 
-import type { OAuthManager } from '@local-mcp/core';
-import type { McpServerRepository } from '@local-mcp/database';
+import type { OAuthManager } from '@dxheroes/local-mcp-core';
+import type { McpServerRepository } from '@dxheroes/local-mcp-database';
 import { Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createOAuthRoutes } from '../../../src/routes/oauth.js';

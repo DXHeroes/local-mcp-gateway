@@ -2,7 +2,7 @@
  * Main App component
  */
 
-import { Toaster } from '@local-mcp/ui';
+import { Toaster } from '@dxheroes/local-mcp-ui';
 import { BrowserRouter, Route, Routes } from 'react-router';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import Layout from './components/Layout.tsx';

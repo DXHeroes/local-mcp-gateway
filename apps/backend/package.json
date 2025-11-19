@@ -2,7 +2,7 @@
   "name": "backend",
   "version": "0.1.0",
   "private": true,
-  "description": "Express.js backend for MCP proxy server",
+  "description": "Express.js backend for Local MCP Gateway",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -18,10 +18,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@local-mcp/config": "workspace:*",
-    "@local-mcp/core": "workspace:*",
-    "@local-mcp/custom-mcp-loader": "workspace:*",
-    "@local-mcp/database": "workspace:*",
+    "@dxheroes/local-mcp-config": "workspace:*",
+    "@dxheroes/local-mcp-core": "workspace:*",
+    "@dxheroes/local-mcp-custom-mcp-loader": "workspace:*",
+    "@dxheroes/local-mcp-database": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.21.1",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
@@ -32,6 +32,8 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@dxheroes/local-mcp-config": "workspace:*",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",

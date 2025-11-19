@@ -16,11 +16,11 @@ We use `localtunnel` to create a public HTTPS URL.
 - **Risk**: The URL is public (`https://random-name.loca.lt`). Anyone with the URL can access your API.
 - **Mitigation**:
     - **Obscurity**: The URL is random and temporary (unless you assign a subdomain).
-    - **Authentication**: The application *should* enforce authentication (see below).
+    - **Authentication**: Currently, the gateway does **not** authenticate incoming requests. It relies on the secrecy of the tunnel URL.
     - **Warning**: We explicitly warn users that this is a public tunnel. Do not share this URL.
 
 ### 2. Authentication & Authorization
-The Proxy supports two auth mechanisms:
+The Proxy supports two auth mechanisms for **connecting to backend tools** (not for protecting the gateway itself):
 
 - **OAuth 2.1**: For connecting to third-party services (GitHub, Linear). Tokens are encrypted at rest.
 - **API Keys**: Keys are stored encrypted in the SQLite database.

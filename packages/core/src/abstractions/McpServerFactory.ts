@@ -19,7 +19,7 @@ async function getCustomMcpLoader(): Promise<(modulePath: string) => Promise<Mcp
   if (!loadCustomMcpModule) {
     // Use dynamic import with string literal to prevent TypeScript from analyzing at compile time
     // This is a runtime import, so TypeScript should not analyze the module
-    const loaderModuleName = '@local-mcp/custom-mcp-loader';
+    const loaderModuleName = '@dxheroes/local-mcp-custom-mcp-loader';
     const loaderModule = await import(loaderModuleName);
     loadCustomMcpModule = loaderModule.loadCustomMcpModule as (
       modulePath: string

@@ -5,7 +5,7 @@
  * Sanitizes sensitive data (tokens, API keys) before storing
  */
 
-import type { DebugLogRepository } from '@local-mcp/database';
+import type { DebugLogRepository } from '@dxheroes/local-mcp-database';
 import type { NextFunction, Request, Response } from 'express';
 
 /**

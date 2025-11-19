@@ -5,14 +5,14 @@
 import { existsSync, rmSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { OAuthManager } from '@local-mcp/core';
+import { OAuthManager } from '@dxheroes/local-mcp-core';
 import {
   createDatabase,
   createRawDatabase,
   McpServerRepository,
   OAuthTokenRepository,
   runMigrations,
-} from '@local-mcp/database';
+} from '@dxheroes/local-mcp-database';
 import express from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
