@@ -7,10 +7,12 @@
       "outputs": ["dist/**", ".next/**", "build/**"]
     },
     "dev": {
+      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true
     },
     "dev:https": {
+      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true
     },

@@ -1,4 +1,4 @@
-import type { UserConfig } from 'vite';
+import { mergeConfig, type UserConfig } from 'vite';
 
 /**
  * Shared Vite configuration
@@ -15,6 +15,6 @@ export const sharedViteConfig: Partial<UserConfig> = {
   },
 };
 
-export function createViteConfig(): Partial<UserConfig> {
-  return { ...sharedViteConfig };
+export function createViteConfig(overrideConfig: UserConfig = {}): UserConfig {
+  return mergeConfig(sharedViteConfig, overrideConfig);
 }

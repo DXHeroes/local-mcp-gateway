@@ -1,6 +1,7 @@
 /**
  * @local-mcp/ui - Shared UI components based on shadcn-ui
  */
+import './styles/globals.css';
 
 export * from './components/alert';
 export * from './components/alert-dialog';

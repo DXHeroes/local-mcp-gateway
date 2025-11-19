@@ -9,6 +9,10 @@ export default defineConfig({
     './src/tsdown.ts',
   ],
   format: ['esm', 'cjs'],
-  clean: true,
-  dts: true,
+  clean: false, // Don't clean in watch mode, only when building for production
+  platform: 'node',
+  external: ['publint/utils', 'unplugin-lightningcss/rolldown'],
+  define: {
+    'import.meta': '{}',
+  },
 });

@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@source "../../../apps/frontend/src/**/*.{tsx,ts,jsx,js}";
+@source "../../../../apps/frontend/src/**/*.{tsx,ts,jsx,js}";
 @source "../components/**/*.{tsx,ts}";
 
 :root {
