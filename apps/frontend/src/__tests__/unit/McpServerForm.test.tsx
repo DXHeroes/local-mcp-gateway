@@ -35,7 +35,7 @@ describe('McpServerForm', () => {
   };
 
   it('should render form in create mode', async () => {
-    const { container } = render(
+    render(
       <McpServerForm
         server={null}
         onSave={mockOnSave}
@@ -75,7 +75,7 @@ describe('McpServerForm', () => {
       updatedAt: Date.now(),
     };
 
-    const { container } = render(
+    render(
       <McpServerForm
         server={mockServer}
         onSave={mockOnSave}
@@ -276,7 +276,7 @@ describe('McpServerForm', () => {
   it('should display OAuth configuration fields when OAuth is selected', async () => {
     const user = userEvent.setup();
 
-    const { container } = render(
+    render(
       <McpServerForm
         server={null}
         onSave={mockOnSave}
@@ -304,7 +304,7 @@ describe('McpServerForm', () => {
   it('should validate OAuth configuration', async () => {
     const user = userEvent.setup();
 
-    const { container } = render(
+    render(
       <McpServerForm
         server={null}
         onSave={mockOnSave}
@@ -351,7 +351,7 @@ describe('McpServerForm', () => {
   it('should display API key configuration fields when API key is selected', async () => {
     const user = userEvent.setup();
 
-    const { container } = render(
+    render(
       <McpServerForm
         server={null}
         onSave={mockOnSave}
@@ -379,7 +379,7 @@ describe('McpServerForm', () => {
   it('should validate API key configuration', async () => {
     const user = userEvent.setup();
 
-    const { container } = render(
+    render(
       <McpServerForm
         server={null}
         onSave={mockOnSave}
@@ -428,7 +428,7 @@ describe('McpServerForm', () => {
 
     mockOnSave.mockResolvedValue(undefined);
 
-    const { container } = render(
+    render(
       <McpServerForm
         server={null}
         onSave={mockOnSave}
@@ -471,7 +471,7 @@ describe('McpServerForm', () => {
 
     mockOnSave.mockResolvedValue(undefined);
 
-    const { container } = render(
+    render(
       <McpServerForm
         server={null}
         onSave={mockOnSave}
@@ -528,7 +528,7 @@ describe('McpServerForm', () => {
 
     mockOnSave.mockResolvedValue(undefined);
 
-    const { container } = render(
+    render(
       <McpServerForm
         server={null}
         onSave={mockOnSave}
@@ -596,7 +596,7 @@ describe('McpServerForm', () => {
 
     mockOnSave.mockResolvedValue(undefined);
 
-    const { container } = render(
+    render(
       <McpServerForm
         server={null}
         onSave={mockOnSave}
@@ -654,7 +654,7 @@ describe('McpServerForm', () => {
   it('should handle cancel action', async () => {
     const user = userEvent.setup();
 
-    const { container } = render(
+    render(
       <McpServerForm
         server={null}
         onSave={mockOnSave}
@@ -677,7 +677,7 @@ describe('McpServerForm', () => {
 
     mockOnSave.mockRejectedValue(new Error('Failed to save MCP server'));
 
-    const { container } = render(
+    render(
       <McpServerForm
         server={null}
         onSave={mockOnSave}
@@ -718,7 +718,7 @@ describe('McpServerForm', () => {
       updatedAt: Date.now(),
     };
 
-    const { container } = render(
+    render(
       <McpServerForm
         server={mockServer}
         onSave={mockOnSave}

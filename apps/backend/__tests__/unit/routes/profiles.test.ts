@@ -4,7 +4,7 @@
 
 import type { ProfileManager } from '@dxheroes/local-mcp-core';
 import type { ProfileMcpServerRepository } from '@dxheroes/local-mcp-database';
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createProfileRoutes } from '../../../src/routes/profiles.js';
 

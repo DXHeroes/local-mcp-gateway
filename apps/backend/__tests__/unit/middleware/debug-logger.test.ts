@@ -3,7 +3,7 @@
  */
 
 import type { DebugLogRepository } from '@dxheroes/local-mcp-database';
-import { Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createDebugLoggerMiddleware,
@@ -138,7 +138,7 @@ describe('Debug Logger Middleware Unit Tests', () => {
 
       // Call res.json to trigger update
       const responseBody = { result: { tools: [] } };
-      mockRes.json!(responseBody);
+      mockRes.json?.(responseBody);
 
       // Wait a bit for async update
       await new Promise((resolve) => setTimeout(resolve, 50));
@@ -179,7 +179,7 @@ describe('Debug Logger Middleware Unit Tests', () => {
       await middleware(mockReq as Request, mockRes as Response, mockNext);
 
       const responseBody = { error: 'Internal error' };
-      mockRes.json!(responseBody);
+      mockRes.json?.(responseBody);
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
@@ -214,7 +214,7 @@ describe('Debug Logger Middleware Unit Tests', () => {
 
       await middleware(mockReq as Request, mockRes as Response, mockNext);
 
-      mockRes.send!('text response');
+      mockRes.send?.('text response');
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 

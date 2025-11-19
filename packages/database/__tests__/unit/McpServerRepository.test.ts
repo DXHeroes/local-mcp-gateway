@@ -4,12 +4,12 @@
 
 import { randomUUID } from 'node:crypto';
 import { unlinkSync } from 'node:fs';
-import { describe, expect, it, beforeEach, afterEach } from 'vitest';
+import type { ApiKeyConfig, OAuthConfig } from '@dxheroes/local-mcp-core';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createDatabase, createRawDatabase, runMigrations } from '../../src/index.js';
 import { McpServerRepository } from '../../src/repositories/McpServerRepository.js';
-import type { OAuthConfig, ApiKeyConfig } from '@dxheroes/local-mcp-core';
-import { ProfileRepository } from '../../src/repositories/ProfileRepository.js';
 import { ProfileMcpServerRepository } from '../../src/repositories/ProfileMcpServerRepository.js';
+import { ProfileRepository } from '../../src/repositories/ProfileRepository.js';
 
 describe('McpServerRepository', () => {
   let db: ReturnType<typeof createDatabase>;

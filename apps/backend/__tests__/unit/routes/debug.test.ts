@@ -3,7 +3,7 @@
  */
 
 import type { DebugLogRepository } from '@dxheroes/local-mcp-database';
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDebugRoutes } from '../../../src/routes/debug.js';
 

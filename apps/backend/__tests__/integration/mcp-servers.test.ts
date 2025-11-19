@@ -5,7 +5,6 @@
 import { existsSync, rmSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { McpServerFactory, OAuthDiscoveryService } from '@dxheroes/local-mcp-core';
 import {
   createDatabase,
   createRawDatabase,

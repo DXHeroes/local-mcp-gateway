@@ -21,6 +21,7 @@
     "format": "biome format --write .",
     "format:check": "biome format .",
     "typecheck": "turbo run typecheck",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "docker:build": "docker-compose build",
     "docker:up": "docker-compose up",
     "docker:down": "docker-compose down",

@@ -2,7 +2,12 @@
  * MCP Server routes
  */
 
-import type { ApiKeyConfig, McpServerConfig, McpServerType, OAuthConfig } from '@dxheroes/local-mcp-core';
+import type {
+  ApiKeyConfig,
+  McpServerConfig,
+  McpServerType,
+  OAuthConfig,
+} from '@dxheroes/local-mcp-core';
 import { McpServerFactory, OAuthDiscoveryService } from '@dxheroes/local-mcp-core';
 import type {
   DebugLogRepository,

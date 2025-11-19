@@ -8,7 +8,7 @@ import type {
   OAuthTokenRepository,
   ProfileRepository,
 } from '@dxheroes/local-mcp-database';
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMcpServerRoutes } from '../../../src/routes/mcp-servers.js';
 
@@ -696,7 +696,7 @@ describe('MCP Server Routes Unit Tests', () => {
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
       // Mock McpServerFactory to throw OAUTH_REQUIRED error
-      const { McpServerFactory, OAuthDiscoveryService } = await import('@dxheroes/local-mcp-core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       vi.mocked(McpServerFactory.createAsync).mockRejectedValue(
         new Error('OAUTH_REQUIRED:https://example.com/.well-known/oauth-resource-metadata')
       );
@@ -761,7 +761,7 @@ describe('MCP Server Routes Unit Tests', () => {
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
       // Mock McpServerFactory to throw OAUTH_REQUIRED error (without resource metadata URL)
-      const { McpServerFactory, OAuthDiscoveryService } = await import('@dxheroes/local-mcp-core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       vi.mocked(McpServerFactory.createAsync).mockRejectedValue(
         new Error('OAUTH_REQUIRED: Server requires OAuth authentication')
       );
@@ -931,7 +931,7 @@ describe('MCP Server Routes Unit Tests', () => {
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
       // Mock McpServerFactory to throw OAUTH_REQUIRED error
-      const { McpServerFactory, OAuthDiscoveryService } = await import('@dxheroes/local-mcp-core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       vi.mocked(McpServerFactory.createAsync).mockRejectedValue(
         new Error('OAUTH_REQUIRED:https://example.com/.well-known/oauth-resource-metadata')
       );
@@ -997,7 +997,7 @@ describe('MCP Server Routes Unit Tests', () => {
       vi.mocked(mockOAuthTokenRepository.get).mockResolvedValue(null);
 
       // Mock McpServerFactory to throw OAUTH_REQUIRED error (without resource metadata URL)
-      const { McpServerFactory, OAuthDiscoveryService } = await import('@dxheroes/local-mcp-core');
+      const { McpServerFactory } = await import('@dxheroes/local-mcp-core');
       vi.mocked(McpServerFactory.createAsync).mockRejectedValue(
         new Error('OAUTH_REQUIRED: Server requires OAuth authentication')
       );

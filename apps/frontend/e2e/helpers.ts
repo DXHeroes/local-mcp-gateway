@@ -1,6 +1,7 @@
 /**
  * Helper functions for E2E tests
  */
+/** biome-ignore-all lint/suspicious/noExplicitAny: safe for tests */
 
 import type { APIRequestContext } from '@playwright/test';
 

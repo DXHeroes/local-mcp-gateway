@@ -2,7 +2,7 @@
  * Unit tests for validation middleware
  */
 
-import { Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { validateRequest } from '../../../src/middleware/validation.js';

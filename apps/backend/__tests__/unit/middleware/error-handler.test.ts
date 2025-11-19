@@ -2,10 +2,10 @@
  * Unit tests for error-handler middleware
  */
 
-import { Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { errorHandler } from '../../../src/middleware/error-handler.js';
 import * as loggerModule from '../../../src/lib/logger.js';
+import { errorHandler } from '../../../src/middleware/error-handler.js';
 
 describe('Error Handler Middleware Unit Tests', () => {
   let mockReq: Partial<Request>;

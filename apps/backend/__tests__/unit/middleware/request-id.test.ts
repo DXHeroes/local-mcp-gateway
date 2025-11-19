@@ -2,7 +2,7 @@
  * Unit tests for request-id middleware
  */
 
-import { Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { requestIdMiddleware } from '../../../src/middleware/request-id.js';
 
@@ -28,7 +28,7 @@ describe('Request ID Middleware Unit Tests', () => {
 
     expect(mockReq.headers['x-request-id']).toBeDefined();
     expect(typeof mockReq.headers['x-request-id']).toBe('string');
-    expect(mockReq.headers['x-request-id']!.length).toBeGreaterThan(0);
+    expect(mockReq.headers['x-request-id']?.length).toBeGreaterThan(0);
     expect(mockRes.setHeader).toHaveBeenCalledWith('X-Request-ID', mockReq.headers['x-request-id']);
     expect(mockNext).toHaveBeenCalled();
   });

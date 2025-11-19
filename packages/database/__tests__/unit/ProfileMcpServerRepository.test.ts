@@ -4,7 +4,7 @@
 
 import { randomUUID } from 'node:crypto';
 import { unlinkSync } from 'node:fs';
-import { describe, expect, it, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createDatabase, createRawDatabase, runMigrations } from '../../src/index.js';
 import { McpServerRepository } from '../../src/repositories/McpServerRepository.js';
 import { ProfileMcpServerRepository } from '../../src/repositories/ProfileMcpServerRepository.js';

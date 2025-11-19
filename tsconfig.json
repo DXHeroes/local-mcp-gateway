@@ -1,9 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": [
-      "ES2022"
-    ],
+    "lib": ["ES2022"],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
@@ -25,26 +23,14 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@dxheroes/local-mcp-core": [
-        "./packages/core/src/index.ts"
-      ],
-      "@dxheroes/local-mcp-database": [
-        "./packages/database/src/index.ts"
-      ],
-      "@dxheroes/local-mcp-config": [
-        "./packages/config/src/index.ts"
-      ],
-      "@dxheroes/local-mcp-custom-mcp-loader": [
-        "./packages/custom-mcp-loader/src/index.ts"
-      ],
-      "@dxheroes/local-mcp-ui": [
-        "./packages/ui/src/index.ts"
-      ]
+      "@dxheroes/local-mcp-core": ["./packages/core/src/index.ts"],
+      "@dxheroes/local-mcp-database": ["./packages/database/src/index.ts"],
+      "@dxheroes/local-mcp-config": ["./packages/config/src/index.ts"],
+      "@dxheroes/local-mcp-custom-mcp-loader": ["./packages/custom-mcp-loader/src/index.ts"],
+      "@dxheroes/local-mcp-ui": ["./packages/ui/src/index.ts"]
     }
   },
-  "include": [
-    "src/**/*"
-  ],
+  "include": ["src/**/*"],
   "exclude": [
     "node_modules",
     "dist",

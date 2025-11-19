@@ -1,16 +1,16 @@
-import type { UserConfig } from 'vitest/config';
+import type { ViteUserConfig } from 'vitest/config';
 
 /**
  * Shared Vitest configuration
  * Used by all packages and apps in the monorepo
  */
-export const sharedVitestConfig: UserConfig = {
+export const sharedVitestConfig: ViteUserConfig = {
   test: {
     globals: true,
     passWithNoTests: true,
   },
 };
 
-export function createVitestConfig(): UserConfig {
+export function createVitestConfig(): ViteUserConfig {
   return { ...sharedVitestConfig };
 }

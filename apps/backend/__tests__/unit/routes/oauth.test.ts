@@ -4,7 +4,7 @@
 
 import type { OAuthManager } from '@dxheroes/local-mcp-core';
 import type { McpServerRepository } from '@dxheroes/local-mcp-database';
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createOAuthRoutes } from '../../../src/routes/oauth.js';
 

@@ -18,7 +18,7 @@ async function fetchProfiles(retries = 5): Promise<Profile[] | null> {
       if (response.ok) {
         return (await response.json()) as Profile[];
       }
-    } catch (err) {
+    } catch (_err) {
       // Ignore error and retry
     }
     // Wait 1 second before retry

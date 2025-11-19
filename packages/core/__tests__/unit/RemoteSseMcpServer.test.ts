@@ -2,8 +2,8 @@
  * Unit tests for RemoteSseMcpServer
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { EventEmitter } from 'node:events';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { RemoteSseMcpServer, type SseClient } from '../../src/abstractions/RemoteSseMcpServer.js';
 import type { OAuthToken } from '../../src/types/database.js';
 import type {
@@ -35,7 +35,7 @@ class MockSseClient implements SseClient {
       if (this.emitter && message.id !== null && message.id !== undefined) {
         const response = this.pendingResponses.get(message.id);
         if (response) {
-          this.emitter!.emit('message', response);
+          this.emitter?.emit('message', response);
         }
       }
     }, 10);
@@ -134,7 +134,7 @@ describe('RemoteSseMcpServer', () => {
       // For Firecrawl-style SSE: initialize returns JSON, then POST requests work directly
       global.fetch = vi.fn().mockImplementation(async (url: string, options?: RequestInit) => {
         // Check if URL ends with /mcp (for JSON-RPC requests) or /sse (for SSE stream)
-        const isMcpEndpoint = url.includes('/mcp') && !url.includes('/sse');
+        const _isMcpEndpoint = url.includes('/mcp') && !url.includes('/sse');
 
         if (options?.method === 'POST') {
           const body = options.body as string;

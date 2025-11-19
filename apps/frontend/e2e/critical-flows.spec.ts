@@ -8,7 +8,7 @@
  */
 
 import { expect, test } from '@playwright/test';
-import { retryRequest, safeDelete } from './helpers';
+import { safeDelete } from './helpers';
 import { McpServersPage } from './pages/McpServersPage';
 import { ProfilesPage } from './pages/ProfilesPage';
 

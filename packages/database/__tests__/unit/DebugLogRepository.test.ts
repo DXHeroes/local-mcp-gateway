@@ -4,11 +4,11 @@
 
 import { randomUUID } from 'node:crypto';
 import { unlinkSync } from 'node:fs';
-import { describe, expect, it, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createDatabase, createRawDatabase, runMigrations } from '../../src/index.js';
 import { DebugLogRepository } from '../../src/repositories/DebugLogRepository.js';
-import { ProfileRepository } from '../../src/repositories/ProfileRepository.js';
 import { McpServerRepository } from '../../src/repositories/McpServerRepository.js';
+import { ProfileRepository } from '../../src/repositories/ProfileRepository.js';
 
 describe('DebugLogRepository', () => {
   let db: ReturnType<typeof createDatabase>;
@@ -355,7 +355,7 @@ describe('DebugLogRepository', () => {
         status: 'pending',
       });
 
-      const longErrorMessage = 'Error: ' + 'x'.repeat(5000);
+      const longErrorMessage = `Error: ${'x'.repeat(5000)}`;
       await repository.update(log.id, {
         status: 'error',
         errorMessage: longErrorMessage,

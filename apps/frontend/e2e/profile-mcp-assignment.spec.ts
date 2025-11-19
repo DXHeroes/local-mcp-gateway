@@ -10,7 +10,6 @@
 
 import { expect, test } from '@playwright/test';
 import { retryRequest, safeDelete } from './helpers';
-import { ProfilesPage } from './pages/ProfilesPage';
 
 const API_URL = 'http://localhost:3001';
 const CONTEXT7_MCP_URL = 'https://mcp.context7.com/mcp';

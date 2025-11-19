@@ -1,6 +1,6 @@
-import { defineConfig, type Config } from 'tsdown';
+import { defineConfig, type UserConfig } from 'tsdown';
 
-export const sharedTsdownConfig: Config = {
+export const sharedTsdownConfig: UserConfig = {
   format: ['esm'],
   outDir: 'dist',
   clean: true,
@@ -8,10 +8,9 @@ export const sharedTsdownConfig: Config = {
   sourcemap: true,
 };
 
-export function createTsdownConfig(config: Config = {}): Config {
+export function createTsdownConfig(config: UserConfig = {}): UserConfig {
   return defineConfig({
     ...sharedTsdownConfig,
     ...config,
   });
 }
-

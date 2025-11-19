@@ -243,7 +243,7 @@ describe('Proxy Routes Unit Tests', () => {
     });
 
     it('should handle tools/list request successfully', async () => {
-      const { mockServer } = await setupSuccessfulProfile();
+      await setupSuccessfulProfile();
 
       // Mock ProxyHandler.handleRequest to return tools/list response
       const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
@@ -290,7 +290,7 @@ describe('Proxy Routes Unit Tests', () => {
     });
 
     it('should handle initialize request successfully', async () => {
-      const { mockServer } = await setupSuccessfulProfile();
+      await setupSuccessfulProfile();
 
       // Mock ProxyHandler.handleRequest for initialize
       const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
@@ -468,7 +468,7 @@ describe('Proxy Routes Unit Tests', () => {
     });
 
     it('should handle initialize request with server without handleRequest method', async () => {
-      const { mockServer } = await setupSuccessfulProfile();
+      await setupSuccessfulProfile();
 
       // Mock server without handleRequest method
       const mockServerWithoutHandleRequest = {
@@ -771,7 +771,7 @@ describe('Proxy Routes Unit Tests', () => {
     });
 
     it('should handle notification (no id)', async () => {
-      const { mockServer } = await setupSuccessfulProfile();
+      await setupSuccessfulProfile();
 
       // Mock ProxyHandler.handleRequest to return undefined (notification)
       const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
@@ -912,7 +912,7 @@ describe('Proxy Routes Unit Tests', () => {
     });
 
     it('should handle resources/list request successfully', async () => {
-      const { mockServer } = await setupSuccessfulProfile();
+      await setupSuccessfulProfile();
 
       // Mock ProxyHandler.handleRequest to return resources/list response
       const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
@@ -957,7 +957,7 @@ describe('Proxy Routes Unit Tests', () => {
     });
 
     it('should handle tools/call request successfully', async () => {
-      const { mockServer } = await setupSuccessfulProfile();
+      await setupSuccessfulProfile();
 
       // Mock ProxyHandler.handleRequest to return tools/call response
       const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
@@ -1006,7 +1006,7 @@ describe('Proxy Routes Unit Tests', () => {
     });
 
     it('should handle tools/call with server ID prefix', async () => {
-      const { mockServer } = await setupSuccessfulProfile();
+      await setupSuccessfulProfile();
 
       // Mock ProxyHandler.handleRequest to return tools/call response for prefixed tool
       const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
@@ -1055,7 +1055,7 @@ describe('Proxy Routes Unit Tests', () => {
     });
 
     it('should handle tools/call error when tool not found', async () => {
-      const { mockServer } = await setupSuccessfulProfile();
+      await setupSuccessfulProfile();
 
       // Mock ProxyHandler.handleRequest to throw error for non-existent tool
       const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
@@ -1102,7 +1102,7 @@ describe('Proxy Routes Unit Tests', () => {
     });
 
     it('should handle resources/read request successfully', async () => {
-      const { mockServer } = await setupSuccessfulProfile();
+      await setupSuccessfulProfile();
 
       // Mock ProxyHandler.handleRequest to return resources/read response
       const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
@@ -1150,7 +1150,7 @@ describe('Proxy Routes Unit Tests', () => {
     });
 
     it('should handle resources/read error when resource not found', async () => {
-      const { mockServer } = await setupSuccessfulProfile();
+      await setupSuccessfulProfile();
 
       // Mock ProxyHandler.handleRequest to throw error for non-existent resource
       const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
@@ -1196,7 +1196,7 @@ describe('Proxy Routes Unit Tests', () => {
     });
 
     it('should handle error response from ProxyHandler', async () => {
-      const { mockServer } = await setupSuccessfulProfile();
+      await setupSuccessfulProfile();
 
       // Mock ProxyHandler.handleRequest to return error response
       const { ProxyHandler } = await import('@dxheroes/local-mcp-core');
