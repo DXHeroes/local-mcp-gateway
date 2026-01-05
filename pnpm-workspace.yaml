@@ -1,4 +1,11 @@
 packages:
-  - 'packages/*'
-  - 'apps/*'
+  - packages/*
+  - apps/*
 
+onlyBuiltDependencies:
+  - '@prisma/client'
+  - bcrypt
+  - better-sqlite3
+  - esbuild
+  - msw
+  - sharp
