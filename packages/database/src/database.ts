@@ -2,10 +2,21 @@
  * Database connection and utilities using Drizzle ORM
  */
 
+import { mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 import Database from 'better-sqlite3';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import * as schema from './schema.js';
+
+/**
+ * Ensure the directory for the database file exists
+ * @param filePath - Database file path
+ */
+function ensureDirectoryExists(filePath: string): void {
+  const dir = dirname(filePath);
+  mkdirSync(dir, { recursive: true });
+}
 
 /**
  * Create database connection using Drizzle ORM
@@ -13,6 +24,7 @@ import * as schema from './schema.js';
  * @returns Drizzle database instance
  */
 export function createDatabase(path: string): BetterSQLite3Database<typeof schema> {
+  ensureDirectoryExists(path);
   const sqlite = new Database(path);
 
   // Enable foreign keys
@@ -33,6 +45,7 @@ export function createDatabase(path: string): BetterSQLite3Database<typeof schem
  * @returns Raw SQLite database instance
  */
 export function createRawDatabase(path: string): Database.Database {
+  ensureDirectoryExists(path);
   const db = new Database(path);
 
   // Enable foreign keys

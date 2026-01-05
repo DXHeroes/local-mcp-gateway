@@ -28,7 +28,8 @@
     "docker:down": "docker-compose down",
     "create-custom-mcp": "node scripts/create-custom-mcp.js",
     "create-package": "node scripts/create-package.js",
-    "db:seed": "pnpm --filter @local-mcp/database seed",
+    "db:seed": "pnpm --filter @dxheroes/local-mcp-database seed",
+    "db:create": "pnpm --filter @dxheroes/local-mcp-database migrate",
     "db:reset": "rm -f ~/.local-mcp-gateway-data/local-mcp-gateway.db && pnpm db:seed"
   },
   "keywords": [
