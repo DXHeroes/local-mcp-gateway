@@ -6,14 +6,21 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 // Database is imported from @dxheroes/local-mcp-database package
 // better-sqlite3 is a dependency of @dxheroes/local-mcp-database
-import { ApiKeyManager, OAuthManager, ProfileManager } from '@dxheroes/local-mcp-core';
+import { ApiKeyManager, LicenseKeyService, OAuthManager, ProfileManager } from '@dxheroes/local-mcp-core';
 import {
   createDatabase,
   DebugLogRepository,
+  LicenseActivationRepository,
+  LicenseKeyRepository,
   McpServerRepository,
+  McpServerToolsCacheRepository,
   OAuthTokenRepository,
+  OrganizationRepository,
   ProfileMcpServerRepository,
+  ProfileMcpServerToolRepository,
   ProfileRepository,
+  SubscriptionRepository,
+  UserRepository,
   runMigrations,
   runSeeds,
 } from '@dxheroes/local-mcp-database';
@@ -21,16 +28,22 @@ import compression from 'compression';
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
+import { toNodeHandler } from 'better-auth/node';
 import { getEnv } from './lib/env.js';
 import { logger } from './lib/logger.js';
+import { auth } from './lib/auth.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { apiLimiter, mcpProxyLimiter } from './middleware/rate-limiting.js';
 import { requestIdMiddleware } from './middleware/request-id.js';
+import { requireAuth } from './middleware/requireAuth.js';
 import { createDebugRoutes } from './routes/debug.js';
+import { createLicenseRoutes } from './routes/licenses.js';
 import { createMcpServerRoutes } from './routes/mcp-servers.js';
 import { createOAuthRoutes } from './routes/oauth.js';
 import { createProfileRoutes } from './routes/profiles.js';
+import { createProfileToolsRoutes } from './routes/profile-tools.js';
 import { createProxyRoutes } from './routes/proxy.js';
+import { createSubscriptionRoutes } from './routes/subscriptions.js';
 
 // Validate environment variables
 const env = getEnv();
@@ -71,6 +84,10 @@ app.use(
     credentials: true,
   })
 );
+
+// Better Auth handler - MUST be before express.json()
+app.use('/api/auth', toNodeHandler(auth));
+
 app.use(express.json({ limit: '10mb' }));
 app.use('/api', apiLimiter);
 
@@ -93,6 +110,17 @@ initializeDatabase()
     const oauthTokenRepository = new OAuthTokenRepository(db);
     const debugLogRepository = new DebugLogRepository(db);
     const profileMcpServerRepository = new ProfileMcpServerRepository(db);
+    const profileMcpServerToolRepository = new ProfileMcpServerToolRepository(db);
+    const mcpServerToolsCacheRepository = new McpServerToolsCacheRepository(db);
+
+    // Initialize monetization repositories
+    // @ts-expect-error - Reserved for future user management routes
+    const _userRepository = new UserRepository(db);
+    // @ts-expect-error - Reserved for future organization routes
+    const _organizationRepository = new OrganizationRepository(db);
+    const subscriptionRepository = new SubscriptionRepository(db);
+    const licenseKeyRepository = new LicenseKeyRepository(db);
+    const licenseActivationRepository = new LicenseActivationRepository(db);
 
     // Initialize managers
     const profileManager = new ProfileManager(profileRepository);
@@ -117,11 +145,35 @@ initializeDatabase()
       },
     });
 
+    // Initialize services (conditionally if env vars are present)
+    let licenseKeyService: LicenseKeyService | null = null;
+
+    if (env.LICENSE_PRIVATE_KEY && env.LICENSE_PUBLIC_KEY) {
+      licenseKeyService = new LicenseKeyService(
+        env.LICENSE_PRIVATE_KEY,
+        env.LICENSE_PUBLIC_KEY
+      );
+      logger.info('License key service initialized');
+    } else {
+      logger.warn('License keys not set - license key generation disabled');
+    }
+
     // API routes
     app.use(
       '/api/profiles',
       apiLimiter,
       createProfileRoutes(profileManager, profileMcpServerRepository)
+    );
+    app.use(
+      '/api/profiles/:profileId/servers/:serverId',
+      apiLimiter,
+      createProfileToolsRoutes(
+        profileManager,
+        mcpServerRepository,
+        profileMcpServerToolRepository,
+        mcpServerToolsCacheRepository,
+        oauthTokenRepository
+      )
     );
     app.use(
       '/api/mcp-servers',
@@ -146,6 +198,23 @@ initializeDatabase()
     );
     app.use('/api/oauth', apiLimiter, createOAuthRoutes(oauthManager, mcpServerRepository));
     app.use('/api/debug', apiLimiter, createDebugRoutes(debugLogRepository));
+
+    // Protected routes (require authentication)
+    app.use(
+      '/api/subscriptions',
+      apiLimiter,
+      requireAuth,
+      createSubscriptionRoutes(subscriptionRepository)
+    );
+
+    // License routes (validate & heartbeat don't require auth, others do)
+    if (licenseKeyService) {
+      app.use(
+        '/api/licenses',
+        apiLimiter,
+        createLicenseRoutes(licenseKeyRepository, licenseActivationRepository, licenseKeyService)
+      );
+    }
 
     // Enhanced health check with database connectivity (after repositories are initialized)
     app.get('/health/ready', async (_req, res) => {

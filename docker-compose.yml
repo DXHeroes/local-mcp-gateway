@@ -10,10 +10,11 @@ services:
     volumes:
       - ${HOME}/.local-mcp-gateway-data:/app/data
       - ./custom-mcps:/app/custom-mcps
+    env_file:
+      - .env.docker
     environment:
+      # Override or add additional env vars here
       - NODE_ENV=production
-      - PORT=3001
-      - DATABASE_PATH=/app/data/local-mcp-gateway.db
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
@@ -24,6 +25,9 @@ services:
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
+      args:
+        # Build-time environment for Vite
+        - VITE_API_URL=${VITE_API_URL:-http://backend:3001}
     ports:
       - "80:80"
       - "443:443"
@@ -31,6 +35,4 @@ services:
       - ${HOME}/.local-mcp-gateway-data/certs:/etc/nginx/certs
     depends_on:
       - backend
-    environment:
-      - VITE_API_URL=http://backend:3001
 

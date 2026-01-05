@@ -8,6 +8,9 @@ import type { Database as DatabaseType } from 'better-sqlite3';
 import Database from 'better-sqlite3';
 import * as migration001 from './001_initial_schema.js';
 import * as migration002 from './002_add_oauth_support.js';
+import * as migration003 from './003_add_monetization.js';
+import * as migration004 from './004_migrate_to_better_auth.js';
+import * as migration005 from './005_add_tool_customizations.js';
 
 interface Migration {
   name: string;
@@ -25,6 +28,21 @@ const migrations: Migration[] = [
     name: '002_add_oauth_support',
     up: migration002.up,
     down: migration002.down,
+  },
+  {
+    name: '003_add_monetization',
+    up: migration003.up,
+    down: migration003.down,
+  },
+  {
+    name: '004_migrate_to_better_auth',
+    up: migration004.up,
+    down: migration004.down,
+  },
+  {
+    name: '005_add_tool_customizations',
+    up: migration005.up,
+    down: migration005.down,
   },
 ];
 

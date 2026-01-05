@@ -23,6 +23,7 @@ import {
 } from '@dxheroes/local-mcp-ui';
 import { ChevronDown, ChevronUp, Copy, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import ProfileForm from '../components/ProfileForm';
 import { generateToonPrompt } from '../utils/promptGenerator';
 
@@ -49,6 +50,7 @@ interface ProfileWithStatus extends Profile {
 import { API_URL } from '../config/api';
 
 export default function ProfilesPage() {
+  const navigate = useNavigate();
   const [profiles, setProfiles] = useState<ProfileWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -331,11 +333,6 @@ export default function ProfilesPage() {
     setIsFormOpen(true);
   };
 
-  const openEditForm = (profile: Profile) => {
-    setEditingProfile(profile);
-    setIsFormOpen(true);
-  };
-
   const closeForm = () => {
     setIsFormOpen(false);
     setEditingProfile(null);
@@ -388,10 +385,10 @@ export default function ProfilesPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => openEditForm(profile)}
+                      onClick={() => navigate(`/profiles/${profile.id}/edit`)}
                       aria-label={`Edit ${profile.name}`}
                     >
-                      Edit
+                      Edit Tools
                     </Button>
                     <Button
                       variant="ghost"

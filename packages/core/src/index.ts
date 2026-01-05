@@ -21,4 +21,8 @@ export type {
   ProfileRepository,
   ProfileUpdateInput,
 } from './abstractions/ProfileManager.js';
+export type { LicensePayload, LicenseValidationResult } from './services/LicenseKeyService.js';
+
+// Services
+export { LicenseKeyService } from './services/LicenseKeyService.js';
 export * from './types/index.js';

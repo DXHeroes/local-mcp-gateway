@@ -9,6 +9,7 @@ import Layout from './components/Layout.tsx';
 import DebugLogsPage from './pages/DebugLogs.tsx';
 import McpServerDetailPage from './pages/McpServerDetail.tsx';
 import McpServersPage from './pages/McpServers.tsx';
+import ProfileEditPage from './pages/ProfileEditPage.tsx';
 import ProfilesPage from './pages/Profiles.tsx';
 
 function App() {
@@ -31,6 +32,14 @@ function App() {
                 element={
                   <ErrorBoundary>
                     <ProfilesPage />
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path="/profiles/:profileId/edit"
+                element={
+                  <ErrorBoundary>
+                    <ProfileEditPage />
                   </ErrorBoundary>
                 }
               />

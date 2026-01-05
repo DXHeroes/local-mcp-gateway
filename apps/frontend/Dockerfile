@@ -17,6 +17,10 @@ RUN pnpm install --frozen-lockfile
 # Build packages
 RUN pnpm --filter "@local-mcp/core" build
 
+# Build argument for VITE_API_URL (required at build time)
+ARG VITE_API_URL
+ENV VITE_API_URL=${VITE_API_URL}
+
 # Build frontend
 RUN pnpm --filter frontend build
 

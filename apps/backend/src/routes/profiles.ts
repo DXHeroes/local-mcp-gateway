@@ -158,14 +158,45 @@ export function createProfileRoutes(
         return;
       }
 
-      const serverIds = await profileMcpServerRepository.getServerIdsForProfile(profile.id);
-      res.json({ serverIds });
+      const servers = await profileMcpServerRepository.getServersForProfile(profile.id);
+      res.json({ servers });
     } catch (error) {
       if (error instanceof Error) {
         res.status(400).json({ error: error.message });
         return;
       }
       res.status(500).json({ error: 'Failed to fetch profile servers' });
+    }
+  });
+
+  // Toggle MCP server active state in profile
+  router.put('/:id/servers/:serverId/toggle', async (req, res) => {
+    try {
+      const profile = await profileManager.getById(req.params.id);
+      if (!profile) {
+        res.status(404).json({ error: 'Profile not found' });
+        return;
+      }
+
+      const { isActive } = req.body;
+      if (typeof isActive !== 'boolean') {
+        res.status(400).json({ error: 'isActive must be a boolean' });
+        return;
+      }
+
+      await profileMcpServerRepository.updateServerInProfile(
+        profile.id,
+        req.params.serverId,
+        { isActive }
+      );
+
+      res.json({ success: true });
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ error: error.message });
+        return;
+      }
+      res.status(500).json({ error: 'Failed to toggle server' });
     }
   });
 

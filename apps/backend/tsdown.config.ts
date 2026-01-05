@@ -1,6 +1,11 @@
-import { createTsdownConfig } from '@dxheroes/local-mcp-config/tsdown';
+import { defineConfig } from 'tsdown';
 
-export default createTsdownConfig({
+export default defineConfig({
   entry: ['./src/index.ts'],
+  format: ['esm'],
+  outDir: 'dist',
+  clean: true,
   dts: false,
+  sourcemap: true,
+  platform: 'node',
 });

@@ -4,6 +4,7 @@
   "private": true,
   "description": "Local MCP Gateway - Gateway for MCP servers with custom MCP support",
   "scripts": {
+    "setup": "bash scripts/setup-env.sh",
     "dev": "turbo run dev",
     "dev:https": "turbo run dev:https",
     "dev:backend": "turbo run dev --filter=backend",
@@ -47,10 +48,14 @@
     "pnpm": ">=9.0.0"
   },
   "devDependencies": {
+    "@better-auth/cli": "^1.4.6",
     "@biomejs/biome": "^2.3.5",
     "@modelcontextprotocol/sdk": "^1.21.1",
     "@playwright/test": "^1.56.1",
+    "@types/bcrypt": "^6.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.10.1",
+    "@types/nodemailer": "^7.0.4",
     "@vitest/coverage-v8": "^4.0.8",
     "concurrently": "^9.2.1",
     "drizzle-kit": "^0.31.6",
@@ -65,5 +70,13 @@
   "workspaces": [
     "packages/*",
     "apps/*"
-  ]
+  ],
+  "dependencies": {
+    "@noble/ed25519": "^3.0.0",
+    "@noble/hashes": "^2.0.1",
+    "bcrypt": "^6.0.0",
+    "better-auth": "^1.4.6",
+    "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^7.0.11"
+  }
 }

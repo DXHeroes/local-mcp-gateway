@@ -33,6 +33,28 @@ A **Local MCP Gateway** for MCP (Model Context Protocol) servers that allows you
 pnpm install
 ```
 
+### Environment Setup
+
+This project uses centralized environment configuration. See [Environment Configuration Guide](./docs/ENVIRONMENT_SETUP.md) for details.
+
+**Quick start:**
+```bash
+# 1. Copy environment template
+cp .env.example .env
+
+# 2. Generate required secret
+openssl rand -hex 32
+
+# 3. Edit .env and set BETTER_AUTH_SECRET to the generated value
+
+# 4. Start development
+pnpm dev
+```
+
+**Required**: Set `BETTER_AUTH_SECRET` in `.env` (minimum 32 characters)
+
+**Optional**: Configure email (Resend), OAuth (Google/GitHub), payments (Paddle), etc.
+
 ### Development
 
 Start both backend and frontend with hot-reload:

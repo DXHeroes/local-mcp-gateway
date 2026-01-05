@@ -1,0 +1,25 @@
+{
+  "name": "@dxheroes/local-mcp-emails",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "dev": "email dev --dir src/templates --port 3002",
+    "build": "tsc --build",
+    "preview": "email dev --dir src/templates --port 3003",
+    "export": "email export --dir src/templates"
+  },
+  "dependencies": {
+    "@react-email/components": "^0.0.29",
+    "@react-email/render": "^1.0.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.4",
+    "@types/react-dom": "^19.2.3",
+    "react-email": "^3.0.3",
+    "typescript": "^5.9.3"
+  }
+}

@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:https": "VITE_API_URL=https://localhost:3002 vite",
+    "dev:https": "vite --mode https",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "start": "serve -s dist -l 3000",
@@ -15,6 +15,11 @@
     "test:integration": "vitest run --dir __tests__/integration",
     "test:coverage": "vitest run --coverage --passWithNoTests",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:report": "playwright show-report",
     "lint": "biome check .",
     "typecheck": "tsc --noEmit"
   },

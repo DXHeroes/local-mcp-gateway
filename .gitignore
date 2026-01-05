@@ -21,6 +21,11 @@ test-db-*.sqlite-*
 .env
 .env.local
 .env.*.local
+.env.docker
+
+# Allow .env.example files
+!.env.example
+!**/.env.example
 
 # Database
 data/
