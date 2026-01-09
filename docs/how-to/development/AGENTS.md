@@ -6,8 +6,8 @@ Documentation for contributors: setup, TDD workflow, contributing guidelines, co
 
 ## Parent Reference
 
-- **[../AGENTS.md](../AGENTS.md)** - Documentation directory instructions
-- **[../../AGENTS.md](../../AGENTS.md)** - Root directory instructions
+- **[../AGENTS.md](../AGENTS.md)** - How-to guides instructions
+- **[../../AGENTS.md](../../AGENTS.md)** - Documentation directory instructions
 
 ## Files
 
@@ -19,10 +19,20 @@ Documentation for contributors: setup, TDD workflow, contributing guidelines, co
   - PR process
 - `code-style.md` - Coding standards and conventions
 - `testing.md` - Testing guide
-  - Unit tests
-  - Integration tests
-  - E2E tests
+  - Unit tests (Vitest)
+  - Integration tests (MSW)
+  - E2E tests (Playwright)
   - Coverage requirements
+- `create-mcp-package.md` - How to create a new MCP package
+
+## Tech Stack for Development
+
+- **Backend**: NestJS 11.x with TypeScript
+- **Database**: Prisma ORM with SQLite
+- **Frontend**: React 19 with Vite
+- **Testing**: Vitest (unit), Playwright (E2E)
+- **Linting**: Biome
+- **Build**: Turborepo
 
 ## Documentation Requirements
 
@@ -36,7 +46,7 @@ Developers contributing to the project.
 
 ## Related Files
 
-- [../../CONTRIBUTING.md](../../CONTRIBUTING.md) - Contributing guide
-- [../../vitest.config.ts](../../vitest.config.ts) - Test configuration
-- [../../playwright.config.ts](../../playwright.config.ts) - E2E test configuration
+- [../../../CONTRIBUTING.md](../../../CONTRIBUTING.md) - Contributing guide
+- [../../../vitest.config.ts](../../../vitest.config.ts) - Test configuration
+- [../../../playwright.config.ts](../../../playwright.config.ts) - E2E test configuration
 

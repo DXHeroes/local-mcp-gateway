@@ -2,7 +2,9 @@
 
 ## Purpose
 
-This directory contains the main applications: backend (Express.js) and frontend (React).
+Main applications: **NestJS backend** and **React frontend**.
+
+**NOTE:** No user authentication - all features are immediately accessible.
 
 ## Parent Reference
 
@@ -12,26 +14,41 @@ This directory contains the main applications: backend (Express.js) and frontend
 
 ```
 apps/
-├── backend/                 # Express.js backend
-└── frontend/                # React frontend
+├── backend/                 # NestJS backend (API + MCP proxy)
+└── frontend/                # React 19 frontend (Web UI)
 ```
 
 ## Child Directories
 
-- **[backend/AGENTS.md](backend/AGENTS.md)** - Backend application
-- **[frontend/AGENTS.md](frontend/AGENTS.md)** - Frontend application
+- **[backend/AGENTS.md](backend/AGENTS.md)** - NestJS backend application
+- **[frontend/AGENTS.md](frontend/AGENTS.md)** - React frontend application
 
-## Development Rules
+## Technology Stack
 
-- Each app has its own `package.json` and `tsconfig.json`
-- Apps depend on packages using workspace protocol
-- Hot-reload enabled in dev mode
-- Tests required before implementation (TDD)
-- Coverage: ≥90%
+### Backend
+- **Framework**: NestJS 11.x
+- **Database**: Prisma ORM with SQLite
+- **MCP Discovery**: Auto-discovers packages from `mcp-servers/`
+
+### Frontend
+- **Framework**: React 19 with Vite
+- **State**: TanStack Query + Zustand
+- **Styling**: Tailwind CSS v4
 
 ## Running Applications
 
-- `pnpm dev` from root runs both apps
-- `pnpm dev:backend` - Backend only
-- `pnpm dev:frontend` - Frontend only
+```bash
+# Both apps (development)
+pnpm dev
 
+# Backend only
+pnpm dev:backend
+
+# Frontend only
+pnpm dev:frontend
+```
+
+## Ports
+
+- **Backend**: http://localhost:3001
+- **Frontend**: http://localhost:5173

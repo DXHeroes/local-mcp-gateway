@@ -2,7 +2,7 @@
   "name": "@dxheroes/local-mcp-database",
   "version": "0.1.2",
   "type": "module",
-  "description": "Database layer for MCP server management using SQLite and Drizzle ORM",
+  "description": "Database layer for MCP server management using SQLite and Prisma ORM",
   "repository": {
     "type": "git",
     "url": "https://github.com/DXHeroes/local-mcp-gateway.git",
@@ -13,9 +13,24 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./generated/prisma": {
+      "import": "./src/generated/prisma/index.js",
+      "types": "./src/generated/prisma/index.d.ts"
+    },
+    "./generated/zod": {
+      "import": "./src/generated/zod/index.js",
+      "types": "./src/generated/zod/index.d.ts"
+    }
+  },
   "scripts": {
-    "build": "tsc --build",
+    "build": "pnpm prisma:generate && tsc --build",
     "dev": "tsc --build --watch",
+    "clean": "rm -rf dist src/generated",
     "test": "vitest run --passWithNoTests",
     "test:unit": "vitest run --dir __tests__/unit --passWithNoTests",
     "test:integration": "vitest run --dir __tests__/integration --passWithNoTests",
@@ -23,22 +38,27 @@
     "test:watch": "vitest",
     "lint": "biome check .",
     "typecheck": "tsc --noEmit",
-    "migrate": "tsx src/migrations/migration-runner.ts",
-    "seed": "tsx src/seeds/seed-runner.ts"
+    "prisma:generate": "prisma generate",
+    "prisma:migrate:dev": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:migrate:reset": "prisma migrate reset --force",
+    "prisma:studio": "prisma studio",
+    "prisma:push": "prisma db push",
+    "prisma:seed": "tsx src/seeds/seed.ts",
+    "db:reset": "pnpm prisma:migrate:reset && pnpm prisma:seed"
   },
   "dependencies": {
-    "better-sqlite3": "^12.4.1",
-    "drizzle-kit": "^0.31.6",
-    "drizzle-orm": "^0.44.7",
+    "@prisma/client": "^6.8.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
     "@dxheroes/local-mcp-config": "workspace:*",
-    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.10.1",
+    "prisma": "^6.8.0",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.8"
+    "vitest": "^4.0.8",
+    "zod-prisma-types": "^3.2.0"
   },
   "peerDependencies": {
     "@dxheroes/local-mcp-core": "workspace:*"

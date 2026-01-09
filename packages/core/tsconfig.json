@@ -19,7 +19,6 @@
     "**/*.test.ts",
     "**/*.spec.ts",
     "**/*.d.ts",
-    "**/*.d.ts.map",
-    "../custom-mcp-loader"
+    "**/*.d.ts.map"
   ]
 }

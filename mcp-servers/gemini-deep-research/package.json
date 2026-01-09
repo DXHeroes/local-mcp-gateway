@@ -1,0 +1,37 @@
+{
+  "name": "@dxheroes/mcp-gemini-deep-research",
+  "version": "1.0.0",
+  "description": "Gemini Deep Research MCP Server for Local MCP Gateway",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "mcpPackage": true,
+  "scripts": {
+    "build": "tsc --build",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["mcp", "local-mcp-gateway", "gemini", "research", "ai"],
+  "author": "DX Heroes",
+  "license": "MIT",
+  "peerDependencies": {
+    "@dxheroes/local-mcp-core": "workspace:*"
+  },
+  "dependencies": {
+    "@google/genai": "^1.0.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.8"
+  }
+}

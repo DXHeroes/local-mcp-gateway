@@ -20,7 +20,7 @@ All components are based on shadcn-ui and follow the same patterns:
 ## Usage
 
 ```typescript
-import { Button, Card, Dialog } from '@local-mcp/ui';
+import { Button, Card, Dialog } from '@dxheroes/local-mcp-ui';
 
 function MyComponent() {
   return (
@@ -53,7 +53,7 @@ ui/
 
 ## Configuration
 
-- **Vite**: Uses shared Vite config from `@local-mcp/config/vite` via `mergeConfig`
+- **Vite**: Uses shared Vite config from `@dxheroes/local-mcp-config/vite` via `mergeConfig`
 - **Tailwind CSS v4**: Configured in `src/styles/globals.css` with `@import "tailwindcss"`, `@source` directives, and `@theme inline`
 - **TypeScript**: Extends root TypeScript config
 
@@ -65,6 +65,6 @@ ui/
 - Follow shadcn-ui patterns and conventions
 - TypeScript strict mode
 - JSDoc comments for all public APIs
-- Vite config extends shared config from `@local-mcp/config`
+- Vite config extends shared config from `@dxheroes/local-mcp-config`
 - Tailwind CSS configuration is centralized in `src/styles/globals.css`
 

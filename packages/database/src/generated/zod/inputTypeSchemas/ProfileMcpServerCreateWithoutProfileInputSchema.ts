@@ -1,0 +1,17 @@
+import type { Prisma } from '../../prisma';
+
+import { z } from 'zod';
+import { McpServerCreateNestedOneWithoutProfilesInputSchema } from './McpServerCreateNestedOneWithoutProfilesInputSchema';
+import { ProfileMcpServerToolCreateNestedManyWithoutProfileMcpServerInputSchema } from './ProfileMcpServerToolCreateNestedManyWithoutProfileMcpServerInputSchema';
+
+export const ProfileMcpServerCreateWithoutProfileInputSchema: z.ZodType<Prisma.ProfileMcpServerCreateWithoutProfileInput> = z.strictObject({
+  id: z.uuid().optional(),
+  order: z.number().int().optional(),
+  isActive: z.boolean().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+  mcpServer: z.lazy(() => McpServerCreateNestedOneWithoutProfilesInputSchema),
+  tools: z.lazy(() => ProfileMcpServerToolCreateNestedManyWithoutProfileMcpServerInputSchema).optional(),
+});
+
+export default ProfileMcpServerCreateWithoutProfileInputSchema;

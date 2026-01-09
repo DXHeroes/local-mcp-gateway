@@ -1,13 +1,10 @@
 /**
- * Database connection and utilities using Drizzle ORM
+ * Database connection and utilities using Prisma ORM
  */
 
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
-import Database from 'better-sqlite3';
-import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import * as schema from './schema.js';
+import { PrismaClient } from './generated/prisma/index.js';
 
 /**
  * Ensure the directory for the database file exists
@@ -15,48 +12,56 @@ import * as schema from './schema.js';
  */
 function ensureDirectoryExists(filePath: string): void {
   const dir = dirname(filePath);
-  mkdirSync(dir, { recursive: true });
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true });
+  }
 }
 
 /**
- * Create database connection using Drizzle ORM
- * @param path - Database file path
- * @returns Drizzle database instance
+ * Create a new Prisma Client instance
+ * @returns PrismaClient instance
  */
-export function createDatabase(path: string): BetterSQLite3Database<typeof schema> {
-  ensureDirectoryExists(path);
-  const sqlite = new Database(path);
+export function createPrismaClient(): PrismaClient {
+  const databaseUrl = process.env.DATABASE_URL;
 
-  // Enable foreign keys
-  sqlite.pragma('foreign_keys = ON');
+  // Extract file path from DATABASE_URL if it's a file URL
+  if (databaseUrl?.startsWith('file:')) {
+    const filePath = databaseUrl.replace('file:', '');
+    if (!filePath.startsWith(':memory:') && !filePath.startsWith('./')) {
+      ensureDirectoryExists(filePath);
+    }
+  }
 
-  // Set WAL mode for better concurrency
-  sqlite.pragma('journal_mode = WAL');
-
-  // Create Drizzle instance
-  const db = drizzle(sqlite, { schema });
-
-  return db;
+  return new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
+  });
 }
 
 /**
- * Get raw SQLite database instance (for migrations)
- * @param path - Database file path
- * @returns Raw SQLite database instance
+ * Global Prisma Client instance (singleton)
  */
-export function createRawDatabase(path: string): Database.Database {
-  ensureDirectoryExists(path);
-  const db = new Database(path);
+let prismaInstance: PrismaClient | null = null;
 
-  // Enable foreign keys
-  db.pragma('foreign_keys = ON');
-
-  // Set WAL mode for better concurrency
-  db.pragma('journal_mode = WAL');
-
-  return db;
+/**
+ * Get the global Prisma Client instance (singleton pattern)
+ * @returns PrismaClient instance
+ */
+export function getPrismaClient(): PrismaClient {
+  if (!prismaInstance) {
+    prismaInstance = createPrismaClient();
+  }
+  return prismaInstance;
 }
 
-// Export schema for use in repositories
-export { schema };
-export type { Database as DatabaseType } from 'better-sqlite3';
+/**
+ * Disconnect the global Prisma Client
+ */
+export async function disconnectPrisma(): Promise<void> {
+  if (prismaInstance) {
+    await prismaInstance.$disconnect();
+    prismaInstance = null;
+  }
+}
+
+// Re-export PrismaClient class for direct use
+export { PrismaClient };

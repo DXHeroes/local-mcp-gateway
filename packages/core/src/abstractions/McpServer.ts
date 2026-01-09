@@ -44,6 +44,16 @@ export abstract class McpServer {
   abstract readResource(uri: string): Promise<unknown>;
 
   /**
+   * Validate the server configuration (e.g., API key)
+   * Optional method - override to implement actual validation
+   * @returns Validation result with valid status and optional error message
+   */
+  async validate(): Promise<{ valid: boolean; error?: string }> {
+    // Default implementation: assume valid if no validation needed
+    return { valid: true };
+  }
+
+  /**
    * Handle a raw JSON-RPC request
    * Override this for custom request handling
    * @param request - JSON-RPC request

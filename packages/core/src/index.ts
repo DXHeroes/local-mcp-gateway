@@ -11,6 +11,8 @@ export {
   OAuthManager,
   ProfileManager,
   ProxyHandler,
+  RemoteHttpMcpServer,
+  RemoteSseMcpServer,
 } from './abstractions/index.js';
 export type {
   OAuthClientRegistrationRepository,
@@ -21,8 +23,4 @@ export type {
   ProfileRepository,
   ProfileUpdateInput,
 } from './abstractions/ProfileManager.js';
-export type { LicensePayload, LicenseValidationResult } from './services/LicenseKeyService.js';
-
-// Services
-export { LicenseKeyService } from './services/LicenseKeyService.js';
 export * from './types/index.js';

@@ -9,6 +9,7 @@ import { HttpResponse, http } from 'msw';
 // React import needed for JSX (even with new JSX transform)
 // biome-ignore lint/correctness/noUnusedImports: JSX requires React in scope
 import React from 'react';
+import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it } from 'vitest';
 import ProfilesPage from '../../pages/Profiles';
 import { server } from '../../test/server';
@@ -30,7 +31,11 @@ describe('ProfilesPage', () => {
       })
     );
 
-    render(<ProfilesPage />);
+    render(
+      <MemoryRouter>
+        <ProfilesPage />
+      </MemoryRouter>
+    );
     expect(screen.getByText('Loading profiles...')).toBeInTheDocument();
   });
 
@@ -66,7 +71,11 @@ describe('ProfilesPage', () => {
       })
     );
 
-    render(<ProfilesPage />);
+    render(
+      <MemoryRouter>
+        <ProfilesPage />
+      </MemoryRouter>
+    );
 
     await waitFor(
       () => {
@@ -94,7 +103,11 @@ describe('ProfilesPage', () => {
       })
     );
 
-    render(<ProfilesPage />);
+    render(
+      <MemoryRouter>
+        <ProfilesPage />
+      </MemoryRouter>
+    );
 
     // Wait for loading to finish
     await waitFor(
@@ -125,7 +138,11 @@ describe('ProfilesPage', () => {
       })
     );
 
-    render(<ProfilesPage />);
+    render(
+      <MemoryRouter>
+        <ProfilesPage />
+      </MemoryRouter>
+    );
 
     // Wait for loading to finish
     await waitFor(
@@ -151,7 +168,11 @@ describe('ProfilesPage', () => {
       })
     );
 
-    render(<ProfilesPage />);
+    render(
+      <MemoryRouter>
+        <ProfilesPage />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       // There are multiple "Create Profile" buttons (header + empty state)
@@ -192,7 +213,11 @@ describe('ProfilesPage', () => {
       })
     );
 
-    render(<ProfilesPage />);
+    render(
+      <MemoryRouter>
+        <ProfilesPage />
+      </MemoryRouter>
+    );
 
     // Wait for loading to finish
     await waitFor(

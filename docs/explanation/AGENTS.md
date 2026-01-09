@@ -10,9 +10,16 @@ Understanding-oriented deep dives. Focus on clarifying concepts and architectura
 
 ## Files
 
-- `overview.md` - Architecture Overview
-- `security-model.md` - Explanation of security features
-- `toon-format.md` - Deep dive into TOON
+- `overview.md` - Architecture Overview (NestJS backend, React frontend)
+- `mcp-discovery.md` - How MCP package auto-discovery works
+- `security-model.md` - Explanation of security features (OAuth for MCP servers, API keys)
+
+## Architecture Overview
+
+- **Backend**: NestJS 11.x with modular architecture
+- **Database**: Prisma ORM with SQLite
+- **Frontend**: React 19 with Vite
+- **MCP Packages**: Auto-discovered from `mcp-servers/`
 
 ## Target Audience
 

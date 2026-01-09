@@ -11,8 +11,8 @@ Practical examples and use cases with complete working code.
 
 ## Files
 
-- `simple-mcp.md` - Simple custom MCP example
-- `oauth-mcp.md` - Custom MCP with OAuth integration
+- `simple-mcp.md` - Simple MCP package example
+- `oauth-mcp.md` - MCP package with OAuth integration
 - `api-integration.md` - External API integration example
 
 ## Documentation Requirements
@@ -24,10 +24,10 @@ Practical examples and use cases with complete working code.
 
 ## Target Audience
 
-Users and developers learning how to create custom MCPs or integrate APIs.
+Users and developers learning how to create MCP packages or integrate APIs.
 
 ## Related Code
 
-- [../../custom-mcps/example-mcp/](../../custom-mcps/example-mcp/) - Example implementation
-- [../../packages/core/](../../packages/core/) - Core abstractions to extend
+- [../../../mcp-servers/gemini-deep-research/](../../../mcp-servers/gemini-deep-research/) - Example MCP package implementation
+- [../../../packages/core/](../../../packages/core/) - Core abstractions (McpServer, McpPackage)
 

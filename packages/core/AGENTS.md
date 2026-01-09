@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This package contains core abstractions, types, and base classes for the MCP proxy server. It provides the foundation for all MCP server implementations (external, custom, remote).
+Core abstractions, types, and base classes for the MCP proxy server. Provides the foundation for all MCP server implementations and the `McpPackage` interface for creating new MCP server packages.
 
 ## Parent Reference
 
@@ -15,83 +15,104 @@ This package contains core abstractions, types, and base classes for the MCP pro
 core/
 ├── src/
 │   ├── types/
-│   │   ├── mcp.ts              # MCP types and interfaces
-│   │   ├── profile.ts           # Profile types
-│   │   └── database.ts         # Database types
+│   │   ├── mcp.ts              # MCP protocol types
+│   │   ├── mcp-package.ts      # McpPackage interface for server packages
+│   │   ├── profile.ts          # Profile types
+│   │   └── index.ts            # Type exports
 │   ├── abstractions/
-│   │   ├── McpServer.ts         # Abstract base class for MCP servers
-│   │   ├── ProxyHandler.ts      # Proxy logic and aggregation
-│   │   ├── ProfileManager.ts    # Profile management
-│   │   ├── OAuthManager.ts      # OAuth 2.1 flow management
-│   │   └── ApiKeyManager.ts    # API key management
-│   └── index.ts                 # Package exports
+│   │   ├── McpServer.ts        # Abstract base class for MCP servers
+│   │   └── index.ts            # Abstraction exports
+│   └── index.ts                # Package exports
 ├── __tests__/
-│   ├── unit/                    # Unit tests
-│   └── integration/             # Integration tests
 ├── package.json
 └── tsconfig.json
 ```
 
-## Key Files
+## Key Exports
 
-### Types
-- `src/types/mcp.ts` - MCP protocol types, tool definitions, resource definitions
-- `src/types/profile.ts` - Profile types, MCP server configuration types
-- `src/types/database.ts` - Database entity types
+### Types (`src/types/`)
 
-### Abstractions
-- `src/abstractions/McpServer.ts` - Abstract base class that all MCP servers must extend
-- `src/abstractions/ProxyHandler.ts` - Handles routing and aggregation of MCP requests
-- `src/abstractions/ProfileManager.ts` - Profile CRUD operations and validation
-- `src/abstractions/OAuthManager.ts` - OAuth 2.1 implementation according to MCP standard (PKCE, DCR, Resource Indicators)
-- `src/abstractions/ApiKeyManager.ts` - Secure API key storage and header injection
-- `src/abstractions/RemoteHttpMcpServer.ts` - Remote HTTP MCP server implementation
-- `src/abstractions/RemoteSseMcpServer.ts` - Remote SSE MCP server implementation
-- `src/abstractions/McpServerFactory.ts` - Factory for creating MCP server instances
+- **`mcp.ts`** - MCP protocol types
+  - `McpTool` - Tool definition
+  - `McpResource` - Resource definition
+  - `ApiKeyConfig` - API key configuration
+  - JSON-RPC types
 
-## Dependencies
+- **`mcp-package.ts`** - MCP package types (for `mcp-servers/` packages)
+  - `McpPackage` - Main interface for MCP server packages
+  - `McpPackageMetadata` - Package metadata
+  - `McpSeedConfig` - Auto-seeding configuration
+  - `McpServerFactory` - Server factory function type
+  - `DiscoveredMcpPackage` - Discovery result
 
-- `@local-mcp/database` - For database types and repositories
-- `zod` - Runtime validation
-- `@modelcontextprotocol/sdk` - MCP SDK types (optional, for type definitions)
+- **`profile.ts`** - Profile and configuration types
 
-## Implementation Status
+### Abstractions (`src/abstractions/`)
 
-According to the implementation plans:
-- ✅ Core abstractions (McpServer, ProxyHandler, ProfileManager, OAuthManager, ApiKeyManager)
-- ✅ Remote HTTP/SSE MCP server implementations
-- ✅ MCP Server Factory for creating instances
-- ⏳ OAuth token exchange HTTP client (in progress)
-- ⏳ Custom MCP loader integration (in progress)
+- **`McpServer.ts`** - Abstract base class that all MCP servers must extend
+  - `initialize()` - Initialize server (async)
+  - `listTools()` - Return available tools
+  - `callTool()` - Execute a tool
+  - `listResources()` - Return available resources
+  - `readResource()` - Read a resource
 
-## Development Rules
+## Usage Examples
 
-- All classes must be abstract or have clear interfaces
-- Strong typing with TypeScript generics
-- All public methods must have JSDoc comments
-- Follow SOLID principles
-- TDD: Write tests before implementation
-
-## Testing Requirements
-
-- Unit tests for all abstractions
-- Mock dependencies (database, external services)
-- Test error handling and edge cases
-- Coverage: ≥90%
-
-## Usage Example
+### Creating an MCP Server
 
 ```typescript
-import { McpServer } from '@local-mcp/core';
+import { McpServer } from '@dxheroes/local-mcp-core';
+import type { ApiKeyConfig, McpTool } from '@dxheroes/local-mcp-core';
 
-class MyMcpServer extends McpServer {
-  async initialize() {
-    // Implementation
+export class MyMcpServer extends McpServer {
+  constructor(private apiKeyConfig: ApiKeyConfig | null) {
+    super();
   }
-  
-  async listTools() {
-    // Return tools
+
+  async initialize(): Promise<void> {
+    // Initialize your server
+  }
+
+  async listTools(): Promise<McpTool[]> {
+    return [
+      { name: 'my_tool', description: 'My tool', inputSchema: {...} }
+    ];
+  }
+
+  async callTool(name: string, args: unknown): Promise<unknown> {
+    // Handle tool calls
   }
 }
 ```
 
+### Creating an MCP Package
+
+```typescript
+import type { McpPackage, ApiKeyConfig } from '@dxheroes/local-mcp-core';
+import { MyMcpServer } from './server.js';
+
+export const mcpPackage: McpPackage = {
+  metadata: {
+    id: 'my-package',
+    name: 'My Package',
+    description: 'Description',
+    version: '1.0.0',
+    requiresApiKey: true,
+  },
+  createServer: (apiKeyConfig: ApiKeyConfig | null) => {
+    return new MyMcpServer(apiKeyConfig);
+  },
+  seed: {
+    defaultProfile: 'default',
+  },
+};
+```
+
+## Dependencies
+
+- `zod` - Runtime validation
+- `@modelcontextprotocol/sdk` - MCP SDK
+
+## Related
+
+- **[../../mcp-servers/AGENTS.md](../../mcp-servers/AGENTS.md)** - MCP server packages

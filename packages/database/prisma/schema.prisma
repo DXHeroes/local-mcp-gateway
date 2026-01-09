@@ -1,0 +1,213 @@
+// Local MCP Gateway - Prisma Schema
+//
+// This schema defines the core database models for MCP server management.
+// No authentication or licensing - this is an open-source application
+// where users can immediately configure and use MCP servers.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+generator zod {
+  provider                         = "zod-prisma-types"
+  output                           = "../src/generated/zod"
+  useMultipleFiles                 = true
+  createInputTypes                 = true
+  createModelTypes                 = true
+  addInputTypeValidation           = true
+  addIncludeType                   = true
+  addSelectType                    = true
+  validateWhereUniqueInput         = true
+  createOptionalDefaultValuesTypes = true
+  createRelationValuesTypes        = true
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// Core MCP Management Models
+// ============================================
+
+/// User-defined profiles for grouping MCP servers
+model Profile {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  mcpServers ProfileMcpServer[]
+  debugLogs  DebugLog[]
+
+  @@map("profiles")
+}
+
+/// MCP server configurations
+model McpServer {
+  id           String   @id @default(uuid())
+  name         String
+  type         String   // 'builtin' | 'external' | 'custom' | 'remote_http' | 'remote_sse'
+  config       String   @default("{}") // JSON config
+  oauthConfig  String?  @map("oauth_config") // JSON OAuth config
+  apiKeyConfig String?  @map("api_key_config") // JSON API key config
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  profiles             ProfileMcpServer[]
+  oauthToken           OAuthToken?
+  oauthClientRegistrations OAuthClientRegistration[]
+  toolsCache           McpServerToolsCache[]
+  debugLogs            DebugLog[]
+
+  @@index([type])
+  @@map("mcp_servers")
+}
+
+/// Many-to-many relationship between profiles and MCP servers
+model ProfileMcpServer {
+  id          String   @id @default(uuid())
+  profileId   String   @map("profile_id")
+  mcpServerId String   @map("mcp_server_id")
+  order       Int      @default(0)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  profile   Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  mcpServer McpServer @relation(fields: [mcpServerId], references: [id], onDelete: Cascade)
+  tools     ProfileMcpServerTool[]
+
+  @@unique([profileId, mcpServerId])
+  @@index([profileId])
+  @@index([mcpServerId])
+  @@map("profile_mcp_servers")
+}
+
+/// Per-profile tool customizations for MCP servers
+model ProfileMcpServerTool {
+  id                 String   @id @default(uuid())
+  profileMcpServerId String   @map("profile_mcp_server_id")
+  toolName           String   @map("tool_name")
+  isEnabled          Boolean  @default(true) @map("is_enabled")
+  customName         String?  @map("custom_name")
+  customDescription  String?  @map("custom_description")
+  customInputSchema  String?  @map("custom_input_schema") // JSON
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  profileMcpServer ProfileMcpServer @relation(fields: [profileMcpServerId], references: [id], onDelete: Cascade)
+
+  @@unique([profileMcpServerId, toolName])
+  @@index([profileMcpServerId])
+  @@map("profile_mcp_server_tools")
+}
+
+/// Cache for MCP server tool metadata (for change detection)
+model McpServerToolsCache {
+  id          String   @id @default(uuid())
+  mcpServerId String   @map("mcp_server_id")
+  toolName    String   @map("tool_name")
+  description String?
+  inputSchema String?  @map("input_schema") // JSON
+  schemaHash  String   @map("schema_hash")
+  fetchedAt   DateTime @default(now()) @map("fetched_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  mcpServer McpServer @relation(fields: [mcpServerId], references: [id], onDelete: Cascade)
+
+  @@unique([mcpServerId, toolName])
+  @@index([mcpServerId])
+  @@map("mcp_server_tools_cache")
+}
+
+// ============================================
+// OAuth Models (for MCP servers, not user auth)
+// ============================================
+
+/// OAuth tokens for MCP servers
+model OAuthToken {
+  id           String    @id @default(uuid())
+  mcpServerId  String    @unique @map("mcp_server_id")
+  accessToken  String    @map("access_token")
+  refreshToken String?   @map("refresh_token")
+  tokenType    String    @default("Bearer") @map("token_type")
+  scope        String?
+  expiresAt    DateTime? @map("expires_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  mcpServer McpServer @relation(fields: [mcpServerId], references: [id], onDelete: Cascade)
+
+  @@map("oauth_tokens")
+}
+
+/// Dynamic client registrations for OAuth (RFC 7591)
+model OAuthClientRegistration {
+  id                      String    @id @default(uuid())
+  mcpServerId             String    @map("mcp_server_id")
+  authorizationServerUrl  String    @map("authorization_server_url")
+  clientId                String    @map("client_id")
+  clientSecret            String?   @map("client_secret")
+  registrationAccessToken String?   @map("registration_access_token")
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
+
+  mcpServer McpServer @relation(fields: [mcpServerId], references: [id], onDelete: Cascade)
+
+  @@unique([mcpServerId, authorizationServerUrl])
+  @@map("oauth_client_registrations")
+}
+
+// ============================================
+// Debug & Logging Models
+// ============================================
+
+/// Debug logs for MCP requests/responses
+model DebugLog {
+  id              String   @id @default(uuid())
+  profileId       String   @map("profile_id")
+  mcpServerId     String?  @map("mcp_server_id")
+  requestType     String   @map("request_type")
+  requestPayload  String   @map("request_payload")
+  responsePayload String?  @map("response_payload")
+  status          String   // 'pending' | 'success' | 'error'
+  errorMessage    String?  @map("error_message")
+  durationMs      Int?     @map("duration_ms")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  profile   Profile    @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  mcpServer McpServer? @relation(fields: [mcpServerId], references: [id], onDelete: SetNull)
+
+  @@index([profileId])
+  @@index([mcpServerId])
+  @@index([createdAt])
+  @@map("debug_logs")
+}
+
+// ============================================
+// Migration Tracking
+// ============================================
+
+/// Tracks applied database migrations
+model Migration {
+  id         String   @id @default(uuid())
+  name       String   @unique
+  executedAt DateTime @default(now()) @map("executed_at")
+
+  @@map("migrations")
+}
+
+// ============================================
+// NOTE: Open-Source Version
+// ============================================
+// This application is fully open-source and does NOT require:
+// - User accounts or organizations
+// - License keys or activations
+// - Subscriptions or payments
+//
+// Users can immediately configure and use MCP servers
+// without any authentication or licensing.

@@ -4,6 +4,8 @@
 
 Utility libraries for API client and common functions.
 
+**NOTE:** No authentication utilities needed - all API calls are public.
+
 ## Parent Reference
 
 - **[../AGENTS.md](../AGENTS.md)** - Frontend source instructions

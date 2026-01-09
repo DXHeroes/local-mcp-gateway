@@ -4,6 +4,8 @@
 
 React 19 frontend source code: pages, components, and utilities.
 
+**NOTE:** No user authentication required - all features are immediately accessible.
+
 ## Parent Reference
 
 - **[../AGENTS.md](../AGENTS.md)** - Frontend application instructions
@@ -17,7 +19,6 @@ src/
 ├── pages/
 │   ├── Profiles.tsx        # Profile management page
 │   ├── McpServers.tsx      # MCP server management page
-│   ├── CustomMcp.tsx        # Custom MCP creation page
 │   └── DebugLogs.tsx       # Debug logs viewer page
 ├── components/
 │   ├── ui/                  # shadcn-ui components
@@ -42,13 +43,9 @@ src/
   - Copy-to-clipboard functionality
 - `McpServers.tsx` - MCP server management page
   - Add external MCP servers (HTTP/SSE)
+  - Configure builtin MCP servers (from mcp-servers/)
   - OAuth flow setup
   - API key setup
-  - Linear MCP quick setup
-- `CustomMcp.tsx` - Custom MCP creation page
-  - Code editor with syntax highlighting
-  - Hot-reload preview
-  - Validation feedback
 - `DebugLogs.tsx` - Debug logs viewer page
   - Filter by profile, MCP server, request type
   - JSON viewer for request/response payloads

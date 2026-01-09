@@ -28,7 +28,7 @@
     "docker:down": "docker-compose down",
     "create-custom-mcp": "node scripts/create-custom-mcp.js",
     "create-package": "node scripts/create-package.js",
-    "db:seed": "pnpm --filter @dxheroes/local-mcp-database seed",
+    "db:seed": "pnpm --filter @dxheroes/local-mcp-database prisma:seed",
     "db:create": "pnpm --filter @dxheroes/local-mcp-database migrate",
     "db:reset": "rm -f ~/.local-mcp-gateway-data/local-mcp-gateway.db && pnpm db:seed"
   },
@@ -49,20 +49,12 @@
     "pnpm": ">=9.0.0"
   },
   "devDependencies": {
-    "@better-auth/cli": "^1.4.6",
     "@biomejs/biome": "^2.3.5",
     "@modelcontextprotocol/sdk": "^1.21.1",
     "@playwright/test": "^1.56.1",
-    "@types/bcrypt": "^6.0.0",
-    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.10.1",
-    "@types/nodemailer": "^7.0.4",
     "@vitest/coverage-v8": "^4.0.8",
     "concurrently": "^9.2.1",
-    "drizzle-kit": "^0.31.6",
-    "drizzle-orm": "^0.44.7",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.2.6",
     "tsx": "^4.20.6",
     "turbo": "^2.6.1",
     "typescript": "^5.9.3",
@@ -72,12 +64,5 @@
     "packages/*",
     "apps/*"
   ],
-  "dependencies": {
-    "@noble/ed25519": "^3.0.0",
-    "@noble/hashes": "^2.0.1",
-    "bcrypt": "^6.0.0",
-    "better-auth": "^1.4.6",
-    "jsonwebtoken": "^9.0.3",
-    "nodemailer": "^7.0.11"
-  }
+  "dependencies": {}
 }

@@ -4,6 +4,8 @@
 
 End-to-end tests using Playwright for complete user flows.
 
+**NOTE:** No authentication tests needed - all features are immediately accessible without login.
+
 ## Parent Reference
 
 - **[../AGENTS.md](../AGENTS.md)** - Frontend application instructions
@@ -19,18 +21,15 @@ End-to-end tests using Playwright for complete user flows.
   - MCP endpoint URL display and copy
 - `mcp-servers.spec.ts` - MCP server management E2E tests
   - Add remote MCP server (HTTP/SSE)
-  - OAuth flow (Linear setup)
+  - Configure builtin MCP servers
+  - OAuth flow (for MCP servers, not user auth)
   - API key setup
   - Delete MCP server
-- `oauth-flow.spec.ts` - OAuth flow E2E tests
+- `oauth-flow.spec.ts` - OAuth flow E2E tests (for MCP servers)
   - OAuth consent screen redirect
   - Callback handling
   - Token refresh
   - Token revocation
-- `custom-mcp.spec.ts` - Custom MCP E2E tests
-  - Create custom MCP
-  - Edit custom MCP
-  - Use custom MCP in profile
 
 ## Development Rules
 

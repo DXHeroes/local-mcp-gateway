@@ -28,7 +28,7 @@ config/
 
 ```typescript
 import { defineConfig } from 'vitest/config';
-import { sharedVitestConfig } from '@local-mcp/config/vitest';
+import { sharedVitestConfig } from '@dxheroes/local-mcp-config/vitest';
 
 export default defineConfig({
   ...sharedVitestConfig,
@@ -40,7 +40,7 @@ export default defineConfig({
 
 ```json
 {
-  "extends": "@local-mcp/config/typescript",
+  "extends": "@dxheroes/local-mcp-config/typescript",
   "compilerOptions": {
     // Package-specific overrides
   }
@@ -51,7 +51,7 @@ export default defineConfig({
 
 ```typescript
 import { defineConfig, mergeConfig } from 'vite';
-import { sharedViteConfig } from '@local-mcp/config/vite';
+import { sharedViteConfig } from '@dxheroes/local-mcp-config/vite';
 
 export default defineConfig(
   mergeConfig(sharedViteConfig, {

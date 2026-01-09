@@ -12,7 +12,7 @@ export type McpTransport = 'http' | 'sse' | 'stdio';
 /**
  * MCP server type
  */
-export type McpServerType = 'external' | 'custom' | 'remote_http' | 'remote_sse';
+export type McpServerType = 'external' | 'custom' | 'remote_http' | 'remote_sse' | 'builtin';
 
 /**
  * JSON-RPC 2.0 request
@@ -91,13 +91,21 @@ export interface RemoteSseMcpConfig {
 }
 
 /**
+ * MCP server configuration for builtin MCP
+ */
+export interface BuiltinMcpConfig {
+  builtinId: string; // e.g., 'gemini-deep-research'
+}
+
+/**
  * Union type for all MCP server configurations
  */
 export type McpServerConfig =
   | ExternalMcpConfig
   | CustomMcpConfig
   | RemoteHttpMcpConfig
-  | RemoteSseMcpConfig;
+  | RemoteSseMcpConfig
+  | BuiltinMcpConfig;
 
 /**
  * OAuth 2.1 configuration

@@ -12,12 +12,32 @@ import {
 } from '@dxheroes/local-mcp-ui';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import McpServerForm from '../components/McpServerForm';
+import McpServerForm, { type McpServerFormData } from '../components/McpServerForm';
+
+interface McpServerMetadata {
+  id: string;
+  name: string;
+  description: string;
+  version: string;
+  requiresApiKey: boolean;
+  apiKeyHint?: string;
+  apiKeyDefaults?: {
+    headerName: string;
+    headerValueTemplate: string;
+  };
+  requiresOAuth?: boolean;
+  oauthDefaults?: {
+    scopes: string[];
+    authorizationServerUrl?: string;
+  };
+  icon?: string;
+  docsUrl?: string;
+}
 
 interface McpServer {
   id: string;
   name: string;
-  type: 'external' | 'custom' | 'remote_http' | 'remote_sse';
+  type: 'external' | 'custom' | 'remote_http' | 'remote_sse' | 'builtin';
   config: Record<string, unknown>;
   oauthConfig?: {
     authorizationServerUrl: string;
@@ -34,6 +54,7 @@ interface McpServer {
     headerName: string;
     headerValue: string;
   };
+  metadata?: McpServerMetadata;
   createdAt: number;
   updatedAt: number;
 }
@@ -42,42 +63,41 @@ interface McpServerWithStatus extends McpServer {
   toolsCount?: number;
   connectionStatus?: 'connected' | 'error' | 'unknown';
   connectionError?: string;
+  validationDetails?: string;
+  validatedAt?: string;
 }
 
-type McpServerFormData = {
-  name: string;
-  type: 'remote_http' | 'remote_sse';
-  config: { url: string; transport: 'http' | 'sse' };
-  oauthConfig?: {
-    authorizationServerUrl: string;
-    tokenEndpoint?: string;
-    resource?: string;
-    scopes: string[];
-    requiresOAuth: boolean;
-    callbackUrl?: string;
-    clientId?: string;
-    clientSecret?: string;
-  };
-  apiKeyConfig?: {
-    apiKey: string;
-    headerName: string;
-    headerValue: string;
-  };
-};
-
 import { API_URL } from '../config/api';
+
+// Helper to parse apiKeyConfig which may be a JSON string from the database
+const parseApiKeyConfig = (config: unknown): { apiKey: string; headerName: string; headerValue: string } | null => {
+  if (!config) return null;
+  if (typeof config === 'string') {
+    try {
+      return JSON.parse(config);
+    } catch {
+      return null;
+    }
+  }
+  return config as { apiKey: string; headerName: string; headerValue: string };
+};
 
 export default function McpServersPage() {
   const navigate = useNavigate();
   const [servers, setServers] = useState<McpServerWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingServer, setEditingServer] = useState<McpServer | null>(null);
 
-  const fetchServers = useCallback(async () => {
+  const fetchServers = useCallback(async (isRefresh = false) => {
     try {
-      setLoading(true);
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       const response = await fetch(`${API_URL}/api/mcp-servers`);
       if (!response.ok) {
         throw new Error('Failed to fetch MCP servers');
@@ -91,6 +111,9 @@ export default function McpServersPage() {
           let connectionStatus: 'connected' | 'error' | 'unknown' = 'unknown';
           let connectionError: string | undefined;
 
+          let validationDetails: string | undefined;
+          let validatedAt: string | undefined;
+
           try {
             // Fetch tools
             const toolsResponse = await fetch(`${API_URL}/api/mcp-servers/${server.id}/tools`);
@@ -99,12 +122,14 @@ export default function McpServersPage() {
               toolsCount = Array.isArray(toolsData.tools) ? toolsData.tools.length : 0;
             }
 
-            // Fetch status
+            // Fetch status (now includes real API validation)
             const statusResponse = await fetch(`${API_URL}/api/mcp-servers/${server.id}/status`);
             if (statusResponse.ok) {
               const statusData = await statusResponse.json();
               connectionStatus = statusData.status || 'unknown';
               connectionError = statusData.error || undefined;
+              validationDetails = statusData.details || undefined;
+              validatedAt = statusData.validatedAt || undefined;
             }
           } catch {
             // Ignore errors when fetching status/tools - server might be unavailable
@@ -116,6 +141,8 @@ export default function McpServersPage() {
             toolsCount,
             connectionStatus,
             connectionError,
+            validationDetails,
+            validatedAt,
           };
         })
       );
@@ -126,6 +153,7 @@ export default function McpServersPage() {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
@@ -145,8 +173,8 @@ export default function McpServersPage() {
       throw new Error(errorData.error || 'Failed to create MCP server');
     }
 
-    await fetchServers();
     setIsFormOpen(false);
+    await fetchServers(true);
   };
 
   const handleUpdate = async (data: McpServerFormData) => {
@@ -163,9 +191,9 @@ export default function McpServersPage() {
       throw new Error(errorData.error || 'Failed to update MCP server');
     }
 
-    await fetchServers();
     setIsFormOpen(false);
     setEditingServer(null);
+    await fetchServers(true);
   };
 
   const handleDelete = async (serverId: string) => {
@@ -227,7 +255,15 @@ export default function McpServersPage() {
   return (
     <div className="p-6">
       <div className="mb-6 flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">MCP Servers</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-gray-900">MCP Servers</h2>
+          {refreshing && (
+            <span className="text-sm text-muted-foreground flex items-center gap-2">
+              <span className="inline-block w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
+              Refreshing...
+            </span>
+          )}
+        </div>
         <Button onClick={openCreateForm}>Add MCP Server</Button>
       </div>
 
@@ -271,7 +307,14 @@ export default function McpServersPage() {
                         }
                       />
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">Type: {server.type}</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Type: {server.type}
+                      {server.type === 'builtin' && (
+                        <span className="ml-2 text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded">
+                          Built-in
+                        </span>
+                      )}
+                    </p>
                     <div className="flex items-center gap-3 mt-2">
                       {/* Tools count badge */}
                       <span className="text-xs px-2 py-1 bg-muted rounded">
@@ -294,6 +337,20 @@ export default function McpServersPage() {
                             : 'Unknown'}
                       </span>
                     </div>
+                    {/* Validation details */}
+                    {server.validationDetails && (
+                      <p
+                        className={`text-xs mt-2 ${
+                          server.connectionStatus === 'connected'
+                            ? 'text-green-700'
+                            : server.connectionStatus === 'error'
+                              ? 'text-red-700'
+                              : 'text-gray-600'
+                        }`}
+                      >
+                        {server.validationDetails}
+                      </p>
+                    )}
                     {server.oauthConfig && (
                       <div className="mt-4">
                         <p className="text-sm font-medium">OAuth Configuration</p>
@@ -309,14 +366,28 @@ export default function McpServersPage() {
                         </Button>
                       </div>
                     )}
-                    {server.apiKeyConfig && (
-                      <div className="mt-4">
-                        <p className="text-sm font-medium">API Key Configured</p>
-                        <p className="text-xs text-muted-foreground">
-                          Header: {server.apiKeyConfig.headerName}
-                        </p>
-                      </div>
-                    )}
+                    {server.apiKeyConfig && (() => {
+                      const parsed = parseApiKeyConfig(server.apiKeyConfig);
+                      return parsed ? (
+                        <div className="mt-4">
+                          <p className="text-sm font-medium">API Key Configured</p>
+                          <p className="text-xs text-muted-foreground">
+                            Header: {parsed.headerName}
+                          </p>
+                        </div>
+                      ) : null;
+                    })()}
+                    {server.type === 'builtin' &&
+                      server.metadata?.requiresApiKey &&
+                      !server.apiKeyConfig && (
+                        <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                          <p className="text-sm font-medium text-amber-800">API Key Required</p>
+                          <p className="text-xs text-amber-700">
+                            {server.metadata.apiKeyHint ||
+                              'This built-in server requires an API key to function. Click Edit to configure.'}
+                          </p>
+                        </div>
+                      )}
                   </div>
                   <div className="flex gap-2">
                     <Button

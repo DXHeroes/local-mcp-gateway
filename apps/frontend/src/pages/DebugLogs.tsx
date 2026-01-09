@@ -35,6 +35,9 @@ export default function DebugLogsPage() {
   const [servers, setServers] = useState<McpServer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [total, setTotal] = useState(0);
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   // Filters
   const [selectedProfileId, setSelectedProfileId] = useState<string>('');
@@ -81,7 +84,8 @@ export default function DebugLogsPage() {
         throw new Error('Failed to fetch debug logs');
       }
       const data = await response.json();
-      setLogs(data);
+      setLogs(data.logs || []);
+      setTotal(data.total || 0);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -89,6 +93,34 @@ export default function DebugLogsPage() {
       setLoading(false);
     }
   }, [selectedProfileId, selectedMcpServerId, selectedRequestType, selectedStatus]);
+
+  const clearLogs = useCallback(async () => {
+    if (!confirm('Are you sure you want to clear all debug logs?')) {
+      return;
+    }
+    try {
+      setClearing(true);
+      const params = new URLSearchParams();
+      if (selectedProfileId) params.append('profileId', selectedProfileId);
+      if (selectedMcpServerId) params.append('mcpServerId', selectedMcpServerId);
+
+      await fetch(`${API_URL}/api/debug/logs?${params.toString()}`, {
+        method: 'DELETE',
+      });
+      await fetchLogs();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to clear logs');
+    } finally {
+      setClearing(false);
+    }
+  }, [selectedProfileId, selectedMcpServerId, fetchLogs]);
+
+  // Auto-refresh effect
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const interval = setInterval(fetchLogs, 3000);
+    return () => clearInterval(interval);
+  }, [autoRefresh, fetchLogs]);
 
   useEffect(() => {
     fetchProfiles();
@@ -106,6 +138,13 @@ export default function DebugLogsPage() {
   const formatDuration = (ms?: number) => {
     if (!ms) return 'N/A';
     return `${ms}ms`;
+  };
+
+  const getDurationColor = (ms?: number) => {
+    if (!ms) return 'text-gray-500';
+    if (ms < 100) return 'text-green-600';
+    if (ms < 500) return 'text-yellow-600';
+    return 'text-red-600';
   };
 
   const getStatusColor = (status: string) => {
@@ -140,9 +179,35 @@ export default function DebugLogsPage() {
 
       {error && <div className="mb-4 p-4 text-red-600 bg-red-50 rounded-md">Error: {error}</div>}
 
-      {/* Filters */}
+      {/* Controls */}
       <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <h3 className="text-sm font-medium text-gray-700 mb-3">Filters</h3>
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-4">
+            <h3 className="text-sm font-medium text-gray-700">Filters</h3>
+            <span className="text-sm text-gray-500">
+              {total} log{total !== 1 ? 's' : ''} total
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={autoRefresh}
+                onChange={(e) => setAutoRefresh(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              Auto-refresh
+            </label>
+            <button
+              type="button"
+              onClick={clearLogs}
+              disabled={clearing || logs.length === 0}
+              className="px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {clearing ? 'Clearing...' : 'Clear Logs'}
+            </button>
+          </div>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label
@@ -249,8 +314,8 @@ export default function DebugLogsPage() {
                         {log.status}
                       </span>
                       <span className="text-sm text-gray-600">{log.requestType}</span>
-                      {log.durationMs && (
-                        <span className="text-xs text-gray-500">
+                      {log.durationMs !== undefined && (
+                        <span className={`text-xs font-medium ${getDurationColor(log.durationMs)}`}>
                           {formatDuration(log.durationMs)}
                         </span>
                       )}

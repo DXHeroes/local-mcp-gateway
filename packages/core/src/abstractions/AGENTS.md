@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Abstract base classes and managers for MCP proxy functionality.
+Abstract base classes for MCP server implementations. All MCP servers in `mcp-servers/` must extend the `McpServer` base class.
 
 ## Parent Reference
 
@@ -14,28 +14,33 @@ Abstract base classes and managers for MCP proxy functionality.
 ## Files
 
 - `McpServer.ts` - Abstract base class
-  - All MCP servers (external, custom, remote) must extend this
-  - Methods: initialize(), listTools(), callTool(), listResources(), readResource()
+  - All MCP servers in `mcp-servers/` must extend this
+  - Methods: `initialize()`, `listTools()`, `callTool()`, `listResources()`, `readResource()`
   - Strong typing with generics
-- `ProxyHandler.ts` - Proxy logic
-  - Aggregates requests across MCP servers in a profile
-  - Merge strategies for tools/resources
-  - Error handling and retry logic
-- `ProfileManager.ts` - Profile management
-  - CRUD operations
-  - Validation
-  - URL generation for profiles
-- `OAuthManager.ts` - OAuth 2.1 management
-  - Dynamic Client Registration (RFC 7591)
-  - PKCE generation and validation
-  - Resource Indicators (RFC 8707)
-  - Protected Resource Metadata discovery (RFC 9728)
-  - Authorization Server Metadata discovery (RFC 8414)
-  - Token management and refresh
-- `ApiKeyManager.ts` - API key management
-  - Secure storage (encrypted)
-  - Header injection
-  - Template support for header values
+
+## Usage
+
+```typescript
+import { McpServer } from '@dxheroes/local-mcp-core';
+import type { ApiKeyConfig, McpTool, McpResource } from '@dxheroes/local-mcp-core';
+
+export class MyMcpServer extends McpServer {
+  constructor(private apiKeyConfig: ApiKeyConfig | null) {
+    super();
+  }
+
+  async initialize(): Promise<void> { /* ... */ }
+  async listTools(): Promise<McpTool[]> { /* ... */ }
+  async callTool(name: string, args: unknown): Promise<unknown> { /* ... */ }
+  async listResources(): Promise<McpResource[]> { return []; }
+  async readResource(uri: string): Promise<unknown> { throw new Error('Not implemented'); }
+}
+```
+
+## Related
+
+- **[../../../../mcp-servers/AGENTS.md](../../../../mcp-servers/AGENTS.md)** - How to create MCP packages
+- **[../types/mcp-package.ts](../types/mcp-package.ts)** - McpPackage interface
 
 ## Development Rules
 

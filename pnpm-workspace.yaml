@@ -1,11 +1,16 @@
 packages:
   - packages/*
   - apps/*
+  - mcp-servers/*
 
 onlyBuiltDependencies:
+  - '@nestjs/core'
   - '@prisma/client'
+  - '@prisma/engines'
+  - '@swc/core'
   - bcrypt
   - better-sqlite3
   - esbuild
   - msw
+  - prisma
   - sharp

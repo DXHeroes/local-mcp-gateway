@@ -55,10 +55,15 @@ lerna-debug.log*
 
 # TypeScript
 *.tsbuildinfo
-# Compiled declaration files in src directories (should be in dist/)
+# Compiled files in src directories (should be in dist/)
 **/src/**/*.d.ts
 **/src/**/*.d.ts.map
 **/src/**/*.js.map
+# Don't ignore .js in src - could break some packages that need them
+# Instead, explicitly ignore compiled TS output patterns
+
+# Prisma generated client (regenerated on prisma generate)
+packages/database/src/generated/prisma/
 
 # Misc
 .cache/

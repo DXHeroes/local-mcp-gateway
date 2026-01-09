@@ -40,7 +40,7 @@
         "noDangerouslySetInnerHtml": "error"
       },
       "style": {
-        "useImportType": "error"
+        "useImportType": "off"
       }
     }
   },

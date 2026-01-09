@@ -4,6 +4,8 @@
 
 Main page components for the application.
 
+**NOTE:** No user authentication required - all features are immediately accessible.
+
 ## Parent Reference
 
 - **[../AGENTS.md](../AGENTS.md)** - Frontend source instructions
@@ -21,15 +23,10 @@ Main page components for the application.
   - Delete profile functionality
 - `McpServers.tsx` - MCP server management page
   - Add remote MCP server form (HTTP/SSE)
+  - Configure builtin MCP servers (auto-discovered from mcp-servers/)
   - OAuth setup flow with consent screen handling
   - API key setup form
-  - Linear MCP quick setup (pre-filled)
   - List all MCP servers with status
-- `CustomMcp.tsx` - Custom MCP creation page
-  - Code editor (Monaco or similar) with TypeScript syntax highlighting
-  - Hot-reload preview
-  - Validation feedback
-  - Save/load custom MCP
 - `DebugLogs.tsx` - Debug logs viewer page
   - Filter by profile, MCP server, request type, status
   - JSON viewer for request/response payloads

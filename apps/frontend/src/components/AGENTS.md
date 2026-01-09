@@ -4,6 +4,8 @@
 
 Reusable React components for the application UI.
 
+**NOTE:** No authentication components needed - all features are immediately accessible.
+
 ## Parent Reference
 
 - **[../AGENTS.md](../AGENTS.md)** - Frontend source instructions

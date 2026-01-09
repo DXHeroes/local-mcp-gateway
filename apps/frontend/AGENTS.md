@@ -2,7 +2,9 @@
 
 ## Purpose
 
-React 19 frontend application for managing profiles, MCP servers, OAuth flows, API keys, and viewing debug logs. Built with Vite, TailwindCSS, and shadcn-ui.
+React 19 frontend application for managing profiles, MCP servers, OAuth flows for MCP servers, API keys, and viewing debug logs. Built with Vite, TailwindCSS, and shadcn-ui.
+
+**NOTE:** No user authentication required - all features are immediately accessible.
 
 ## Parent Reference
 
@@ -17,7 +19,6 @@ frontend/
 │   ├── pages/
 │   │   ├── Profiles.tsx        # Profile management page
 │   │   ├── McpServers.tsx      # MCP server management page
-│   │   ├── CustomMcp.tsx        # Custom MCP creation page
 │   │   └── DebugLogs.tsx       # Debug logs viewer page
 │   ├── components/
 │   │   ├── ui/                  # shadcn-ui components
@@ -34,12 +35,7 @@ frontend/
 │   ├── unit/                    # Component unit tests
 │   └── integration/             # Integration tests (MSW)
 ├── e2e/
-│   ├── profiles.spec.ts
-│   ├── mcp-servers.spec.ts
-│   ├── oauth-flow.spec.ts
-│   └── custom-mcp.spec.ts
-├── Dockerfile                   # Multi-stage Docker build
-├── nginx.conf                   # Nginx config for production
+│   └── *.spec.ts                # Playwright E2E tests
 ├── package.json
 ├── vite.config.ts
 └── tsconfig.json
@@ -49,24 +45,22 @@ frontend/
 
 - `src/pages/Profiles.tsx` - List, create, edit profiles with MCP endpoint URL display
 - `src/pages/McpServers.tsx` - Add/manage MCP servers (OAuth/API key setup)
-- `src/pages/CustomMcp.tsx` - Create and manage custom MCP servers
 - `src/pages/DebugLogs.tsx` - View debug logs with filtering
 
 ## Key Components
 
-- `src/components/OAuthFlowHandler.tsx` - Handles OAuth consent screen redirect
+- `src/components/OAuthFlowHandler.tsx` - Handles OAuth consent screen redirect for MCP servers
 - `src/components/ApiKeyInput.tsx` - Secure API key input with header configuration
 - `src/components/DebugLogViewer.tsx` - JSON viewer for debug logs
 
 ## Dependencies
 
 - `react` (v19) - UI framework
-- `vite` - Build tool and dev server (uses `@local-mcp/config/vite` for shared config)
-- `@local-mcp/ui` - Shared UI components (shadcn-ui based) with Tailwind CSS v4 configuration
+- `vite` - Build tool and dev server
+- `@dxheroes/local-mcp-ui` - Shared UI components (shadcn-ui based) with Tailwind CSS v4
 - `@tanstack/react-query` (v5) - Data fetching
 - `react-router` (v7) - Routing
 - `zustand` - State management
-- `@toon-format/toon` - TOON format generator for AI prompts
 
 ## Development Rules
 
@@ -75,21 +69,18 @@ frontend/
 - **Type safety**: Full TypeScript strict mode
 - **Accessibility**: All components must be accessible
 - **Responsive**: Mobile-first design
-- **Documentation**: Component props documented
 
-## Testing Requirements
+## Testing
 
-- Unit tests for all components (@testing-library/react)
-- Integration tests with MSW for API mocking
-- E2E tests for all user flows (Playwright)
-- Coverage: ≥90%
+- Unit tests: `@testing-library/react`
+- Integration tests: MSW for API mocking
+- E2E tests: Playwright
 
 ## Environment Variables
 
 - `VITE_API_URL` - Backend API URL (default: http://localhost:3001)
 
-## Related Documentation
+## Child Directories
 
-- [../../docs/guides/creating-profiles.md](../../docs/guides/creating-profiles.md) - User guide
-- [../../docs/guides/oauth-setup.md](../../docs/guides/oauth-setup.md) - OAuth setup
-
+- **[src/AGENTS.md](src/AGENTS.md)** - Source code documentation
+- **[e2e/AGENTS.md](e2e/AGENTS.md)** - E2E tests documentation
