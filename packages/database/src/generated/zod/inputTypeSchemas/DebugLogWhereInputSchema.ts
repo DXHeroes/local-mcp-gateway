@@ -5,7 +5,7 @@ import { StringFilterSchema } from './StringFilterSchema';
 import { StringNullableFilterSchema } from './StringNullableFilterSchema';
 import { IntNullableFilterSchema } from './IntNullableFilterSchema';
 import { DateTimeFilterSchema } from './DateTimeFilterSchema';
-import { ProfileScalarRelationFilterSchema } from './ProfileScalarRelationFilterSchema';
+import { ProfileNullableScalarRelationFilterSchema } from './ProfileNullableScalarRelationFilterSchema';
 import { ProfileWhereInputSchema } from './ProfileWhereInputSchema';
 import { McpServerNullableScalarRelationFilterSchema } from './McpServerNullableScalarRelationFilterSchema';
 import { McpServerWhereInputSchema } from './McpServerWhereInputSchema';
@@ -15,7 +15,7 @@ export const DebugLogWhereInputSchema: z.ZodType<Prisma.DebugLogWhereInput> = z.
   OR: z.lazy(() => DebugLogWhereInputSchema).array().optional(),
   NOT: z.union([ z.lazy(() => DebugLogWhereInputSchema), z.lazy(() => DebugLogWhereInputSchema).array() ]).optional(),
   id: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
-  profileId: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
+  profileId: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   mcpServerId: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   requestType: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
   requestPayload: z.union([ z.lazy(() => StringFilterSchema), z.string() ]).optional(),
@@ -24,7 +24,7 @@ export const DebugLogWhereInputSchema: z.ZodType<Prisma.DebugLogWhereInput> = z.
   errorMessage: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   durationMs: z.union([ z.lazy(() => IntNullableFilterSchema), z.number() ]).optional().nullable(),
   createdAt: z.union([ z.lazy(() => DateTimeFilterSchema), z.coerce.date() ]).optional(),
-  profile: z.union([ z.lazy(() => ProfileScalarRelationFilterSchema), z.lazy(() => ProfileWhereInputSchema) ]).optional(),
+  profile: z.union([ z.lazy(() => ProfileNullableScalarRelationFilterSchema), z.lazy(() => ProfileWhereInputSchema) ]).optional().nullable(),
   mcpServer: z.union([ z.lazy(() => McpServerNullableScalarRelationFilterSchema), z.lazy(() => McpServerWhereInputSchema) ]).optional().nullable(),
 });
 

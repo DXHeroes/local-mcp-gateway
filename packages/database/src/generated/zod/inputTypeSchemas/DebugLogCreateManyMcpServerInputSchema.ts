@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 export const DebugLogCreateManyMcpServerInputSchema: z.ZodType<Prisma.DebugLogCreateManyMcpServerInput> = z.strictObject({
   id: z.uuid().optional(),
-  profileId: z.string(),
+  profileId: z.string().optional().nullable(),
   requestType: z.string(),
   requestPayload: z.string(),
   responsePayload: z.string().optional().nullable(),

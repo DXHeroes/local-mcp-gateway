@@ -12,6 +12,7 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -128,5 +129,29 @@ export class ProfilesController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async removeServer(@Param('id') id: string, @Param('serverId') serverId: string) {
     await this.profilesService.removeServer(id, serverId);
+  }
+
+  /**
+   * Toggle server active status in a profile
+   */
+  @Put(':id/servers/:serverId/toggle')
+  async toggleServer(
+    @Param('id') id: string,
+    @Param('serverId') serverId: string,
+    @Body() dto: { isActive: boolean }
+  ) {
+    return this.profilesService.updateServer(id, serverId, { isActive: dto.isActive });
+  }
+
+  /**
+   * Get tools for a server in a profile
+   */
+  @Get(':id/servers/:serverId/tools')
+  async getServerTools(
+    @Param('id') id: string,
+    @Param('serverId') serverId: string,
+    @Query('refresh') refresh?: string
+  ) {
+    return this.profilesService.getServerTools(id, serverId, refresh === 'true');
   }
 }

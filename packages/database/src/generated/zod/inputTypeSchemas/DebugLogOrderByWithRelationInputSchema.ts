@@ -8,7 +8,7 @@ import { McpServerOrderByWithRelationInputSchema } from './McpServerOrderByWithR
 
 export const DebugLogOrderByWithRelationInputSchema: z.ZodType<Prisma.DebugLogOrderByWithRelationInput> = z.strictObject({
   id: z.lazy(() => SortOrderSchema).optional(),
-  profileId: z.lazy(() => SortOrderSchema).optional(),
+  profileId: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
   mcpServerId: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
   requestType: z.lazy(() => SortOrderSchema).optional(),
   requestPayload: z.lazy(() => SortOrderSchema).optional(),

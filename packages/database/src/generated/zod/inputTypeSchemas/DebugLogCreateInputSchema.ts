@@ -13,7 +13,7 @@ export const DebugLogCreateInputSchema: z.ZodType<Prisma.DebugLogCreateInput> = 
   errorMessage: z.string().optional().nullable(),
   durationMs: z.number().int().optional().nullable(),
   createdAt: z.coerce.date().optional(),
-  profile: z.lazy(() => ProfileCreateNestedOneWithoutDebugLogsInputSchema),
+  profile: z.lazy(() => ProfileCreateNestedOneWithoutDebugLogsInputSchema).optional(),
   mcpServer: z.lazy(() => McpServerCreateNestedOneWithoutDebugLogsInputSchema).optional(),
 });
 

@@ -10,8 +10,10 @@ import { McpService } from './mcp.service.js';
 import { McpDiscoveryService } from './mcp-discovery.service.js';
 import { McpSeedService } from './mcp-seed.service.js';
 import { McpRegistry } from './mcp-registry.js';
+import { DebugModule } from '../debug/debug.module.js';
 
 @Module({
+  imports: [DebugModule],
   controllers: [McpController],
   providers: [McpService, McpDiscoveryService, McpSeedService, McpRegistry],
   exports: [McpService, McpRegistry],

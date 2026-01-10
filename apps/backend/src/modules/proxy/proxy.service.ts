@@ -8,6 +8,10 @@ import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { McpRegistry } from '../mcp/mcp-registry.js';
 import { DebugService } from '../debug/debug.service.js';
+import {
+  RemoteHttpMcpServer,
+  RemoteSseMcpServer,
+} from '@dxheroes/local-mcp-core';
 import type { McpServer, ApiKeyConfig as CoreApiKeyConfig } from '@dxheroes/local-mcp-core';
 
 interface McpToolCall {
@@ -35,6 +39,7 @@ export interface McpResponse {
 
 interface ServerConfig {
   builtinId?: string;
+  url?: string;
 }
 
 interface StoredApiKeyConfig {
@@ -212,7 +217,7 @@ export class ProxyService {
     requestId: string | number,
     profile: {
       mcpServers: Array<{
-        mcpServer: { id: string; name: string; config: unknown; apiKeyConfig: unknown };
+        mcpServer: { id: string; name: string; type: string; config: unknown; apiKeyConfig: unknown };
         tools: Array<{
           toolName: string;
           isEnabled: boolean;
@@ -263,7 +268,7 @@ export class ProxyService {
     requestId: string | number,
     profile: {
       mcpServers: Array<{
-        mcpServer: { id: string; name: string; config: unknown; apiKeyConfig: unknown };
+        mcpServer: { id: string; name: string; type: string; config: unknown; apiKeyConfig: unknown };
         tools: Array<{
           toolName: string;
           isEnabled: boolean;
@@ -327,7 +332,7 @@ export class ProxyService {
     requestId: string | number,
     profile: {
       mcpServers: Array<{
-        mcpServer: { id: string; name: string; config: unknown; apiKeyConfig: unknown };
+        mcpServer: { id: string; name: string; type: string; config: unknown; apiKeyConfig: unknown };
       }>;
     }
   ): Promise<McpResponse> {
@@ -361,7 +366,7 @@ export class ProxyService {
     requestId: string | number,
     profile: {
       mcpServers: Array<{
-        mcpServer: { id: string; name: string; config: unknown; apiKeyConfig: unknown };
+        mcpServer: { id: string; name: string; type: string; config: unknown; apiKeyConfig: unknown };
       }>;
     },
     params: { uri: string }
@@ -396,10 +401,31 @@ export class ProxyService {
   }
 
   /**
+   * Get tools for a specific server by ID
+   */
+  async getToolsForServer(serverId: string) {
+    const server = await this.prisma.mcpServer.findUnique({
+      where: { id: serverId },
+    });
+
+    if (!server) {
+      throw new NotFoundException(`MCP server ${serverId} not found`);
+    }
+
+    const instance = await this.getServerInstance(server);
+    if (!instance) {
+      return [];
+    }
+
+    return instance.listTools();
+  }
+
+  /**
    * Get or create a server instance
    */
   private async getServerInstance(server: {
     id: string;
+    type: string;
     config: unknown;
     apiKeyConfig: unknown;
   }): Promise<McpServer | null> {
@@ -412,26 +438,46 @@ export class ProxyService {
     const config = this.parseJson<ServerConfig>(server.config);
     const builtinId = config?.builtinId;
 
-    if (!builtinId || !this.registry.has(builtinId)) {
-      return null;
-    }
-
-    // Get package from registry
-    const pkg = this.registry.get(builtinId);
-    if (!pkg) return null;
-
     // Get API key config and convert to CoreApiKeyConfig format
     const storedConfig = this.parseJson<StoredApiKeyConfig>(server.apiKeyConfig);
     const apiKeyConfig = this.convertApiKeyConfig(storedConfig);
 
-    // Create instance
-    const instance = pkg.createServer(apiKeyConfig);
-    await instance.initialize();
+    // For builtin servers, get from registry
+    if (builtinId && this.registry.has(builtinId)) {
+      const pkg = this.registry.get(builtinId);
+      if (pkg) {
+        const instance = pkg.createServer(apiKeyConfig);
+        await instance.initialize();
+        this.serverInstances.set(server.id, instance);
+        return instance;
+      }
+    }
 
-    // Cache instance
-    this.serverInstances.set(server.id, instance);
+    // For remote_http servers, create RemoteHttpMcpServer
+    if (server.type === 'remote_http' && config?.url) {
+      const remoteServer = new RemoteHttpMcpServer(
+        { url: config.url, transport: 'http' },
+        null,
+        apiKeyConfig
+      );
+      await remoteServer.initialize();
+      this.serverInstances.set(server.id, remoteServer);
+      return remoteServer;
+    }
 
-    return instance;
+    // For remote_sse servers, create RemoteSseMcpServer
+    if (server.type === 'remote_sse' && config?.url) {
+      const remoteServer = new RemoteSseMcpServer(
+        { url: config.url, transport: 'sse' },
+        null,
+        apiKeyConfig
+      );
+      await remoteServer.initialize();
+      this.serverInstances.set(server.id, remoteServer);
+      return remoteServer;
+    }
+
+    return null;
   }
 
   /**

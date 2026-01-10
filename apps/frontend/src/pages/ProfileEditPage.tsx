@@ -80,7 +80,14 @@ export default function ProfileEditPage() {
       if (!serversRes.ok) {
         throw new Error('Failed to load servers');
       }
-      const { servers: serversList } = await serversRes.json();
+      const serversList = await serversRes.json();
+
+      // Ensure serversList is an array
+      if (!Array.isArray(serversList)) {
+        setServers([]);
+        setLoading(false);
+        return;
+      }
 
       // 3. For each server, load full details and tools
       const serversData = await Promise.all(

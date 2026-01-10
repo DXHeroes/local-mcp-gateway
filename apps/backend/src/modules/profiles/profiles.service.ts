@@ -4,8 +4,9 @@
  * Business logic for profile management.
  */
 
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
+import { ProxyService } from '../proxy/proxy.service.js';
 
 interface CreateProfileDto {
   name: string;
@@ -30,7 +31,11 @@ interface UpdateServerInProfileDto {
 
 @Injectable()
 export class ProfilesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => ProxyService))
+    private readonly proxyService: ProxyService
+  ) {}
 
   /**
    * Get all profiles
@@ -284,5 +289,62 @@ export class ProfilesService {
     await this.prisma.profileMcpServer.delete({
       where: { id: link.id },
     });
+  }
+
+  /**
+   * Get tools for a server in a profile with customizations
+   */
+  async getServerTools(profileId: string, serverId: string, _refresh = false) {
+    // Check profile exists
+    const profile = await this.prisma.profile.findUnique({ where: { id: profileId } });
+    if (!profile) {
+      throw new NotFoundException(`Profile ${profileId} not found`);
+    }
+
+    // Check server link exists
+    const link = await this.prisma.profileMcpServer.findUnique({
+      where: {
+        profileId_mcpServerId: {
+          profileId,
+          mcpServerId: serverId,
+        },
+      },
+      include: {
+        tools: true,
+      },
+    });
+
+    if (!link) {
+      throw new NotFoundException('Server is not in this profile');
+    }
+
+    // Get tools from the MCP server
+    const serverTools = await this.proxyService.getToolsForServer(serverId);
+
+    // Apply customizations
+    const tools = serverTools.map((tool) => {
+      const customization = link.tools.find((t) => t.toolName === tool.name);
+
+      return {
+        name: tool.name,
+        original: {
+          name: tool.name,
+          description: tool.description,
+          inputSchema: tool.inputSchema,
+        },
+        customized: customization
+          ? {
+              name: customization.customName || tool.name,
+              description: customization.customDescription || tool.description,
+              inputSchema: tool.inputSchema,
+            }
+          : null,
+        isEnabled: customization?.isEnabled ?? true,
+        hasChanges: !!customization,
+        changeType: customization ? 'modified' : 'unchanged',
+      };
+    });
+
+    return { tools };
   }
 }

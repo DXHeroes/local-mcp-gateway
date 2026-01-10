@@ -161,6 +161,7 @@ export { OAuthClientRegistrationCountOrderByAggregateInputSchema } from './OAuth
 export { OAuthClientRegistrationMaxOrderByAggregateInputSchema } from './OAuthClientRegistrationMaxOrderByAggregateInputSchema';
 export { OAuthClientRegistrationMinOrderByAggregateInputSchema } from './OAuthClientRegistrationMinOrderByAggregateInputSchema';
 export { IntNullableFilterSchema } from './IntNullableFilterSchema';
+export { ProfileNullableScalarRelationFilterSchema } from './ProfileNullableScalarRelationFilterSchema';
 export { McpServerNullableScalarRelationFilterSchema } from './McpServerNullableScalarRelationFilterSchema';
 export { DebugLogCountOrderByAggregateInputSchema } from './DebugLogCountOrderByAggregateInputSchema';
 export { DebugLogAvgOrderByAggregateInputSchema } from './DebugLogAvgOrderByAggregateInputSchema';
@@ -224,7 +225,7 @@ export { McpServerUpdateOneRequiredWithoutOauthClientRegistrationsNestedInputSch
 export { ProfileCreateNestedOneWithoutDebugLogsInputSchema } from './ProfileCreateNestedOneWithoutDebugLogsInputSchema';
 export { McpServerCreateNestedOneWithoutDebugLogsInputSchema } from './McpServerCreateNestedOneWithoutDebugLogsInputSchema';
 export { NullableIntFieldUpdateOperationsInputSchema } from './NullableIntFieldUpdateOperationsInputSchema';
-export { ProfileUpdateOneRequiredWithoutDebugLogsNestedInputSchema } from './ProfileUpdateOneRequiredWithoutDebugLogsNestedInputSchema';
+export { ProfileUpdateOneWithoutDebugLogsNestedInputSchema } from './ProfileUpdateOneWithoutDebugLogsNestedInputSchema';
 export { McpServerUpdateOneWithoutDebugLogsNestedInputSchema } from './McpServerUpdateOneWithoutDebugLogsNestedInputSchema';
 export { NestedStringFilterSchema } from './NestedStringFilterSchema';
 export { NestedStringNullableFilterSchema } from './NestedStringNullableFilterSchema';

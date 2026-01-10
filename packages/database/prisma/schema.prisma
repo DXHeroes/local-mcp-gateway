@@ -169,7 +169,7 @@ model OAuthClientRegistration {
 /// Debug logs for MCP requests/responses
 model DebugLog {
   id              String   @id @default(uuid())
-  profileId       String   @map("profile_id")
+  profileId       String?  @map("profile_id")
   mcpServerId     String?  @map("mcp_server_id")
   requestType     String   @map("request_type")
   requestPayload  String   @map("request_payload")
@@ -179,7 +179,7 @@ model DebugLog {
   durationMs      Int?     @map("duration_ms")
   createdAt       DateTime @default(now()) @map("created_at")
 
-  profile   Profile    @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profile   Profile?   @relation(fields: [profileId], references: [id], onDelete: Cascade)
   mcpServer McpServer? @relation(fields: [mcpServerId], references: [id], onDelete: SetNull)
 
   @@index([profileId])

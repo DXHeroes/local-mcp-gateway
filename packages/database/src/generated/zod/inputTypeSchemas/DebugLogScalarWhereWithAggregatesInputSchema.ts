@@ -11,7 +11,7 @@ export const DebugLogScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.Debu
   OR: z.lazy(() => DebugLogScalarWhereWithAggregatesInputSchema).array().optional(),
   NOT: z.union([ z.lazy(() => DebugLogScalarWhereWithAggregatesInputSchema), z.lazy(() => DebugLogScalarWhereWithAggregatesInputSchema).array() ]).optional(),
   id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
-  profileId: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
+  profileId: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
   mcpServerId: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
   requestType: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),
   requestPayload: z.union([ z.lazy(() => StringWithAggregatesFilterSchema), z.string() ]).optional(),

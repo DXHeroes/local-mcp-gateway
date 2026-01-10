@@ -9,7 +9,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 
 interface CreateLogDto {
-  profileId: string;
+  profileId?: string | null;
   mcpServerId?: string | null;
   requestType: string;
   requestPayload: string;

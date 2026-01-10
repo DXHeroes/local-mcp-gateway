@@ -164,18 +164,13 @@ export default function McpServerDetailPage() {
       }
 
       // Fetch debug logs filtered by server ID
-      // Note: Logs may have mcpServerId set if profile has only one server,
-      // or mcpServerId may be undefined for aggregated requests
-      // We'll fetch logs for this server ID specifically
       try {
         const logsResponse = await fetch(`${API_URL}/api/debug/logs?mcpServerId=${id}&limit=50`);
         if (logsResponse.ok) {
           const logsData = await logsResponse.json();
-          // Filter to ensure we only show logs for this server
-          const filteredLogs = Array.isArray(logsData)
-            ? logsData.filter((log: DebugLog) => log.mcpServerId === id)
-            : [];
-          setDebugLogs(filteredLogs);
+          // API returns { logs: [...], total: ... }
+          const logs = Array.isArray(logsData.logs) ? logsData.logs : [];
+          setDebugLogs(logs);
         }
       } catch {
         setDebugLogs([]);

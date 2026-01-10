@@ -12,7 +12,7 @@ export const DebugLogCreateWithoutMcpServerInputSchema: z.ZodType<Prisma.DebugLo
   errorMessage: z.string().optional().nullable(),
   durationMs: z.number().int().optional().nullable(),
   createdAt: z.coerce.date().optional(),
-  profile: z.lazy(() => ProfileCreateNestedOneWithoutDebugLogsInputSchema),
+  profile: z.lazy(() => ProfileCreateNestedOneWithoutDebugLogsInputSchema).optional(),
 });
 
 export default DebugLogCreateWithoutMcpServerInputSchema;

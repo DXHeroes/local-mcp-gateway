@@ -8,6 +8,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { RemoteHttpMcpServer, RemoteSseMcpServer } from '@dxheroes/local-mcp-core';
 import { PrismaService } from '../database/prisma.service.js';
 import { McpRegistry } from './mcp-registry.js';
+import { DebugService } from '../debug/debug.service.js';
 import type { CreateMcpServerDto } from './dto/create-mcp-server.dto.js';
 import type { UpdateMcpServerDto } from './dto/update-mcp-server.dto.js';
 
@@ -15,7 +16,8 @@ import type { UpdateMcpServerDto } from './dto/update-mcp-server.dto.js';
 export class McpService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly registry: McpRegistry
+    private readonly registry: McpRegistry,
+    private readonly debugService: DebugService
   ) {}
 
   /**
@@ -141,6 +143,42 @@ export class McpService {
    * Get tools from an MCP server
    */
   async getTools(id: string) {
+    const startTime = Date.now();
+
+    // Create debug log entry
+    const log = await this.debugService.createLog({
+      mcpServerId: id,
+      requestType: 'tools/list',
+      requestPayload: JSON.stringify({ method: 'tools/list', serverId: id }),
+      status: 'pending',
+    });
+
+    try {
+      const result = await this.getToolsInternal(id);
+
+      // Update debug log with success
+      await this.debugService.updateLog(log.id, {
+        responsePayload: JSON.stringify(result),
+        status: 'success',
+        durationMs: Date.now() - startTime,
+      });
+
+      return result;
+    } catch (error) {
+      // Update debug log with error
+      await this.debugService.updateLog(log.id, {
+        status: 'error',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        durationMs: Date.now() - startTime,
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Internal method to get tools from an MCP server
+   */
+  private async getToolsInternal(id: string) {
     const server = await this.findById(id);
     const builtinId = this.getBuiltinId(server.config);
 
@@ -206,6 +244,43 @@ export class McpService {
    * Get MCP server status with real validation
    */
   async getStatus(id: string) {
+    const startTime = Date.now();
+
+    // Create debug log entry
+    const log = await this.debugService.createLog({
+      mcpServerId: id,
+      requestType: 'status/check',
+      requestPayload: JSON.stringify({ method: 'status/check', serverId: id }),
+      status: 'pending',
+    });
+
+    try {
+      const result = await this.getStatusInternal(id);
+
+      // Update debug log with success or error based on status
+      await this.debugService.updateLog(log.id, {
+        responsePayload: JSON.stringify(result),
+        status: result.status === 'error' ? 'error' : 'success',
+        errorMessage: result.error,
+        durationMs: Date.now() - startTime,
+      });
+
+      return result;
+    } catch (error) {
+      // Update debug log with error
+      await this.debugService.updateLog(log.id, {
+        status: 'error',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        durationMs: Date.now() - startTime,
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Internal method to get MCP server status with real validation
+   */
+  private async getStatusInternal(id: string) {
     const server = await this.findById(id);
     const builtinId = this.getBuiltinId(server.config);
 

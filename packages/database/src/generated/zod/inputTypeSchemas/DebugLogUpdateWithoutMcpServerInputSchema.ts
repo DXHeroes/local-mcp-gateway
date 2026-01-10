@@ -5,7 +5,7 @@ import { StringFieldUpdateOperationsInputSchema } from './StringFieldUpdateOpera
 import { NullableStringFieldUpdateOperationsInputSchema } from './NullableStringFieldUpdateOperationsInputSchema';
 import { NullableIntFieldUpdateOperationsInputSchema } from './NullableIntFieldUpdateOperationsInputSchema';
 import { DateTimeFieldUpdateOperationsInputSchema } from './DateTimeFieldUpdateOperationsInputSchema';
-import { ProfileUpdateOneRequiredWithoutDebugLogsNestedInputSchema } from './ProfileUpdateOneRequiredWithoutDebugLogsNestedInputSchema';
+import { ProfileUpdateOneWithoutDebugLogsNestedInputSchema } from './ProfileUpdateOneWithoutDebugLogsNestedInputSchema';
 
 export const DebugLogUpdateWithoutMcpServerInputSchema: z.ZodType<Prisma.DebugLogUpdateWithoutMcpServerInput> = z.strictObject({
   id: z.union([ z.uuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
@@ -16,7 +16,7 @@ export const DebugLogUpdateWithoutMcpServerInputSchema: z.ZodType<Prisma.DebugLo
   errorMessage: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   durationMs: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  profile: z.lazy(() => ProfileUpdateOneRequiredWithoutDebugLogsNestedInputSchema).optional(),
+  profile: z.lazy(() => ProfileUpdateOneWithoutDebugLogsNestedInputSchema).optional(),
 });
 
 export default DebugLogUpdateWithoutMcpServerInputSchema;

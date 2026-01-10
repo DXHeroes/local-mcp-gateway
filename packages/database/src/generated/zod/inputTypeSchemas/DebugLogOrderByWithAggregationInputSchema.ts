@@ -11,7 +11,7 @@ import { DebugLogSumOrderByAggregateInputSchema } from './DebugLogSumOrderByAggr
 
 export const DebugLogOrderByWithAggregationInputSchema: z.ZodType<Prisma.DebugLogOrderByWithAggregationInput> = z.strictObject({
   id: z.lazy(() => SortOrderSchema).optional(),
-  profileId: z.lazy(() => SortOrderSchema).optional(),
+  profileId: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
   mcpServerId: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
   requestType: z.lazy(() => SortOrderSchema).optional(),
   requestPayload: z.lazy(() => SortOrderSchema).optional(),

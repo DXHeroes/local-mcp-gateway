@@ -13,7 +13,7 @@ import type { McpServerWithRelations, McpServerOptionalDefaultsWithRelations } f
  */
 export const DebugLogSchema = z.object({
   id: z.uuid(),
-  profileId: z.string(),
+  profileId: z.string().nullable(),
   mcpServerId: z.string().nullable(),
   requestType: z.string(),
   requestPayload: z.string(),
@@ -42,14 +42,14 @@ export type DebugLogOptionalDefaults = z.infer<typeof DebugLogOptionalDefaultsSc
 /////////////////////////////////////////
 
 export type DebugLogRelations = {
-  profile: ProfileWithRelations;
+  profile?: ProfileWithRelations | null;
   mcpServer?: McpServerWithRelations | null;
 };
 
 export type DebugLogWithRelations = z.infer<typeof DebugLogSchema> & DebugLogRelations
 
 export const DebugLogWithRelationsSchema: z.ZodType<DebugLogWithRelations> = DebugLogSchema.merge(z.object({
-  profile: z.lazy(() => ProfileWithRelationsSchema),
+  profile: z.lazy(() => ProfileWithRelationsSchema).nullable(),
   mcpServer: z.lazy(() => McpServerWithRelationsSchema).nullable(),
 }))
 
@@ -58,14 +58,14 @@ export const DebugLogWithRelationsSchema: z.ZodType<DebugLogWithRelations> = Deb
 /////////////////////////////////////////
 
 export type DebugLogOptionalDefaultsRelations = {
-  profile: ProfileOptionalDefaultsWithRelations;
+  profile?: ProfileOptionalDefaultsWithRelations | null;
   mcpServer?: McpServerOptionalDefaultsWithRelations | null;
 };
 
 export type DebugLogOptionalDefaultsWithRelations = z.infer<typeof DebugLogOptionalDefaultsSchema> & DebugLogOptionalDefaultsRelations
 
 export const DebugLogOptionalDefaultsWithRelationsSchema: z.ZodType<DebugLogOptionalDefaultsWithRelations> = DebugLogOptionalDefaultsSchema.merge(z.object({
-  profile: z.lazy(() => ProfileOptionalDefaultsWithRelationsSchema),
+  profile: z.lazy(() => ProfileOptionalDefaultsWithRelationsSchema).nullable(),
   mcpServer: z.lazy(() => McpServerOptionalDefaultsWithRelationsSchema).nullable(),
 }))
 

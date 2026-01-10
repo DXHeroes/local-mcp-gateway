@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 export const DebugLogUncheckedCreateInputSchema: z.ZodType<Prisma.DebugLogUncheckedCreateInput> = z.strictObject({
   id: z.uuid().optional(),
-  profileId: z.string(),
+  profileId: z.string().optional().nullable(),
   mcpServerId: z.string().optional().nullable(),
   requestType: z.string(),
   requestPayload: z.string(),
