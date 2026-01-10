@@ -14,15 +14,12 @@ COPY apps/frontend ./apps/frontend
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Build packages
-RUN pnpm --filter "@dxheroes/local-mcp-ui"... build
-
 # Build argument for VITE_API_URL (defaults to Docker Hub port)
 ARG VITE_API_URL=http://localhost:9631
 ENV VITE_API_URL=${VITE_API_URL}
 
-# Build frontend
-RUN pnpm --filter frontend build
+# Build frontend and all its dependencies
+RUN pnpm --filter frontend... build
 
 # Production stage
 FROM nginx:alpine
