@@ -47,7 +47,7 @@ jobs:
       
       - name: Publish packages
         if: ${{ steps.release.outputs.releases_created }}
-        run: pnpm publish -r --no-git-checks
+        run: pnpm publish -r --no-git-checks --provenance --access public
 
   publish-docker:
     name: Publish Docker Images (Production)
