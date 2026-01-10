@@ -23,6 +23,14 @@
   "keywords": ["mcp", "local-mcp-gateway", "gemini", "research", "ai"],
   "author": "DX Heroes",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DXHeroes/local-mcp-gateway.git",
+    "directory": "mcp-servers/gemini-deep-research"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "peerDependencies": {
     "@dxheroes/local-mcp-core": "workspace:*"
   },

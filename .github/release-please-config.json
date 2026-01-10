@@ -3,8 +3,8 @@
     "packages/config": {},
     "packages/core": {},
     "packages/database": {},
-    "packages/custom-mcp-loader": {},
-    "packages/ui": {}
+    "packages/ui": {},
+    "mcp-servers/gemini-deep-research": {}
   },
   "release-type": "node",
   "bump-minor-pre-major": true,
