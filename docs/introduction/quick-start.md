@@ -1,13 +1,36 @@
 # Quick Start Guide
 
-## Installation
+## Option 1: Docker (Recommended)
+
+The fastest way to get started - no installation required:
+
+```bash
+# Download and start
+curl -fsSL https://raw.githubusercontent.com/DXHeroes/local-mcp-gateway/main/docker-compose.hub.yml -o docker-compose.yml
+docker compose up -d
+```
+
+- **UI**: http://localhost:9630
+- **MCP Endpoint**: http://localhost:9631/mcp/default
+
+To stop: `docker compose down`
+
+For detailed Docker documentation, see [Docker Quick Start](../how-to/docker-quickstart.md).
+
+---
+
+## Option 2: From Source
+
+If you want to develop or customize the gateway:
+
+### Installation
 
 ```bash
 # Install dependencies
 pnpm install
 
-# Build all packages
-pnpm build
+# Initialize database
+pnpm db:seed
 ```
 
 ## Running the Application

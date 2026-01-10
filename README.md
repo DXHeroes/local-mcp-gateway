@@ -10,6 +10,24 @@ A **Local MCP Gateway** for MCP (Model Context Protocol) servers that allows you
 
 ![Local MCP Gateway Dashboard](docs/images/dashboard-preview.png)
 
+## Quick Start with Docker (Recommended)
+
+Run Local MCP Gateway instantly without cloning the repository:
+
+```bash
+# Download and start
+curl -fsSL https://raw.githubusercontent.com/DXHeroes/local-mcp-gateway/main/docker-compose.hub.yml -o docker-compose.yml
+docker compose up -d
+```
+
+- **UI**: http://localhost:9630
+- **MCP Endpoint**: http://localhost:9631/mcp/default
+- **Data**: Stored in `~/.local-mcp-gateway-data/`
+
+To stop: `docker compose down`
+
+For more details, see [Docker Quick Start Guide](./docs/how-to/docker-quickstart.md).
+
 ## Features
 
 -   🚀 **Proxy & Aggregator**: Combine multiple MCP servers (stdio, SSE, remote) into one
@@ -19,41 +37,27 @@ A **Local MCP Gateway** for MCP (Model Context Protocol) servers that allows you
 -   🖥️ **Web Interface**: Modern UI to manage servers, profiles, and logs
 -   🐳 **Docker Ready**: Easy deployment with Docker Compose
 
-## Quick Start
+## Development Setup
+
+If you want to develop or build from source:
 
 ### Prerequisites
 
 -   Node.js 20+
 -   pnpm 9+
--   Docker (optional, for containerized deployment)
 
 ### Installation
 
 ```bash
+# Install dependencies
 pnpm install
-```
 
-### Environment Setup
+# Initialize database
+pnpm db:seed
 
-This project uses centralized environment configuration. See [Environment Configuration Guide](./docs/ENVIRONMENT_SETUP.md) for details.
-
-**Quick start:**
-```bash
-# 1. Copy environment template
-cp .env.example .env
-
-# 2. Generate required secret
-openssl rand -hex 32
-
-# 3. Edit .env and set BETTER_AUTH_SECRET to the generated value
-
-# 4. Start development
+# Start development
 pnpm dev
 ```
-
-**Required**: Set `BETTER_AUTH_SECRET` in `.env` (minimum 32 characters)
-
-**Optional**: Configure email (Resend), OAuth (Google/GitHub), payments (Paddle), etc.
 
 ### Development
 
@@ -123,24 +127,19 @@ This will:
 **Data Persistence:**
 Data is stored in `~/.local-mcp-gateway-data` (your home directory) to ensure it persists across restarts and updates.
 
-### Running with Docker
+### Running with Docker (from source)
 
-To run using Docker (recommended for long-term use):
+Build and run from source using Docker:
 
 ```bash
-pnpm docker:up
-# or
-docker-compose up -d
+docker compose up -d --build
 ```
 
 This provides:
-- **Frontend**: http://localhost (Port 80) and https://localhost (Port 443)
-- **Backend**: http://localhost:3001
-- **Data Persistence**: Volumes mapped to `~/.local-mcp-gateway-data`.
-- **HTTPS**: Self-signed certificates are automatically generated in `~/.local-mcp-gateway-data/certs`.
-
-**Note on HTTPS**:
-Since self-signed certificates are used, you will need to accept the security warning in your browser or configure your system to trust `localhost.crt`.
+- **UI**: http://localhost:3000
+- **Backend API**: http://localhost:3001
+- **MCP Endpoint**: http://localhost:3001/mcp/default
+- **Data**: Stored in `~/.local-mcp-gateway-data/`
 
 ## Integration with Claude Desktop
 

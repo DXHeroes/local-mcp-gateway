@@ -15,10 +15,10 @@ COPY apps/frontend ./apps/frontend
 RUN pnpm install --frozen-lockfile
 
 # Build packages
-RUN pnpm --filter "@local-mcp/core" build
+RUN pnpm --filter "@dxheroes/local-mcp-ui"... build
 
-# Build argument for VITE_API_URL (required at build time)
-ARG VITE_API_URL
+# Build argument for VITE_API_URL (defaults to Docker Hub port)
+ARG VITE_API_URL=http://localhost:9631
 ENV VITE_API_URL=${VITE_API_URL}
 
 # Build frontend
@@ -27,22 +27,17 @@ RUN pnpm --filter frontend build
 # Production stage
 FROM nginx:alpine
 
-# Install openssl for cert generation
-RUN apk add --no-cache openssl
-
 # Copy built files
 COPY --from=builder /app/apps/frontend/dist /usr/share/nginx/html
 
 # Copy nginx config
 COPY nginx/docker.conf /etc/nginx/conf.d/default.conf
 
-# Copy entrypoint
-COPY scripts/docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:80/health || exit 1
 
 EXPOSE 80
-EXPOSE 443
 
-ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
 

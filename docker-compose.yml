@@ -1,38 +1,52 @@
-version: '3.8'
+# Local MCP Gateway - Docker Compose for Local Development
+#
+# Build and run from source:
+#   docker compose up -d --build
+#
+# Access:
+#   - UI: http://localhost:3000
+#   - Backend API: http://localhost:3001
+#   - MCP Endpoint: http://localhost:3001/mcp/default
+#
+# Data is stored in ~/.local-mcp-gateway-data/
 
 services:
   backend:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
+    container_name: local-mcp-backend-dev
     ports:
       - "3001:3001"
     volumes:
-      - ${HOME}/.local-mcp-gateway-data:/app/data
-      - ./custom-mcps:/app/custom-mcps
-    env_file:
-      - .env.docker
+      - ${HOME}/.local-mcp-gateway-data:/data
     environment:
-      # Override or add additional env vars here
       - NODE_ENV=production
+      - DATABASE_URL=file:/data/local-mcp-gateway.db
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 10s
+    restart: unless-stopped
 
   frontend:
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
       args:
-        # Build-time environment for Vite
-        - VITE_API_URL=${VITE_API_URL:-http://backend:3001}
+        # For local dev, frontend calls backend on localhost:3001
+        VITE_API_URL: http://localhost:3001
+    container_name: local-mcp-frontend-dev
     ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ${HOME}/.local-mcp-gateway-data/certs:/etc/nginx/certs
+      - "3000:80"
     depends_on:
-      - backend
-
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
