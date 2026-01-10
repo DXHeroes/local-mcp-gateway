@@ -39,6 +39,14 @@ interface UpdateServerDto {
   isActive?: boolean;
 }
 
+interface UpdateToolDto {
+  toolName: string;
+  isEnabled: boolean;
+  customName?: string;
+  customDescription?: string;
+  customInputSchema?: unknown;
+}
+
 @Controller('profiles')
 export class ProfilesController {
   constructor(private readonly profilesService: ProfilesService) {}
@@ -153,5 +161,17 @@ export class ProfilesController {
     @Query('refresh') refresh?: string
   ) {
     return this.profilesService.getServerTools(id, serverId, refresh === 'true');
+  }
+
+  /**
+   * Update tool customizations for a server in a profile
+   */
+  @Put(':id/servers/:serverId/tools')
+  async updateServerTools(
+    @Param('id') id: string,
+    @Param('serverId') serverId: string,
+    @Body() dto: { tools: UpdateToolDto[] }
+  ) {
+    return this.profilesService.updateServerTools(id, serverId, dto.tools);
   }
 }

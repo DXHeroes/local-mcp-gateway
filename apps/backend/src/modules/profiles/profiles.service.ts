@@ -29,6 +29,14 @@ interface UpdateServerInProfileDto {
   isActive?: boolean;
 }
 
+interface UpdateToolDto {
+  toolName: string;
+  isEnabled: boolean;
+  customName?: string;
+  customDescription?: string;
+  customInputSchema?: unknown;
+}
+
 @Injectable()
 export class ProfilesService {
   constructor(
@@ -346,5 +354,59 @@ export class ProfilesService {
     });
 
     return { tools };
+  }
+
+  /**
+   * Update tool customizations for a server in a profile
+   */
+  async updateServerTools(profileId: string, serverId: string, tools: UpdateToolDto[]) {
+    // Check profile exists
+    const profile = await this.prisma.profile.findUnique({ where: { id: profileId } });
+    if (!profile) {
+      throw new NotFoundException(`Profile ${profileId} not found`);
+    }
+
+    // Check server link exists
+    const link = await this.prisma.profileMcpServer.findUnique({
+      where: {
+        profileId_mcpServerId: {
+          profileId,
+          mcpServerId: serverId,
+        },
+      },
+    });
+
+    if (!link) {
+      throw new NotFoundException('Server is not in this profile');
+    }
+
+    // Use transaction to update tool customizations
+    await this.prisma.$transaction(async (tx) => {
+      // Delete existing tool customizations for this profile-server link
+      await tx.profileMcpServerTool.deleteMany({
+        where: { profileMcpServerId: link.id },
+      });
+
+      // Create new tool customizations (only for tools that have changes)
+      const toolsToCreate = tools.filter(
+        (tool) => !tool.isEnabled || tool.customName || tool.customDescription || tool.customInputSchema
+      );
+
+      if (toolsToCreate.length > 0) {
+        await tx.profileMcpServerTool.createMany({
+          data: toolsToCreate.map((tool) => ({
+            profileMcpServerId: link.id,
+            toolName: tool.toolName,
+            isEnabled: tool.isEnabled,
+            customName: tool.customName || null,
+            customDescription: tool.customDescription || null,
+            customInputSchema: tool.customInputSchema ? JSON.stringify(tool.customInputSchema) : null,
+          })),
+        });
+      }
+    });
+
+    // Return updated tools by calling getServerTools
+    return this.getServerTools(profileId, serverId);
   }
 }

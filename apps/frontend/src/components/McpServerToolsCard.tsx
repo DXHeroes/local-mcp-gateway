@@ -110,7 +110,7 @@ export function McpServerToolsCard({
                 {changedToolsCount > 0 && (
                   <Badge
                     variant="outline"
-                    className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700"
+                    className="bg-amber-500 text-white border-amber-600 dark:bg-amber-600 dark:border-amber-500"
                   >
                     {changedToolsCount} remote {changedToolsCount === 1 ? 'change' : 'changes'}
                   </Badge>

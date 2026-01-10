@@ -145,7 +145,7 @@ export function ToolEditCard({ tool, onChange }: ToolEditCardProps) {
                 {tool.hasChanges && (
                   <Badge
                     variant="outline"
-                    className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700"
+                    className="bg-amber-500 text-white border-amber-600 dark:bg-amber-600 dark:border-amber-500"
                   >
                     Server Changed
                   </Badge>
@@ -153,7 +153,7 @@ export function ToolEditCard({ tool, onChange }: ToolEditCardProps) {
                 {hasCustomizations && (
                   <Badge
                     variant="outline"
-                    className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-700"
+                    className="bg-blue-500 text-white border-blue-600 dark:bg-blue-600 dark:border-blue-500"
                   >
                     Customized
                   </Badge>
@@ -161,7 +161,7 @@ export function ToolEditCard({ tool, onChange }: ToolEditCardProps) {
                 {tool.changeType === 'added' && (
                   <Badge
                     variant="outline"
-                    className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-300 dark:border-green-700"
+                    className="bg-green-500 text-white border-green-600 dark:bg-green-600 dark:border-green-500"
                   >
                     New
                   </Badge>
