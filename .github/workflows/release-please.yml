@@ -24,30 +24,63 @@ jobs:
           config-file: .github/release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      # Publish to NPM when releases are created
+  publish-npm-prerelease:
+    name: Publish NPM Packages (Pre-release)
+    runs-on: ubuntu-latest
+    needs: release-please
+    # Run when PR was created/updated BUT release was NOT created
+    if: ${{ needs.release-please.outputs.prs_created == 'true' && needs.release-please.outputs.releases_created != 'true' }}
+    steps:
       - uses: actions/checkout@v4
-        if: ${{ steps.release.outputs.releases_created }}
-      
+
       - uses: pnpm/action-setup@v4
-        if: ${{ steps.release.outputs.releases_created }}
         with:
           version: 10.22.0
-      
+
       - uses: actions/setup-node@v4
-        if: ${{ steps.release.outputs.releases_created }}
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "pnpm"
           registry-url: 'https://registry.npmjs.org'
-      
+
       - run: pnpm install --frozen-lockfile
-        if: ${{ steps.release.outputs.releases_created }}
-      
+
       - run: pnpm build
-        if: ${{ steps.release.outputs.releases_created }}
-      
-      - name: Publish packages
-        if: ${{ steps.release.outputs.releases_created }}
+
+      # Update versions to pre-release (e.g., 0.1.2 -> 0.1.2-beta.123)
+      - name: Set pre-release versions
+        run: |
+          pnpm -r exec -- npm version prerelease --preid=beta.${{ github.run_number }} --no-git-tag-version || true
+
+      # Publish with 'next' tag (not 'latest')
+      - name: Publish pre-release packages
+        run: pnpm publish -r --no-git-checks --access public --tag next
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-npm-stable:
+    name: Publish NPM Packages (Stable)
+    runs-on: ubuntu-latest
+    needs: release-please
+    if: ${{ needs.release-please.outputs.releases_created == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.22.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm build
+
+      - name: Publish stable packages
         run: pnpm publish -r --no-git-checks --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
