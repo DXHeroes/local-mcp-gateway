@@ -3,6 +3,7 @@
   "globalEnv": [
     "NODE_ENV",
     "PORT",
+    "DATABASE_URL",
     "DATABASE_PATH",
     "CORS_ORIGINS",
     "LOG_LEVEL",

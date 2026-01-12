@@ -40,7 +40,7 @@ export function createPrismaAdapter(): PrismaBetterSqlite3 {
   // Ensure directory exists for file-based databases
   if (databaseUrl.startsWith('file:')) {
     const filePath = databaseUrl.replace('file:', '');
-    if (!filePath.startsWith(':memory:') && !filePath.startsWith('./')) {
+    if (!filePath.startsWith(':memory:')) {
       ensureDirectoryExists(filePath);
     }
   }
