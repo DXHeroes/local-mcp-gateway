@@ -12,7 +12,9 @@
       "require": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "mcpPackage": true,
   "scripts": {
     "build": "tsc --build",
@@ -20,7 +22,13 @@
     "test:watch": "vitest",
     "clean": "rm -rf dist"
   },
-  "keywords": ["mcp", "local-mcp-gateway", "gemini", "research", "ai"],
+  "keywords": [
+    "mcp",
+    "local-mcp-gateway",
+    "gemini",
+    "research",
+    "ai"
+  ],
   "author": "DX Heroes",
   "license": "MIT",
   "repository": {
