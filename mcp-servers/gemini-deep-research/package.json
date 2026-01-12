@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/mcp-gemini-deep-research",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Gemini Deep Research MCP Server for Local MCP Gateway",
   "type": "module",
   "main": "./dist/index.js",
