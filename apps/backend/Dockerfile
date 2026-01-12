@@ -45,6 +45,9 @@ COPY --from=builder /app/packages/database/dist ./packages/database/dist
 COPY --from=builder /app/packages/database/src/generated ./packages/database/src/generated
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
 
+# Copy Prisma schema (required for db push at runtime)
+COPY --from=builder /app/packages/database/prisma ./packages/database/prisma
+
 # Install production dependencies only
 RUN pnpm install --frozen-lockfile --prod
 
@@ -59,6 +62,10 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
 
-# Start the application
-WORKDIR /app/apps/backend
-CMD ["node", "dist/main.js"]
+# Copy and set up entrypoint script
+COPY apps/backend/docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
+# Start the application via entrypoint (runs prisma db push first)
+WORKDIR /app
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
