@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
 permissions:
   id-token: write  # Required for OIDC
@@ -21,6 +18,7 @@ jobs:
     outputs:
       releases_created: ${{ steps.release.outputs.releases_created }}
       prs_created: ${{ steps.release.outputs.prs_created }}
+      pr_branch: release-please--branches--main
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
@@ -32,10 +30,13 @@ jobs:
   publish-npm-prerelease:
     name: Publish NPM Packages (Pre-release)
     runs-on: ubuntu-latest
-    # Run on release-please PRs only
-    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'release-please--')
+    needs: release-please
+    # Run when release-please creates/updates a PR (not when release is created)
+    if: needs.release-please.outputs.prs_created == 'true'
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release-please.outputs.pr_branch }}
 
       - uses: pnpm/action-setup@v4
         with:
@@ -93,10 +94,13 @@ jobs:
   publish-docker-edge:
     name: Publish Docker Images (Edge)
     runs-on: ubuntu-latest
-    # Run on release-please PRs only
-    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'release-please--')
+    needs: release-please
+    # Run when release-please creates/updates a PR
+    if: needs.release-please.outputs.prs_created == 'true'
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release-please.outputs.pr_branch }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
