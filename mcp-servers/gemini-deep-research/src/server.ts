@@ -112,7 +112,7 @@ export class GeminiDeepResearchMcpServer extends McpServer {
       {
         name: 'deep_research',
         description:
-          'Conducts comprehensive, multi-step research using Google\'s Deep Research Agent. ' +
+          "Conducts comprehensive, multi-step research using Google's Deep Research Agent. " +
           'The agent autonomously searches the web, reads multiple sources, and synthesizes findings ' +
           'into detailed, cited reports. Research tasks typically take 5-20 minutes to complete. ' +
           'Cost: ~$2-5 per research task. ' +

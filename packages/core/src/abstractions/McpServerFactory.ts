@@ -9,11 +9,7 @@
  */
 
 import type { OAuthToken } from '../types/database.js';
-import type {
-  ApiKeyConfig,
-  RemoteHttpMcpConfig,
-  RemoteSseMcpConfig,
-} from '../types/mcp.js';
+import type { ApiKeyConfig, RemoteHttpMcpConfig, RemoteSseMcpConfig } from '../types/mcp.js';
 import type { McpServerEntity } from '../types/profile.js';
 import type { McpServer } from './McpServer.js';
 import { RemoteHttpMcpServer } from './RemoteHttpMcpServer.js';

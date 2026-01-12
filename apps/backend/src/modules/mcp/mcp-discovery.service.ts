@@ -4,12 +4,12 @@
  * Discovers MCP packages from dependencies with "mcpPackage": true.
  */
 
-import { Injectable, Logger } from '@nestjs/common';
-import { readFileSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { existsSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { DiscoveredMcpPackage, McpPackage } from '@dxheroes/local-mcp-core';
+import { Injectable, Logger } from '@nestjs/common';
 
 // ESM equivalents for __dirname and require.resolve
 const __filename = fileURLToPath(import.meta.url);
@@ -47,7 +47,9 @@ export class McpDiscoveryService {
       if (backendPkgPath) {
         const backendPkg = JSON.parse(readFileSync(backendPkgPath, 'utf-8')) as PackageJson;
         Object.assign(allDeps, backendPkg.dependencies, backendPkg.devDependencies);
-        this.logger.debug(`Found backend package.json with ${Object.keys(allDeps).length} dependencies`);
+        this.logger.debug(
+          `Found backend package.json with ${Object.keys(allDeps).length} dependencies`
+        );
       }
 
       // Also check root package.json for any global MCP packages

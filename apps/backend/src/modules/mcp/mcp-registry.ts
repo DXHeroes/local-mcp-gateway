@@ -4,8 +4,8 @@
  * In-memory registry of discovered MCP packages.
  */
 
+import type { DiscoveredMcpPackage, McpPackage } from '@dxheroes/local-mcp-core';
 import { Injectable } from '@nestjs/common';
-import type { McpPackage, DiscoveredMcpPackage } from '@dxheroes/local-mcp-core';
 
 @Injectable()
 export class McpRegistry {

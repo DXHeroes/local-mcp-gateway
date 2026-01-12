@@ -2,7 +2,7 @@
  * Database connection and utilities using Prisma ORM
  */
 
-import { mkdirSync, existsSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { PrismaClient } from './generated/prisma/index.js';
 

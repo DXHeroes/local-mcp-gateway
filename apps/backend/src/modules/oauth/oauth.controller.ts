@@ -4,16 +4,7 @@
  * REST API endpoints for OAuth token management.
  */
 
-import {
-  Controller,
-  Get,
-  Post,
-  Delete,
-  Param,
-  Body,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { OAuthService } from './oauth.service.js';
 
 interface StartOAuthDto {

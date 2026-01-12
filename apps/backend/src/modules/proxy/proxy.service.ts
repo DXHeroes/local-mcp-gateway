@@ -4,15 +4,12 @@
  * Handles MCP protocol proxying for profiles.
  */
 
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import type { ApiKeyConfig as CoreApiKeyConfig, McpServer } from '@dxheroes/local-mcp-core';
+import { RemoteHttpMcpServer, RemoteSseMcpServer } from '@dxheroes/local-mcp-core';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
-import { McpRegistry } from '../mcp/mcp-registry.js';
 import { DebugService } from '../debug/debug.service.js';
-import {
-  RemoteHttpMcpServer,
-  RemoteSseMcpServer,
-} from '@dxheroes/local-mcp-core';
-import type { McpServer, ApiKeyConfig as CoreApiKeyConfig } from '@dxheroes/local-mcp-core';
+import { McpRegistry } from '../mcp/mcp-registry.js';
 
 interface McpToolCall {
   name: string;
@@ -120,7 +117,12 @@ export class ProxyService {
           break;
 
         case 'tools/call':
-          response = await this.handleToolsCall(requestId, profile, request.params as McpToolCall, logId);
+          response = await this.handleToolsCall(
+            requestId,
+            profile,
+            request.params as McpToolCall,
+            logId
+          );
           break;
 
         case 'resources/list':
@@ -217,7 +219,13 @@ export class ProxyService {
     requestId: string | number,
     profile: {
       mcpServers: Array<{
-        mcpServer: { id: string; name: string; type: string; config: unknown; apiKeyConfig: unknown };
+        mcpServer: {
+          id: string;
+          name: string;
+          type: string;
+          config: unknown;
+          apiKeyConfig: unknown;
+        };
         tools: Array<{
           toolName: string;
           isEnabled: boolean;
@@ -268,7 +276,13 @@ export class ProxyService {
     requestId: string | number,
     profile: {
       mcpServers: Array<{
-        mcpServer: { id: string; name: string; type: string; config: unknown; apiKeyConfig: unknown };
+        mcpServer: {
+          id: string;
+          name: string;
+          type: string;
+          config: unknown;
+          apiKeyConfig: unknown;
+        };
         tools: Array<{
           toolName: string;
           isEnabled: boolean;
@@ -332,7 +346,13 @@ export class ProxyService {
     requestId: string | number,
     profile: {
       mcpServers: Array<{
-        mcpServer: { id: string; name: string; type: string; config: unknown; apiKeyConfig: unknown };
+        mcpServer: {
+          id: string;
+          name: string;
+          type: string;
+          config: unknown;
+          apiKeyConfig: unknown;
+        };
       }>;
     }
   ): Promise<McpResponse> {
@@ -366,7 +386,13 @@ export class ProxyService {
     requestId: string | number,
     profile: {
       mcpServers: Array<{
-        mcpServer: { id: string; name: string; type: string; config: unknown; apiKeyConfig: unknown };
+        mcpServer: {
+          id: string;
+          name: string;
+          type: string;
+          config: unknown;
+          apiKeyConfig: unknown;
+        };
       }>;
     },
     params: { uri: string }

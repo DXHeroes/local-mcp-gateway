@@ -205,7 +205,9 @@ export class ProfileEditPage {
     await this.openToolDetails(serverName, toolName);
 
     // Switch to Diff tab (scope to visible dialog to avoid multiple matches)
-    const dialog = this.page.locator('[role="dialog"]:visible, [data-testid="tool-details"]:visible').first();
+    const dialog = this.page
+      .locator('[role="dialog"]:visible, [data-testid="tool-details"]:visible')
+      .first();
     const diffTab = dialog.getByRole('tab', { name: /diff/i });
     await diffTab.click();
     await this.page.waitForTimeout(300);

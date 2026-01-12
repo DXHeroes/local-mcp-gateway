@@ -4,14 +4,7 @@
  * REST API endpoints for debug log management.
  */
 
-import {
-  Controller,
-  Get,
-  Delete,
-  Query,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Query } from '@nestjs/common';
 import { DebugService } from './debug.service.js';
 
 @Controller('debug')

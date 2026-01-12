@@ -70,7 +70,9 @@ interface McpServerWithStatus extends McpServer {
 import { API_URL } from '../config/api';
 
 // Helper to parse apiKeyConfig which may be a JSON string from the database
-const parseApiKeyConfig = (config: unknown): { apiKey: string; headerName: string; headerValue: string } | null => {
+const parseApiKeyConfig = (
+  config: unknown
+): { apiKey: string; headerName: string; headerValue: string } | null => {
   if (!config) return null;
   if (typeof config === 'string') {
     try {
@@ -366,17 +368,18 @@ export default function McpServersPage() {
                         </Button>
                       </div>
                     )}
-                    {server.apiKeyConfig && (() => {
-                      const parsed = parseApiKeyConfig(server.apiKeyConfig);
-                      return parsed ? (
-                        <div className="mt-4">
-                          <p className="text-sm font-medium">API Key Configured</p>
-                          <p className="text-xs text-muted-foreground">
-                            Header: {parsed.headerName}
-                          </p>
-                        </div>
-                      ) : null;
-                    })()}
+                    {server.apiKeyConfig &&
+                      (() => {
+                        const parsed = parseApiKeyConfig(server.apiKeyConfig);
+                        return parsed ? (
+                          <div className="mt-4">
+                            <p className="text-sm font-medium">API Key Configured</p>
+                            <p className="text-xs text-muted-foreground">
+                              Header: {parsed.headerName}
+                            </p>
+                          </div>
+                        ) : null;
+                      })()}
                     {server.type === 'builtin' &&
                       server.metadata?.requiresApiKey &&
                       !server.apiKeyConfig && (

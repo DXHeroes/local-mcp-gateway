@@ -4,7 +4,7 @@
  * Custom validation pipe that uses Zod schemas.
  */
 
-import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 import { z } from 'zod';
 
 @Injectable()

@@ -153,9 +153,7 @@ export class GeminiClient {
 
       // Log progress
       const elapsedMin = Math.round((Date.now() - startTime) / 60000);
-      console.log(
-        `[GeminiDeepResearch] Research in progress (${elapsedMin}min): ${interactionId}`
-      );
+      console.log(`[GeminiDeepResearch] Research in progress (${elapsedMin}min): ${interactionId}`);
 
       // Wait before next poll
       await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));

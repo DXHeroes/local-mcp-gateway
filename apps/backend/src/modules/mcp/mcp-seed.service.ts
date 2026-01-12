@@ -4,9 +4,9 @@
  * Seeds MCP server records from discovered packages.
  */
 
-import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import type { DiscoveredMcpPackage } from '@dxheroes/local-mcp-core';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 
 interface McpServerConfig {

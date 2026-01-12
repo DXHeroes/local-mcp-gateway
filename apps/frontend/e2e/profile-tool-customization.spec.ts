@@ -213,7 +213,7 @@ test.describe('Profile Tool Customization', () => {
   test.describe('Suite 1.2: Tool Enable/Disable', () => {
     test('1.2.1: User disables a tool and saves changes', async ({ page }) => {
       // Capture console logs
-      page.on('console', msg => {
+      page.on('console', (msg) => {
         if (msg.text().startsWith('[ToolsList]')) {
           console.log('Browser console:', msg.text());
         }
@@ -235,11 +235,9 @@ test.describe('Profile Tool Customization', () => {
       await editPage.expandAndRefreshServerTools('test-tool-custom-context7-4');
 
       // Get first tool name from the h3 heading
-      const toolName = await page
-        .locator('[data-testid="tool-item"]')
-        .first()
-        .locator('h3')
-        .textContent() || 'resolve-library-id';
+      const toolName =
+        (await page.locator('[data-testid="tool-item"]').first().locator('h3').textContent()) ||
+        'resolve-library-id';
 
       // WHEN: Disable the tool (use keyboard to avoid Playwright click issues with Radix UI)
       const checkbox = page
@@ -307,7 +305,10 @@ test.describe('Profile Tool Customization', () => {
       const tools = toolsData.tools || [];
 
       console.log('Looking for tool:', toolName);
-      console.log('Available tools:', tools.map((t: any) => ({ name: t.name, isEnabled: t.isEnabled })));
+      console.log(
+        'Available tools:',
+        tools.map((t: any) => ({ name: t.name, isEnabled: t.isEnabled }))
+      );
 
       const disabledTool = tools.find((t: any) => t.name === toolName);
       console.log('Found tool:', disabledTool);

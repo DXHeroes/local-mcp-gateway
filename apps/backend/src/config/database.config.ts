@@ -2,9 +2,9 @@
  * Database configuration
  */
 
-import { registerAs } from '@nestjs/config';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { registerAs } from '@nestjs/config';
 
 export default registerAs('database', () => {
   // Parse DATABASE_URL for path

@@ -4,7 +4,7 @@
  * Manages OAuth tokens for MCP servers.
  */
 
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 
 interface StartOAuthFlowDto {

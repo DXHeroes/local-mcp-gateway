@@ -4,7 +4,13 @@
  * Business logic for profile management.
  */
 
-import { Injectable, NotFoundException, ConflictException, Inject, forwardRef } from '@nestjs/common';
+import {
+  ConflictException,
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { ProxyService } from '../proxy/proxy.service.js';
 
@@ -389,7 +395,8 @@ export class ProfilesService {
 
       // Create new tool customizations (only for tools that have changes)
       const toolsToCreate = tools.filter(
-        (tool) => !tool.isEnabled || tool.customName || tool.customDescription || tool.customInputSchema
+        (tool) =>
+          !tool.isEnabled || tool.customName || tool.customDescription || tool.customInputSchema
       );
 
       if (toolsToCreate.length > 0) {
@@ -400,7 +407,9 @@ export class ProfilesService {
             isEnabled: tool.isEnabled,
             customName: tool.customName || null,
             customDescription: tool.customDescription || null,
-            customInputSchema: tool.customInputSchema ? JSON.stringify(tool.customInputSchema) : null,
+            customInputSchema: tool.customInputSchema
+              ? JSON.stringify(tool.customInputSchema)
+              : null,
           })),
         });
       }

@@ -14,7 +14,8 @@
       "!**/build",
       "!**/.next",
       "!**/coverage",
-      "!**/*.min.js"
+      "!**/*.min.js",
+      "!**/generated"
     ]
   },
   "formatter": {
@@ -45,6 +46,9 @@
     }
   },
   "javascript": {
+    "parser": {
+      "unsafeParameterDecoratorsEnabled": true
+    },
     "formatter": {
       "quoteStyle": "single",
       "semicolons": "always",

@@ -1,6 +1,11 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: Test file */
-import { test, expect } from '@playwright/test';
-import { createTestProfile, createTestMcpServer, assignServerToProfile, safeDelete } from './helpers';
+import { expect, test } from '@playwright/test';
+import {
+  assignServerToProfile,
+  createTestMcpServer,
+  createTestProfile,
+  safeDelete,
+} from './helpers';
 import { ProfileEditPage } from './pages/ProfileEditPage';
 
 const API_URL = 'http://localhost:3001';
@@ -30,7 +35,9 @@ test.beforeEach(async ({ page }) => {
 
 test('Debug Save Button - Mimic 1.2.1', async ({ page }) => {
   const profile = await createTestProfile(page.request, 'test-debug');
-  const server = await createTestMcpServer(page.request, 'test-debug-server', 'remote_http', { url: CONTEXT7_URL });
+  const server = await createTestMcpServer(page.request, 'test-debug-server', 'remote_http', {
+    url: CONTEXT7_URL,
+  });
   await assignServerToProfile(page.request, profile.id, server.id);
 
   const editPage = new ProfileEditPage(page);
@@ -38,11 +45,9 @@ test('Debug Save Button - Mimic 1.2.1', async ({ page }) => {
   await editPage.expandAndRefreshServerTools('test-debug-server');
 
   // Get tool name exactly like test 1.2.1 does
-  const toolName = await page
-    .locator('[data-testid="tool-item"]')
-    .first()
-    .locator('h3')
-    .textContent() || 'resolve-library-id';
+  const toolName =
+    (await page.locator('[data-testid="tool-item"]').first().locator('h3').textContent()) ||
+    'resolve-library-id';
 
   console.log('Tool name extracted:', toolName.trim());
 
@@ -55,11 +60,11 @@ test('Debug Save Button - Mimic 1.2.1', async ({ page }) => {
 
   // Debug: Check what getTool actually returns
   const toolLocator = editPage.getTool('test-debug-server', toolName.trim());
-  const toolHTML = await toolLocator.evaluate(el => ({
+  const toolHTML = await toolLocator.evaluate((el) => ({
     tag: el.tagName,
     dataTestId: el.getAttribute('data-testid'),
     dataToolName: el.getAttribute('data-tool-name'),
-    innerHTML: el.innerHTML.substring(0, 200)
+    innerHTML: el.innerHTML.substring(0, 200),
   }));
   console.log('getTool returns element:', toolHTML);
 
@@ -71,8 +76,8 @@ test('Debug Save Button - Mimic 1.2.1', async ({ page }) => {
     .getByRole('checkbox')
     .first();
 
-  const checkbox1HTML = await checkboxViaGetTool.evaluate(el => el.outerHTML.substring(0, 150));
-  const checkbox2HTML = await checkboxViaDirect.evaluate(el => el.outerHTML.substring(0, 150));
+  const checkbox1HTML = await checkboxViaGetTool.evaluate((el) => el.outerHTML.substring(0, 150));
+  const checkbox2HTML = await checkboxViaDirect.evaluate((el) => el.outerHTML.substring(0, 150));
 
   console.log('Checkbox via getTool:', checkbox1HTML);
   console.log('Checkbox via direct:', checkbox2HTML);
@@ -82,7 +87,7 @@ test('Debug Save Button - Mimic 1.2.1', async ({ page }) => {
   await editPage.toggleTool('test-debug-server', toolName.trim(), false);
 
   // Check if it worked
-  let afterMethod1 = await checkboxViaGetTool.isChecked();
+  const afterMethod1 = await checkboxViaGetTool.isChecked();
   console.log('After toggleTool, checkbox:', afterMethod1);
 
   // Method 2: Direct click without tool scoping

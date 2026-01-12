@@ -2,8 +2,8 @@
  * Update MCP Server DTO
  */
 
-import { IsString, IsOptional, ValidateNested, IsArray } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 class ApiKeyConfigDto {
   @IsString()

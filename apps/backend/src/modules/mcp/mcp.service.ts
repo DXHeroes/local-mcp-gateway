@@ -4,13 +4,13 @@
  * Business logic for MCP server management.
  */
 
-import { Injectable, NotFoundException } from '@nestjs/common';
 import { RemoteHttpMcpServer, RemoteSseMcpServer } from '@dxheroes/local-mcp-core';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
-import { McpRegistry } from './mcp-registry.js';
 import { DebugService } from '../debug/debug.service.js';
 import type { CreateMcpServerDto } from './dto/create-mcp-server.dto.js';
 import type { UpdateMcpServerDto } from './dto/update-mcp-server.dto.js';
+import { McpRegistry } from './mcp-registry.js';
 
 @Injectable()
 export class McpService {
@@ -117,9 +117,12 @@ export class McpService {
       data: {
         name: dto.name,
         type: dto.type,
-        config: dto.config !== undefined
-          ? (typeof dto.config === 'string' ? dto.config : JSON.stringify(dto.config))
-          : undefined,
+        config:
+          dto.config !== undefined
+            ? typeof dto.config === 'string'
+              ? dto.config
+              : JSON.stringify(dto.config)
+            : undefined,
         apiKeyConfig: dto.apiKeyConfig !== undefined ? JSON.stringify(dto.apiKeyConfig) : undefined,
         oauthConfig: dto.oauthConfig !== undefined ? JSON.stringify(dto.oauthConfig) : undefined,
       },
@@ -187,9 +190,7 @@ export class McpService {
       const pkg = this.registry.get(builtinId);
       if (pkg) {
         // Get API key config if set
-        const apiKeyConfig = server.apiKeyConfig
-          ? JSON.parse(server.apiKeyConfig as string)
-          : null;
+        const apiKeyConfig = server.apiKeyConfig ? JSON.parse(server.apiKeyConfig as string) : null;
 
         // Create server instance and list tools
         const instance = pkg.createServer(apiKeyConfig);
@@ -202,9 +203,7 @@ export class McpService {
     // For remote_http servers, connect and fetch tools
     if (server.type === 'remote_http') {
       const config = this.parseConfig(server.config) as { url: string };
-      const apiKeyConfig = server.apiKeyConfig
-        ? JSON.parse(server.apiKeyConfig as string)
-        : null;
+      const apiKeyConfig = server.apiKeyConfig ? JSON.parse(server.apiKeyConfig as string) : null;
 
       const remoteServer = new RemoteHttpMcpServer(
         { url: config.url, transport: 'http' },
@@ -219,9 +218,7 @@ export class McpService {
     // For remote_sse servers, connect and fetch tools
     if (server.type === 'remote_sse') {
       const config = this.parseConfig(server.config) as { url: string };
-      const apiKeyConfig = server.apiKeyConfig
-        ? JSON.parse(server.apiKeyConfig as string)
-        : null;
+      const apiKeyConfig = server.apiKeyConfig ? JSON.parse(server.apiKeyConfig as string) : null;
 
       const remoteServer = new RemoteSseMcpServer(
         { url: config.url, transport: 'sse' },
@@ -307,9 +304,7 @@ export class McpService {
     if (isBuiltin && hasApiKey) {
       const pkg = this.registry.get(builtinId);
       if (pkg) {
-        const apiKeyConfig = server.apiKeyConfig
-          ? JSON.parse(server.apiKeyConfig as string)
-          : null;
+        const apiKeyConfig = server.apiKeyConfig ? JSON.parse(server.apiKeyConfig as string) : null;
 
         try {
           const instance = pkg.createServer(apiKeyConfig);
@@ -340,9 +335,7 @@ export class McpService {
     // For remote_http servers, validate by connecting
     if (server.type === 'remote_http' && status === 'unknown') {
       const config = this.parseConfig(server.config) as { url: string };
-      const apiKeyConfig = server.apiKeyConfig
-        ? JSON.parse(server.apiKeyConfig as string)
-        : null;
+      const apiKeyConfig = server.apiKeyConfig ? JSON.parse(server.apiKeyConfig as string) : null;
 
       try {
         const remoteServer = new RemoteHttpMcpServer(
@@ -354,7 +347,9 @@ export class McpService {
         const tools = await remoteServer.listTools();
         status = 'connected';
         validationDetails = `Connected successfully. ${tools.length} tools available.`;
-        console.log(`[McpService] Remote HTTP validation for ${server.name}: ${tools.length} tools`);
+        console.log(
+          `[McpService] Remote HTTP validation for ${server.name}: ${tools.length} tools`
+        );
       } catch (error) {
         status = 'error';
         validationError = error instanceof Error ? error.message : 'Unknown error';
@@ -366,9 +361,7 @@ export class McpService {
     // For remote_sse servers, validate by connecting
     if (server.type === 'remote_sse' && status === 'unknown') {
       const config = this.parseConfig(server.config) as { url: string };
-      const apiKeyConfig = server.apiKeyConfig
-        ? JSON.parse(server.apiKeyConfig as string)
-        : null;
+      const apiKeyConfig = server.apiKeyConfig ? JSON.parse(server.apiKeyConfig as string) : null;
 
       try {
         const remoteServer = new RemoteSseMcpServer(

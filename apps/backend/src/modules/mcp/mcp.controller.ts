@@ -5,20 +5,20 @@
  */
 
 import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Param,
   Body,
+  Controller,
+  Delete,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Post,
+  Put,
 } from '@nestjs/common';
-import { McpService } from './mcp.service.js';
-import { McpRegistry } from './mcp-registry.js';
 import { CreateMcpServerDto } from './dto/create-mcp-server.dto.js';
 import { UpdateMcpServerDto } from './dto/update-mcp-server.dto.js';
+import { McpService } from './mcp.service.js';
+import { McpRegistry } from './mcp-registry.js';
 
 @Controller('mcp-servers')
 export class McpController {

@@ -154,7 +154,9 @@ export default function McpServerForm({
   const metadata = server?.metadata;
 
   // Helper to parse apiKeyConfig (can be string or object)
-  const parseApiKeyConfig = (config: unknown): { apiKey: string; headerName: string; headerValue: string } | null => {
+  const parseApiKeyConfig = (
+    config: unknown
+  ): { apiKey: string; headerName: string; headerValue: string } | null => {
     if (!config) return null;
     if (typeof config === 'string') {
       try {

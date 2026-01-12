@@ -4,13 +4,13 @@
  * Handles MCP server management, discovery, seeding, and registry.
  */
 
-import { Module, OnModuleInit, Logger } from '@nestjs/common';
+import { Logger, Module, OnModuleInit } from '@nestjs/common';
+import { DebugModule } from '../debug/debug.module.js';
 import { McpController } from './mcp.controller.js';
 import { McpService } from './mcp.service.js';
 import { McpDiscoveryService } from './mcp-discovery.service.js';
-import { McpSeedService } from './mcp-seed.service.js';
 import { McpRegistry } from './mcp-registry.js';
-import { DebugModule } from '../debug/debug.module.js';
+import { McpSeedService } from './mcp-seed.service.js';
 
 @Module({
   imports: [DebugModule],

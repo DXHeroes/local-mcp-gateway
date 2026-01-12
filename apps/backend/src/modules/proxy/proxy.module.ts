@@ -5,10 +5,10 @@
  */
 
 import { Module } from '@nestjs/common';
+import { DebugModule } from '../debug/debug.module.js';
+import { McpModule } from '../mcp/mcp.module.js';
 import { ProxyController } from './proxy.controller.js';
 import { ProxyService } from './proxy.service.js';
-import { McpModule } from '../mcp/mcp.module.js';
-import { DebugModule } from '../debug/debug.module.js';
 
 @Module({
   imports: [McpModule, DebugModule],

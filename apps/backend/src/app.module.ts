@@ -8,15 +8,15 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { DatabaseModule } from './modules/database/database.module.js';
-import { McpModule } from './modules/mcp/mcp.module.js';
-import { ProfilesModule } from './modules/profiles/profiles.module.js';
-import { OAuthModule } from './modules/oauth/oauth.module.js';
-import { ProxyModule } from './modules/proxy/proxy.module.js';
-import { HealthModule } from './modules/health/health.module.js';
-import { DebugModule } from './modules/debug/debug.module.js';
 import appConfig from './config/app.config.js';
 import databaseConfig from './config/database.config.js';
+import { DatabaseModule } from './modules/database/database.module.js';
+import { DebugModule } from './modules/debug/debug.module.js';
+import { HealthModule } from './modules/health/health.module.js';
+import { McpModule } from './modules/mcp/mcp.module.js';
+import { OAuthModule } from './modules/oauth/oauth.module.js';
+import { ProfilesModule } from './modules/profiles/profiles.module.js';
+import { ProxyModule } from './modules/proxy/proxy.module.js';
 
 @Module({
   imports: [

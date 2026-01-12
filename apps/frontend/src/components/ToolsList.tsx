@@ -56,7 +56,10 @@ export function ToolsList({
 
   const handleSave = async () => {
     console.log('[ToolsList] handleSave called');
-    console.log('[ToolsList] editingTools:', editingTools.map(t => ({ name: t.name, isEnabled: t.isEnabled })));
+    console.log(
+      '[ToolsList] editingTools:',
+      editingTools.map((t) => ({ name: t.name, isEnabled: t.isEnabled }))
+    );
     setIsSaving(true);
 
     try {
