@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.5](https://github.com/DXHeroes/local-mcp-gateway/compare/local-mcp-database-v0.1.4...local-mcp-database-v0.1.5) (2026-01-12)
+
+
+### Features
+
+* add Docker entrypoint script and update Dockerfile for database migrations ([04374f3](https://github.com/DXHeroes/local-mcp-gateway/commit/04374f3bbe6b331705f6d89bcab2f62899e9d539))
+
+
+### Code Refactoring
+
+* update Docker configurations and Prisma setup ([880878f](https://github.com/DXHeroes/local-mcp-gateway/commit/880878f18745b60045aeb0dc61a8e2441b506908))
+
 ## [0.1.4](https://github.com/DXHeroes/local-mcp-gateway/compare/local-mcp-database-v0.1.3...local-mcp-database-v0.1.4) (2026-01-12)
 
 
