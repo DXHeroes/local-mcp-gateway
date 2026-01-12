@@ -35,9 +35,15 @@ jobs:
       - uses: actions/setup-node@v4
         if: ${{ steps.release.outputs.releases_created }}
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "pnpm"
           registry-url: 'https://registry.npmjs.org'
+      
+      - name: Verify npm supports OIDC
+        if: ${{ steps.release.outputs.releases_created }}
+        run: |
+          echo "Node version: $(node --version)"
+          echo "npm version: $(npm --version)"
       
       - run: pnpm install --frozen-lockfile
         if: ${{ steps.release.outputs.releases_created }}
@@ -48,8 +54,6 @@ jobs:
       - name: Publish packages
         if: ${{ steps.release.outputs.releases_created }}
         run: pnpm publish -r --no-git-checks --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish-docker:
     name: Publish Docker Images (Production)
