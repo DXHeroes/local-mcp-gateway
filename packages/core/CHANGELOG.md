@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/DXHeroes/local-mcp-gateway/compare/local-mcp-core-v0.1.2...local-mcp-core-v0.1.3) (2026-01-12)
+
+
+### Code Refactoring
+
+* update for OS ([56e4118](https://github.com/DXHeroes/local-mcp-gateway/commit/56e41182029ac000da3ef0b4beb970b7d02f2970))
+
 ## [0.1.2](https://github.com/DXHeroes/local-mcp-gateway/compare/local-mcp-core-v0.1.1...local-mcp-core-v0.1.2) (2025-11-19)
 
 
