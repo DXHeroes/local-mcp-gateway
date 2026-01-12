@@ -12,6 +12,18 @@
 
 * update for OS ([56e4118](https://github.com/DXHeroes/local-mcp-gateway/commit/56e41182029ac000da3ef0b4beb970b7d02f2970))
 
+## [0.1.2](https://github.com/DXHeroes/local-mcp-gateway/compare/local-mcp-ui-v0.1.1...local-mcp-ui-v0.1.2) (2026-01-12)
+
+
+### Bug Fixes
+
+* Integrate UI package styles directly into the frontend, enhance Vite and Turborepo build configurations, and configure the database package as an ES module. ([f9357db](https://github.com/DXHeroes/local-mcp-gateway/commit/f9357dbc791c836141c28c865869838ee664b295))
+
+
+### Code Refactoring
+
+* update for OS ([56e4118](https://github.com/DXHeroes/local-mcp-gateway/commit/56e41182029ac000da3ef0b4beb970b7d02f2970))
+
 ## [0.1.1](https://github.com/DXHeroes/local-mcp-gateway/compare/local-mcp-ui-v0.1.0...local-mcp-ui-v0.1.1) (2025-11-19)
 
 
