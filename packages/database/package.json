@@ -28,7 +28,7 @@
     }
   },
   "scripts": {
-    "build": "pnpm prisma:generate && tsc --build",
+    "build": "pnpm prisma:generate && tsc --build && cp -r src/generated/prisma dist/generated/",
     "dev": "tsc --build --watch",
     "clean": "rm -rf dist src/generated",
     "test": "vitest run --passWithNoTests",
@@ -38,18 +38,19 @@
     "test:watch": "vitest",
     "lint": "biome check .",
     "typecheck": "tsc --noEmit",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate:dev": "prisma migrate dev",
-    "prisma:migrate:deploy": "prisma migrate deploy",
-    "prisma:migrate:reset": "prisma migrate reset --force",
-    "prisma:studio": "prisma studio",
-    "prisma:push": "prisma db push",
+    "prisma:generate": "prisma generate --config src/prisma.config.ts",
+    "prisma:migrate:dev": "prisma migrate dev --config src/prisma.config.ts",
+    "prisma:migrate:deploy": "prisma migrate deploy --config src/prisma.config.ts",
+    "prisma:migrate:reset": "prisma migrate reset --force --config src/prisma.config.ts",
+    "prisma:studio": "prisma studio --config src/prisma.config.ts",
+    "prisma:push": "prisma db push --config src/prisma.config.ts",
     "prisma:seed": "tsx src/seeds/seed.ts",
     "db:reset": "pnpm prisma:migrate:reset && pnpm prisma:seed"
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "^7.2.0",
     "@prisma/client": "^7.2.0",
+    "@prisma/client-runtime-utils": "^7.2.0",
     "zod": "^4.3.5"
   },
   "devDependencies": {

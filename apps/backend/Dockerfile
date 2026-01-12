@@ -45,7 +45,7 @@ COPY --from=builder /app/packages/database/dist ./packages/database/dist
 COPY --from=builder /app/packages/database/src/generated ./packages/database/src/generated
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
 
-# Copy Prisma schema (required for db push at runtime)
+# Copy Prisma schema and migrations (required for migrate deploy)
 COPY --from=builder /app/packages/database/prisma ./packages/database/prisma
 
 # Install production dependencies only
@@ -60,7 +60,7 @@ EXPOSE 3001
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/api/health || exit 1
 
 # Copy and set up entrypoint script
 COPY apps/backend/docker-entrypoint.sh /app/docker-entrypoint.sh
