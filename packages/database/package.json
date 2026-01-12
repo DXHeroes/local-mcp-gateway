@@ -48,17 +48,18 @@
     "db:reset": "pnpm prisma:migrate:reset && pnpm prisma:seed"
   },
   "dependencies": {
-    "@prisma/client": "^6.8.0",
-    "zod": "^4.1.12"
+    "@prisma/adapter-better-sqlite3": "^7.2.0",
+    "@prisma/client": "^7.2.0",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@dxheroes/local-mcp-config": "workspace:*",
-    "@types/node": "^24.10.1",
-    "prisma": "^6.8.0",
-    "tsx": "^4.20.6",
+    "@types/node": "^25.0.6",
+    "prisma": "^7.2.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.8",
-    "zod-prisma-types": "^3.2.0"
+    "vitest": "^4.0.17",
+    "zod-prisma-types": "^3.3.10"
   },
   "peerDependencies": {
     "@dxheroes/local-mcp-core": "workspace:*"

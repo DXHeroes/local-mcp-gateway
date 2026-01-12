@@ -108,7 +108,7 @@ describe('McpServerFactory', () => {
       };
 
       expect(() => McpServerFactory.create(entity)).toThrow(
-        'Custom MCP server loading requires async initialization'
+        'Custom MCP servers should be created as packages in mcp-servers/ folder'
       );
     });
 
@@ -310,7 +310,7 @@ describe('McpServerFactory', () => {
       };
 
       await expect(McpServerFactory.createAsync(entity)).rejects.toThrow(
-        'Custom MCP server config must contain modulePath'
+        'Custom MCP servers should be created as packages in mcp-servers/ folder'
       );
     });
 

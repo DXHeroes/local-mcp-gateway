@@ -4,6 +4,7 @@
  * NestJS service wrapping Prisma Client with lifecycle management.
  */
 
+import { createPrismaAdapter } from '@dxheroes/local-mcp-database';
 import { PrismaClient } from '@dxheroes/local-mcp-database/generated/prisma';
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 
@@ -13,6 +14,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   constructor() {
     super({
+      adapter: createPrismaAdapter(),
       log:
         process.env.NODE_ENV === 'development'
           ? [

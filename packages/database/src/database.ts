@@ -4,13 +4,14 @@
 
 import { existsSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import { PrismaClient } from './generated/prisma/index.js';
 
 /**
  * Ensure the directory for the database file exists
  * @param filePath - Database file path
  */
-function ensureDirectoryExists(filePath: string): void {
+export function ensureDirectoryExists(filePath: string): void {
   const dir = dirname(filePath);
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
@@ -18,21 +19,44 @@ function ensureDirectoryExists(filePath: string): void {
 }
 
 /**
- * Create a new Prisma Client instance
- * @returns PrismaClient instance
+ * Get the database URL from environment variable
+ * @returns Database URL string
  */
-export function createPrismaClient(): PrismaClient {
+export function getDatabaseUrl(): string {
   const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error('DATABASE_URL environment variable is not set');
+  }
+  return databaseUrl;
+}
 
-  // Extract file path from DATABASE_URL if it's a file URL
-  if (databaseUrl?.startsWith('file:')) {
+/**
+ * Create a Prisma SQLite adapter with proper directory setup
+ * @returns PrismaBetterSqlite3 adapter instance
+ */
+export function createPrismaAdapter(): PrismaBetterSqlite3 {
+  const databaseUrl = getDatabaseUrl();
+
+  // Ensure directory exists for file-based databases
+  if (databaseUrl.startsWith('file:')) {
     const filePath = databaseUrl.replace('file:', '');
     if (!filePath.startsWith(':memory:') && !filePath.startsWith('./')) {
       ensureDirectoryExists(filePath);
     }
   }
 
+  return new PrismaBetterSqlite3({ url: databaseUrl });
+}
+
+/**
+ * Create a new Prisma Client instance with SQLite adapter
+ * @returns PrismaClient instance
+ */
+export function createPrismaClient(): PrismaClient {
+  const adapter = createPrismaAdapter();
+
   return new PrismaClient({
+    adapter,
     log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
   });
 }
