@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 permissions:
   id-token: write  # Required for OIDC
@@ -13,6 +16,8 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    # Only run on push to main, not on PRs
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     outputs:
       releases_created: ${{ steps.release.outputs.releases_created }}
       prs_created: ${{ steps.release.outputs.prs_created }}
@@ -27,9 +32,8 @@ jobs:
   publish-npm-prerelease:
     name: Publish NPM Packages (Pre-release)
     runs-on: ubuntu-latest
-    needs: release-please
-    # Run when PR was created/updated BUT release was NOT created
-    if: ${{ needs.release-please.outputs.prs_created == 'true' && needs.release-please.outputs.releases_created != 'true' }}
+    # Run on release-please PRs only
+    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'release-please--')
     steps:
       - uses: actions/checkout@v4
 
@@ -62,7 +66,8 @@ jobs:
     name: Publish NPM Packages (Stable)
     runs-on: ubuntu-latest
     needs: release-please
-    if: ${{ needs.release-please.outputs.releases_created == 'true' }}
+    # Run on push to main when release was created (release-please PR merged)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.release-please.outputs.releases_created == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -88,9 +93,8 @@ jobs:
   publish-docker-edge:
     name: Publish Docker Images (Edge)
     runs-on: ubuntu-latest
-    needs: release-please
-    # Run when PR was created/updated BUT release was NOT created
-    if: ${{ needs.release-please.outputs.prs_created == 'true' && needs.release-please.outputs.releases_created != 'true' }}
+    # Run on release-please PRs only
+    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'release-please--')
     steps:
       - uses: actions/checkout@v4
 
@@ -127,7 +131,8 @@ jobs:
     name: Publish Docker Images (Production)
     runs-on: ubuntu-latest
     needs: release-please
-    if: ${{ needs.release-please.outputs.releases_created == 'true' }}
+    # Run on push to main when release was created (release-please PR merged)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.release-please.outputs.releases_created == 'true'
     steps:
       - uses: actions/checkout@v4
         with:
