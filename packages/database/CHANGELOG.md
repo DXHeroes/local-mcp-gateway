@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/DXHeroes/local-mcp-gateway/compare/local-mcp-database-v0.1.5...local-mcp-database-v0.1.6) (2026-01-12)
+
+
+### Bug Fixes
+
+* update Dockerfiles to use Node 22 and enhance database handling ([d14c83a](https://github.com/DXHeroes/local-mcp-gateway/commit/d14c83a89581ad63e6a8b34850cff22a6a7df9d6))
+
 ## [0.1.5](https://github.com/DXHeroes/local-mcp-gateway/compare/local-mcp-database-v0.1.4...local-mcp-database-v0.1.5) (2026-01-12)
 
 
