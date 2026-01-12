@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.4](https://github.com/DXHeroes/local-mcp-gateway/compare/local-mcp-config-v0.1.3...local-mcp-config-v0.1.4) (2026-01-12)
+
+
+### Bug Fixes
+
+* test ([e4d787a](https://github.com/DXHeroes/local-mcp-gateway/commit/e4d787ae4b4e4798d08b9f8c9c7fda9d9f469c9c))
+* test ([e4d787a](https://github.com/DXHeroes/local-mcp-gateway/commit/e4d787ae4b4e4798d08b9f8c9c7fda9d9f469c9c))
+
 ## [0.1.3](https://github.com/DXHeroes/local-mcp-gateway/compare/local-mcp-config-v0.1.2...local-mcp-config-v0.1.3) (2026-01-12)
 
 
