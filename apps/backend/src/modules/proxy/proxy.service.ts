@@ -71,9 +71,7 @@ export class ProxyService {
           where: { isActive: true },
           include: {
             mcpServer: true,
-            tools: {
-              where: { isEnabled: true },
-            },
+            tools: true,
           },
           orderBy: { order: 'asc' },
         },
@@ -305,6 +303,11 @@ export class ProxyService {
         const customization = profileServer.tools.find(
           (t) => t.customName === params.name || t.toolName === params.name
         );
+
+        // Skip if tool is disabled
+        if (customization && !customization.isEnabled) {
+          continue;
+        }
 
         const toolName = customization?.toolName || params.name;
         const hasTool = tools.some((t) => t.name === toolName);
@@ -546,7 +549,7 @@ export class ProxyService {
           where: { isActive: true },
           include: {
             mcpServer: true,
-            tools: { where: { isEnabled: true } },
+            tools: true,
           },
           orderBy: { order: 'asc' },
         },
