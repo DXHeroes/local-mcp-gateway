@@ -7,6 +7,12 @@
   ],
   "include-component-in-tag": true,
   "packages": {
+    "apps/backend": {
+      "component": "backend"
+    },
+    "apps/frontend": {
+      "component": "frontend"
+    },
     "packages/config": {
       "component": "config"
     },

@@ -1,4 +1,6 @@
 {
+  "apps/backend": "0.2.0",
+  "apps/frontend": "0.2.0",
   "packages/config": "0.2.0",
   "packages/core": "0.2.0",
   "packages/database": "0.2.0",
