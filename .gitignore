@@ -43,7 +43,6 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # IDE
-.vscode/
 .idea/
 *.swp
 *.swo
