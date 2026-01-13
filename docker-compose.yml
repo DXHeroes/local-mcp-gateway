@@ -1,0 +1,52 @@
+# Local MCP Gateway - Docker Compose for Local Development
+#
+# Build and run from source:
+#   docker compose up -d --build
+#
+# Access:
+#   - UI: http://localhost:3000
+#   - Backend API: http://localhost:3001
+#   - MCP Endpoint: http://localhost:3001/api/mcp/default
+#
+# Data is stored in ~/.local-mcp-gateway-data/
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: local-mcp-backend-dev
+    ports:
+      - "3001:3001"
+    volumes:
+      - ${HOME}/.local-mcp-gateway-data:/data
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:/data/local-mcp-gateway.db
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+      args:
+        # For local dev, frontend calls backend on localhost:3001
+        VITE_API_URL: http://localhost:3001
+    container_name: local-mcp-frontend-dev
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped

@@ -1,0 +1,49 @@
+{
+  "name": "@dxheroes/local-mcp-core",
+  "version": "0.2.0",
+  "type": "module",
+  "description": "Core types, interfaces, and utilities for MCP server management and package discovery",
+  "license": "Elastic-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DXHeroes/local-mcp-gateway.git",
+    "directory": "packages/core"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "dev": "tsc --build --watch",
+    "test": "vitest run",
+    "test:unit": "vitest run --dir __tests__/unit",
+    "test:integration": "vitest run --dir __tests__/integration",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "lint": "biome check src __tests__",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dxheroes/local-mcp-config": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.25.2",
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@dxheroes/local-mcp-config": "workspace:*",
+    "@types/node": "^25.0.6",
+    "tsdown": "^0.19.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.17"
+  },
+  "peerDependencies": {
+    "@dxheroes/local-mcp-database": "workspace:*"
+  }
+}

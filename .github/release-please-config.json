@@ -1,0 +1,40 @@
+{
+  "plugins": [
+    {
+      "type": "node-workspace",
+      "updateAllPackages": true
+    }
+  ],
+  "include-component-in-tag": true,
+  "packages": {
+    "packages/config": {
+      "component": "config"
+    },
+    "packages/core": {
+      "component": "core"
+    },
+    "packages/database": {
+      "component": "database"
+    },
+    "packages/ui": {
+      "component": "ui"
+    },
+    "mcp-servers/gemini-deep-research": {
+      "component": "mcp-gemini-deep-research"
+    }
+  },
+  "release-type": "node",
+  "changelog-sections": [
+    { "type": "feat", "section": "Features" },
+    { "type": "fix", "section": "Bug Fixes" },
+    { "type": "perf", "section": "Performance Improvements" },
+    { "type": "revert", "section": "Reverts" },
+    { "type": "docs", "section": "Documentation", "hidden": false },
+    { "type": "style", "section": "Styles", "hidden": true },
+    { "type": "chore", "section": "Miscellaneous", "hidden": true },
+    { "type": "refactor", "section": "Code Refactoring", "hidden": false },
+    { "type": "test", "section": "Tests", "hidden": true },
+    { "type": "build", "section": "Build System", "hidden": true },
+    { "type": "ci", "section": "Continuous Integration", "hidden": true }
+  ]
+}

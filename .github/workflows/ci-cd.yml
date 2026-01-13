@@ -1,0 +1,101 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+
+  # test:
+  #   name: Test
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: pnpm/action-setup@v4
+  #       with:
+  #         version: 10.22.0
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: "20"
+  #         cache: "pnpm"
+  #     - run: pnpm install --frozen-lockfile
+  #     - run: pnpm test:unit
+  #     - run: pnpm test:integration
+  #     - name: Upload coverage
+  #       uses: codecov/codecov-action@v4
+  #       with:
+  #         token: ${{ secrets.CODECOV_TOKEN }}
+  #         files: ./coverage/coverage-final.json
+  #         fail_ci_if_error: false
+
+  # test-coverage:
+  #   name: Test Coverage
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: pnpm/action-setup@v4
+  #       with:
+  #         version: 10.22.0
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: "20"
+  #         cache: "pnpm"
+  #     - run: pnpm install --frozen-lockfile
+  #     - run: pnpm test:coverage
+  #     - name: Check coverage threshold
+  #       run: |
+  #         COVERAGE=$(cat coverage/coverage-summary.json | jq '.total.lines.pct')
+  #         if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+  #           echo "Coverage $COVERAGE% is below 80% threshold"
+  #           exit 1
+  #         fi
+
+  build:
+    name: Build
+    needs: [lint]
+    # needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+  # e2e:
+  #   name: E2E Tests
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: pnpm/action-setup@v4
+  #       with:
+  #         version: 10.22.0
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: "20"
+  #         cache: "pnpm"
+  #     - run: pnpm install --frozen-lockfile
+  #     - run: pnpm build
+  #     - uses: microsoft/playwright@v1
+  #       with:
+  #         install-deps: false
+  #     - run: pnpm test:e2e

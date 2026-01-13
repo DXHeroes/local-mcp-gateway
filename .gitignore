@@ -1,0 +1,73 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Testing
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+test-db.sqlite-*
+test-db-*.sqlite-*
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.docker
+
+# Allow .env.example files
+!.env.example
+!**/.env.example
+
+# Database
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Turbo
+.turbo/
+
+# TypeScript
+*.tsbuildinfo
+# Compiled files in src directories (should be in dist/)
+**/src/**/*.d.ts
+**/src/**/*.d.ts.map
+**/src/**/*.js.map
+# Don't ignore .js in src - could break some packages that need them
+# Instead, explicitly ignore compiled TS output patterns
+
+# Prisma generated client (regenerated on prisma generate)
+packages/database/src/generated/prisma/
+
+# Misc
+.cache/
+.temp/
+.tmp/
+tmp/
+

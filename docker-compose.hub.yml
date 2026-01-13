@@ -1,0 +1,44 @@
+# Local MCP Gateway - Docker Compose for Docker Hub
+#
+# Quick Start:
+#   curl -fsSL https://raw.githubusercontent.com/DXHeroes/local-mcp-gateway/main/docker-compose.hub.yml -o local-mcp-gateway.yml && docker compose -f local-mcp-gateway.yml up -d
+#
+# Access:
+#   - UI: http://localhost:9630
+#   - MCP Endpoint: http://localhost:9631/api/mcp/default
+#
+# Data is stored in ~/.local-mcp-gateway-data/
+
+services:
+  backend:
+    image: dxheroes/local-mcp-gateway-backend:latest
+    container_name: local-mcp-backend
+    ports:
+      - "9631:3001"
+    volumes:
+      - ${HOME}/.local-mcp-gateway-data:/data
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:/data/local-mcp-gateway.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    image: dxheroes/local-mcp-gateway-frontend:latest
+    container_name: local-mcp-frontend
+    ports:
+      - "9630:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
