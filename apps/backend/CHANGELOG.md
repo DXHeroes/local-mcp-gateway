@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.2](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.3.1...backend-v0.3.2) (2026-01-13)
+
+
+### Bug Fixes
+
+* simplify tool inclusion logic in ProxyService ([8bb3be9](https://github.com/DXHeroes/local-mcp-gateway/commit/8bb3be93ef5504790edef84711cc3cff8c4dc6d9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-core bumped to 0.3.2
+    * @dxheroes/local-mcp-database bumped to 0.3.2
+    * @dxheroes/mcp-gemini-deep-research bumped to 0.3.2
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.3.2
+
 ## [0.3.1](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.3.0...backend-v0.3.1) (2026-01-13)
 
 
