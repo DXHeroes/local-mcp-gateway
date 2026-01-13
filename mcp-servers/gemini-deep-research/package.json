@@ -1,7 +1,7 @@
 {
   "name": "@dxheroes/mcp-gemini-deep-research",
   "version": "1.0.2",
-  "description": "Gemini Deep Research MCP Server for Local MCP Gateway",
+  "description": "MCP server providing Google Gemini Deep Research capabilities for AI-powered web research",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

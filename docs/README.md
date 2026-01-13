@@ -1,6 +1,6 @@
-# Local MCP Proxy Server Documentation
+# Local MCP Gateway Documentation
 
-Welcome to the documentation for the Local MCP Proxy Server. This tool empowers you to orchestrate AI tools locally, securely, and efficiently.
+Welcome to the documentation for Local MCP Gateway. This tool empowers you to orchestrate AI tools locally, securely, and efficiently.
 
 ## 📚 Where to Start
 

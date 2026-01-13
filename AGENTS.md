@@ -24,7 +24,7 @@ This is a **pnpm workspace + Turborepo** monorepo built with:
 ## Setup Commands
 
 ### Prerequisites
-- **Node.js**: >=20.0.0 (check `.nvmrc` for exact version)
+- **Node.js**: >=22.0.0 (check `.nvmrc` for exact version)
 - **pnpm**: >=9.0.0 (specified in `packageManager` field)
 - **Docker**: Optional, for containerized deployment
 
@@ -395,9 +395,10 @@ sequenceDiagram
 ### Server Types
 
 - **builtin**: MCP server package in `mcp-servers/` folder (auto-discovered)
+- **custom**: Custom TypeScript module MCP server
 - **remote_http**: External HTTP MCP server
 - **remote_sse**: Server-Sent Events MCP server
-- **external**: Spawned process MCP server (future)
+- **external**: Spawned process MCP server
 
 ### Authentication
 

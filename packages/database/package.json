@@ -2,7 +2,8 @@
   "name": "@dxheroes/local-mcp-database",
   "version": "0.1.7",
   "type": "module",
-  "description": "Database layer for MCP server management using SQLite and Prisma ORM",
+  "description": "Prisma ORM layer with SQLite for persisting MCP servers, profiles, OAuth tokens, and API keys",
+  "license": "Elastic-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/DXHeroes/local-mcp-gateway.git",

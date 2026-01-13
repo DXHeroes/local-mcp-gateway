@@ -51,4 +51,4 @@ pnpm dev:frontend
 ## Ports
 
 - **Backend**: http://localhost:3001
-- **Frontend**: http://localhost:5173
+- **Frontend**: http://localhost:3000

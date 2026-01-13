@@ -2,7 +2,8 @@
   "name": "@dxheroes/local-mcp-core",
   "version": "0.1.5",
   "type": "module",
-  "description": "Core abstractions and utilities for MCP server management",
+  "description": "Core types, interfaces, and utilities for MCP server management and package discovery",
+  "license": "Elastic-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/DXHeroes/local-mcp-gateway.git",

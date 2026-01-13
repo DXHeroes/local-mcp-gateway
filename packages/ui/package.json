@@ -2,7 +2,8 @@
   "name": "@dxheroes/local-mcp-ui",
   "version": "0.1.4",
   "type": "module",
-  "description": "Shared UI components based on shadcn-ui",
+  "description": "Reusable React UI components built on shadcn/ui and Radix primitives",
+  "license": "Elastic-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/DXHeroes/local-mcp-gateway.git",

@@ -2,7 +2,8 @@
   "name": "@dxheroes/local-mcp-config",
   "version": "0.1.5",
   "type": "module",
-  "description": "Shared configuration for TypeScript, Vitest, and Vite",
+  "description": "Shared TypeScript, Vitest, Vite, and Biome configuration presets for the monorepo",
+  "license": "Elastic-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/DXHeroes/local-mcp-gateway.git",

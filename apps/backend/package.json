@@ -2,7 +2,8 @@
   "name": "backend",
   "version": "0.1.0",
   "private": true,
-  "description": "NestJS backend for Local MCP Gateway",
+  "description": "NestJS API server providing MCP proxy, server aggregation, OAuth 2.1, and profile management",
+  "license": "Elastic-2.0",
   "type": "module",
   "main": "./dist/main.js",
   "scripts": {

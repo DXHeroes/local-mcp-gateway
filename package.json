@@ -2,7 +2,7 @@
   "name": "local-mcp-gateway",
   "version": "0.1.0",
   "private": true,
-  "description": "Local MCP Gateway - Gateway for MCP servers with custom MCP support",
+  "description": "Aggregate multiple MCP servers into a single endpoint with web UI, OAuth 2.1, and profile-based tool management",
   "scripts": {
     "setup": "bash scripts/setup-env.sh",
     "dev": "turbo run dev",
@@ -29,7 +29,6 @@
     "create-custom-mcp": "node scripts/create-custom-mcp.js",
     "create-package": "node scripts/create-package.js",
     "db:seed": "pnpm --filter @dxheroes/local-mcp-database prisma:seed",
-    "db:create": "pnpm --filter @dxheroes/local-mcp-database migrate",
     "db:reset": "rm -f ~/.local-mcp-gateway-data/local-mcp-gateway.db && pnpm db:seed"
   },
   "keywords": [
@@ -42,10 +41,10 @@
     "cursor"
   ],
   "author": "",
-  "license": "MIT",
+  "license": "Elastic-2.0",
   "packageManager": "pnpm@10.28.0",
   "engines": {
-    "node": ">=20.0.0",
+    "node": ">=22.0.0",
     "pnpm": ">=9.0.0"
   },
   "devDependencies": {

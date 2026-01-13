@@ -15,16 +15,14 @@ A **Local MCP Gateway** for MCP (Model Context Protocol) servers that allows you
 Run Local MCP Gateway instantly without cloning the repository:
 
 ```bash
-# Download and start
-curl -fsSL https://raw.githubusercontent.com/DXHeroes/local-mcp-gateway/main/docker-compose.hub.yml -o docker-compose.yml
-docker compose up -d
+curl -fsSL https://raw.githubusercontent.com/DXHeroes/local-mcp-gateway/main/docker-compose.hub.yml -o local-mcp-gateway.yml && docker compose -f local-mcp-gateway.yml up -d
 ```
 
 - **UI**: http://localhost:9630
 - **MCP Endpoint**: http://localhost:9631/mcp/default
 - **Data**: Stored in `~/.local-mcp-gateway-data/`
 
-To stop: `docker compose down`
+To stop: `docker compose -f local-mcp-gateway.yml down`
 
 For more details, see [Docker Quick Start Guide](./docs/how-to/docker-quickstart.md).
 
@@ -43,7 +41,7 @@ If you want to develop or build from source:
 
 ### Prerequisites
 
--   Node.js 20+
+-   Node.js 22+
 -   pnpm 9+
 
 ### Installation
@@ -157,16 +155,17 @@ This provides:
 ## Project Structure
 
 ```
-local_mcp_gateway/
+local-mcp-gateway/
 ├── packages/          # Shared packages
-│   ├── core/         # Core abstractions
-│   ├── database/     # Database layer
-│   └── custom-mcp-loader/  # Custom MCP loader
+│   ├── core/          # Core types and abstractions
+│   ├── database/      # Prisma ORM + SQLite
+│   ├── config/        # Shared configuration
+│   └── ui/            # Shared UI components
 ├── apps/              # Applications
-│   ├── backend/      # Express.js backend
-│   └── frontend/     # React 19 frontend
-├── custom-mcps/       # User-created custom MCPs
-└── docs/             # Documentation
+│   ├── backend/       # NestJS 11.x backend
+│   └── frontend/      # React 19 frontend
+├── mcp-servers/       # MCP server packages (auto-discovered)
+└── docs/              # Documentation
 ```
 
 ## Features
@@ -179,10 +178,7 @@ local_mcp_gateway/
 - ✅ Debug logging
 - ✅ **HTTPS Tunneling** for Claude Desktop
 - ✅ **AI Prompt Generation** (TOON format) for easy context sharing
-- 🔄 Custom MCP loader (in progress)
-- 🔄 Full test coverage (in progress)
-- 🔄 Complete documentation (in progress)
 
 ## License
 
-MIT
+[Elastic License 2.0](./LICENSE) - Free to use, modify, and distribute. Cannot be provided as a hosted service to third parties.
