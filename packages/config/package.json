@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/local-mcp-config",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "description": "Shared TypeScript, Vitest, Vite, and Biome configuration presets for the monorepo",
   "license": "Elastic-2.0",
