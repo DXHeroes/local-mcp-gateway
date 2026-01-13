@@ -23,8 +23,8 @@ const getApiUrl = (): string => {
     return '';
   }
 
-  // Production: use backend URL from env or default to localhost:3001
-  return meta.env?.VITE_API_URL || 'http://localhost:3001';
+  // Production: use backend URL from env or empty (nginx proxy handles it)
+  return meta.env?.VITE_API_URL || '';
 };
 
 export const API_URL = getApiUrl();
