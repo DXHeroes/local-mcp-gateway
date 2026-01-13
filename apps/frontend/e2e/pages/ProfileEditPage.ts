@@ -81,7 +81,7 @@ export class ProfileEditPage {
   /**
    * Toggle tool enabled/disabled
    */
-  async toggleTool(serverName: string, toolName: string, enabled: boolean) {
+  async toggleTool(_serverName: string, toolName: string, enabled: boolean) {
     // Use page locator directly to avoid Playwright locator chain issues with filter()
     const checkbox = this.page
       .locator(`[data-testid="tool-item"][data-tool-name="${toolName}"]`)

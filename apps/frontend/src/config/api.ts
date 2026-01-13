@@ -3,11 +3,19 @@
  * Determines the base URL for API requests based on the environment
  */
 
+interface ImportMetaEnv {
+  DEV?: boolean;
+  VITE_API_URL?: string;
+}
+
+interface ImportMetaWithEnv {
+  env?: ImportMetaEnv;
+}
+
 // In development, Vite proxy handles /api -> http://localhost:3001
 // In production, we need to use the full backend URL
 const getApiUrl = (): string => {
-  // Cast to any to avoid TypeScript issues with ImportMeta if types aren't picked up
-  const meta = import.meta as any;
+  const meta = import.meta as ImportMetaWithEnv;
 
   // Check if we're in development (Vite dev server)
   if (meta.env?.DEV) {

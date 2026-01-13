@@ -18,6 +18,7 @@ import { RemoteSseMcpServer } from './RemoteSseMcpServer.js';
 /**
  * Factory for creating MCP server instances
  */
+// biome-ignore lint/complexity/noStaticOnlyClass: Factory pattern - refactoring would break external API
 export class McpServerFactory {
   /**
    * Create MCP server instance from entity

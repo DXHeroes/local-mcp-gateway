@@ -107,6 +107,34 @@ type BuiltinServerFormData = {
 
 export type McpServerFormData = RemoteServerFormData | BuiltinServerFormData;
 
+// Helper to parse apiKeyConfig (can be string or object)
+const parseApiKeyConfig = (
+  config: unknown
+): { apiKey: string; headerName: string; headerValue: string } | null => {
+  if (!config) return null;
+  if (typeof config === 'string') {
+    try {
+      return JSON.parse(config);
+    } catch {
+      return null;
+    }
+  }
+  return config as { apiKey: string; headerName: string; headerValue: string };
+};
+
+// Helper to parse config (can be string or object)
+const parseConfig = (config: unknown): Record<string, unknown> => {
+  if (!config) return {};
+  if (typeof config === 'string') {
+    try {
+      return JSON.parse(config);
+    } catch {
+      return {};
+    }
+  }
+  return config as Record<string, unknown>;
+};
+
 interface McpServerFormProps {
   server?: McpServer | null;
   onSave: (data: McpServerFormData) => Promise<void>;
@@ -152,34 +180,6 @@ export default function McpServerForm({
   // Derived state for builtin servers
   const isBuiltin = server?.type === 'builtin';
   const metadata = server?.metadata;
-
-  // Helper to parse apiKeyConfig (can be string or object)
-  const parseApiKeyConfig = (
-    config: unknown
-  ): { apiKey: string; headerName: string; headerValue: string } | null => {
-    if (!config) return null;
-    if (typeof config === 'string') {
-      try {
-        return JSON.parse(config);
-      } catch {
-        return null;
-      }
-    }
-    return config as { apiKey: string; headerName: string; headerValue: string };
-  };
-
-  // Helper to parse config (can be string or object)
-  const parseConfig = (config: unknown): Record<string, unknown> => {
-    if (!config) return {};
-    if (typeof config === 'string') {
-      try {
-        return JSON.parse(config);
-      } catch {
-        return {};
-      }
-    }
-    return config as Record<string, unknown>;
-  };
 
   useEffect(() => {
     if (server) {

@@ -60,7 +60,7 @@ export class McpSeedService {
 
   private async seedPackage(
     pkg: DiscoveredMcpPackage['package'],
-    packageName: string
+    _packageName: string
   ): Promise<void> {
     const { metadata, seed } = pkg;
 

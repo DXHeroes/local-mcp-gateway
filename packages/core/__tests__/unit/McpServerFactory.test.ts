@@ -131,6 +131,7 @@ describe('McpServerFactory', () => {
       const entity = {
         id: 'test-id',
         name: 'test-server',
+        // biome-ignore lint/suspicious/noExplicitAny: Testing invalid type
         type: 'unknown' as any,
         config: {},
         createdAt: Date.now(),

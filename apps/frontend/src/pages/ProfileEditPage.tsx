@@ -6,7 +6,7 @@
 
 import { Button, useToast } from '@dxheroes/local-mcp-ui';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { McpServerToolsCard } from '../components/McpServerToolsCard';
 import { API_URL } from '../config/api';
@@ -53,14 +53,7 @@ export default function ProfileEditPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (profileId) {
-      fetchProfileData();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profileId]);
-
-  const fetchProfileData = async () => {
+  const fetchProfileData = useCallback(async () => {
     if (!profileId) return;
 
     setLoading(true);
@@ -142,7 +135,13 @@ export default function ProfileEditPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [profileId, toast]);
+
+  useEffect(() => {
+    if (profileId) {
+      fetchProfileData();
+    }
+  }, [profileId, fetchProfileData]);
 
   const handleToggleServer = async (serverId: string, isActive: boolean) => {
     if (!profileId) return;
@@ -212,7 +211,7 @@ export default function ProfileEditPage() {
     );
   }
 
-  if (error || !profile) {
+  if (error || !profile || !profileId) {
     return (
       <div className="p-6">
         <div className="max-w-4xl mx-auto">
@@ -266,7 +265,7 @@ export default function ProfileEditPage() {
             {servers.map((server) => (
               <McpServerToolsCard
                 key={server.id}
-                profileId={profileId!}
+                profileId={profileId}
                 server={server}
                 onToggle={handleToggleServer}
                 onRefresh={handleRefreshTools}

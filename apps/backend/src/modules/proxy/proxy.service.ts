@@ -456,8 +456,9 @@ export class ProxyService {
     apiKeyConfig: unknown;
   }): Promise<McpServer | null> {
     // Check cache
-    if (this.serverInstances.has(server.id)) {
-      return this.serverInstances.get(server.id)!;
+    const cached = this.serverInstances.get(server.id);
+    if (cached) {
+      return cached;
     }
 
     // Parse config

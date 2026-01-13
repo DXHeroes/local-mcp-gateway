@@ -1,5 +1,5 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: Test file */
-import { expect, test } from '@playwright/test';
+import { test } from '@playwright/test';
 import {
   assignServerToProfile,
   createTestMcpServer,
