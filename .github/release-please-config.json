@@ -1,10 +1,27 @@
 {
+  "plugins": [
+    {
+      "type": "node-workspace",
+      "updateAllPackages": true
+    }
+  ],
+  "include-component-in-tag": true,
   "packages": {
-    "packages/config": {},
-    "packages/core": {},
-    "packages/database": {},
-    "packages/ui": {},
-    "mcp-servers/gemini-deep-research": {}
+    "packages/config": {
+      "component": "config"
+    },
+    "packages/core": {
+      "component": "core"
+    },
+    "packages/database": {
+      "component": "database"
+    },
+    "packages/ui": {
+      "component": "ui"
+    },
+    "mcp-servers/gemini-deep-research": {
+      "component": "mcp-gemini-deep-research"
+    }
   },
   "release-type": "node",
   "bump-minor-pre-major": true,
