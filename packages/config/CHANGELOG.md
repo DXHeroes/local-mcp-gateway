@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/DXHeroes/local-mcp-gateway/compare/config-v0.1.5...config-v0.1.6) (2026-01-13)
+
+
+### Documentation
+
+* update project documentation and configuration ([35ddbef](https://github.com/DXHeroes/local-mcp-gateway/commit/35ddbef46397c381e207960450b3a9653ba11d2c))
+
 ## [0.1.5](https://github.com/DXHeroes/local-mcp-gateway/compare/config-v0.1.4...config-v0.1.5) (2026-01-13)
 
 
