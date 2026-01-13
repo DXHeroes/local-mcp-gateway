@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.1](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.3.0...backend-v0.3.1) (2026-01-13)
+
+
+### Bug Fixes
+
+* update package names in Dockerfiles and add apps to npm publish ([1928dba](https://github.com/DXHeroes/local-mcp-gateway/commit/1928dba89a6a9134fdadf5bcacd3a0617cee74dc))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-core bumped to 0.3.1
+    * @dxheroes/local-mcp-database bumped to 0.3.1
+    * @dxheroes/mcp-gemini-deep-research bumped to 0.3.1
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.3.1
+
 ## [0.3.0](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.2.0...backend-v0.3.0) (2026-01-13)
 
 
