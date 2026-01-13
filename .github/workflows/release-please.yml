@@ -47,7 +47,7 @@ jobs:
       # Publish all packages, skip if version already exists
       - name: Publish packages
         run: |
-          for pkg in packages/config packages/core packages/database packages/ui mcp-servers/gemini-deep-research; do
+          for pkg in packages/config packages/core packages/database packages/ui mcp-servers/gemini-deep-research apps/backend apps/frontend; do
             cd "$pkg"
             PKG_NAME=$(node -p "require('./package.json').name")
             PKG_VERSION=$(node -p "require('./package.json').version")

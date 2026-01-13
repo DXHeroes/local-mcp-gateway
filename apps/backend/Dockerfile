@@ -19,7 +19,7 @@ RUN pnpm install --frozen-lockfile
 RUN pnpm --filter @dxheroes/local-mcp-database prisma:generate
 
 # Build all required packages
-RUN pnpm --filter backend... build
+RUN pnpm --filter @dxheroes/local-mcp-backend... build
 
 # Production stage
 FROM node:22-alpine AS runner

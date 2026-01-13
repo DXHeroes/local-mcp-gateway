@@ -19,7 +19,7 @@ ARG VITE_API_URL=http://localhost:9631
 ENV VITE_API_URL=${VITE_API_URL}
 
 # Build frontend and all its dependencies
-RUN pnpm --filter frontend... build
+RUN pnpm --filter @dxheroes/local-mcp-frontend... build
 
 # Production stage
 FROM nginx:alpine
