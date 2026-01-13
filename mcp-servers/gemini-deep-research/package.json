@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/mcp-gemini-deep-research",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "MCP server providing Google Gemini Deep Research capabilities for AI-powered web research",
   "type": "module",
   "main": "./dist/index.js",
