@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.0](https://github.com/DXHeroes/local-mcp-gateway/compare/core-v0.2.1...core-v0.3.0) (2026-01-13)
+
+
+### Miscellaneous
+
+* release 0.3.0 ([9d54f73](https://github.com/DXHeroes/local-mcp-gateway/commit/9d54f73a2d4cd49903ad353e131740513915d681))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.3.0
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.3.0
+  * peerDependencies
+    * @dxheroes/local-mcp-database bumped to 0.3.0
+
 ## [0.2.1](https://github.com/DXHeroes/local-mcp-gateway/compare/core-v0.2.0...core-v0.2.1) (2026-01-13)
 
 
