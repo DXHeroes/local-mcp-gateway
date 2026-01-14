@@ -170,7 +170,11 @@ export default function ProfilesPage() {
         `${API_URL}/api/profiles/${editingProfile.id}/servers`
       );
       const currentServersData = await currentServersResponse.json();
-      const currentServerIds = new Set(currentServersData.serverIds || []);
+      const currentServerIds = new Set(
+        Array.isArray(currentServersData)
+          ? currentServersData.map((item: { mcpServerId: string }) => item.mcpServerId)
+          : []
+      );
 
       const newServerIds = new Set(data.serverIds);
 
@@ -386,9 +390,20 @@ export default function ProfilesPage() {
                       variant="ghost"
                       size="sm"
                       onClick={() => navigate(`/profiles/${profile.id}/edit`)}
+                      aria-label={`View details for ${profile.name}`}
+                    >
+                      Detail
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setEditingProfile(profile);
+                        setIsFormOpen(true);
+                      }}
                       aria-label={`Edit ${profile.name}`}
                     >
-                      Edit Tools
+                      Edit
                     </Button>
                     <Button
                       variant="ghost"

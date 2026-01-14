@@ -90,7 +90,9 @@ export default function ProfileForm({
         throw new Error('Failed to fetch profile servers');
       }
       const data = await response.json();
-      const serverIds = data.serverIds || [];
+      const serverIds = Array.isArray(data)
+        ? data.map((item: { mcpServerId: string }) => item.mcpServerId)
+        : [];
       setSelectedServerIds(new Set(serverIds));
     } catch (err) {
       console.error('Failed to fetch profile servers:', err);
