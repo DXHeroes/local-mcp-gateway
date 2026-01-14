@@ -1,14 +1,31 @@
 # Local MCP Gateway
 
-A **Local MCP Gateway** for MCP (Model Context Protocol) servers that allows you to:
+The **Middleware Layer** for your AI tools.
 
--   **Aggregate multiple MCP servers** into a single endpoint
--   **Create custom MCP servers** using TypeScript
--   **Manage servers via a Web UI**
--   **Inspect MCP traffic** with built-in debug logs
--   **Secure your servers** with API keys and OAuth 2.1
+As AI clients multiply (Claude, Cursor, IDEs) and MCP servers proliferate (GitHub, Postgres, Slack), direct connections create an N×M fragmentation problem. Debugging is a nightmare, security is an afterthought, and context overload degrades model performance.
+
+**Local MCP Gateway** is the Control Plane that solves this. It acts as a central hub where you configure your MCP servers once and expose them through curated **Profiles**—giving each AI assistant exactly the tools it needs, nothing more.
+
+**Local First**: Your data and tools stay under your control. No cloud dependency, no SaaS API keys.
 
 ![Local MCP Gateway Dashboard](docs/images/dashboard-preview.png)
+
+```json
+{
+  "mcpServers": {
+    "profile_development": {
+      "type": "http",
+      "url": "http://localhost:3000/api/mcp/development"
+    },
+    "profile_marketing": {
+      "type": "http",
+      "url": "http://localhost:3000/api/mcp/marketing"
+    }
+  }
+}
+```
+
+![](docs/images/cursor-mcp.png)
 
 ## Quick Start with Docker (Recommended)
 
