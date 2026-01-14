@@ -15,9 +15,17 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter.js';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor.js';
 
 async function bootstrap() {
+  // Determine log levels from environment
+  const logLevel = process.env.LOG_LEVEL || 'log';
+  const logLevels: ('error' | 'warn' | 'log' | 'debug' | 'verbose')[] = ['error'];
+  if (['warn', 'log', 'debug', 'verbose'].includes(logLevel)) logLevels.push('warn');
+  if (['log', 'debug', 'verbose'].includes(logLevel)) logLevels.push('log');
+  if (['debug', 'verbose'].includes(logLevel)) logLevels.push('debug');
+  if (logLevel === 'verbose') logLevels.push('verbose');
+
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'warn', 'log', 'debug', 'verbose'],
+    logger: logLevels,
   });
 
   const configService = app.get(ConfigService);

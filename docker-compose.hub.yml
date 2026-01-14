@@ -20,6 +20,7 @@ services:
     environment:
       - NODE_ENV=production
       - DATABASE_URL=file:/data/local-mcp-gateway.db
+      - LOG_LEVEL=log
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
@@ -33,6 +34,8 @@ services:
     container_name: local-mcp-frontend
     ports:
       - "9630:80"
+    environment:
+      - NGINX_ENTRYPOINT_QUIET_LOGS=1
     depends_on:
       backend:
         condition: service_healthy
