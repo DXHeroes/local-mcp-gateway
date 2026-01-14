@@ -47,7 +47,7 @@ interface ProfileWithStatus extends Profile {
   toolsCount?: number;
 }
 
-import { API_URL } from '../config/api';
+import { API_URL, getMcpEndpointUrl } from '../config/api';
 
 export default function ProfilesPage() {
   const navigate = useNavigate();
@@ -241,9 +241,8 @@ export default function ProfilesPage() {
   };
 
   const getFullEndpointUrl = (profileName: string): string => {
-    // Use API_URL if defined (e.g. via env var or Vite proxy target), otherwise default to current origin
-    const baseUrl = API_URL || window.location.origin;
-    return `${baseUrl}/api/mcp/${profileName}`;
+    // getMcpEndpointUrl handles Docker Hub port mapping (9630 -> 9631)
+    return `${getMcpEndpointUrl()}/api/mcp/${profileName}`;
   };
 
   const handleCopyEndpoint = async (profileName: string) => {

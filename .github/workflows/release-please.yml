@@ -106,6 +106,8 @@ jobs:
           file: apps/frontend/Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
+          build-args: |
+            VITE_API_URL=http://localhost:9631
           tags: |
             dxheroes/local-mcp-gateway-frontend:latest
             dxheroes/local-mcp-gateway-frontend:${{ steps.version.outputs.date }}-${{ steps.version.outputs.sha }}
