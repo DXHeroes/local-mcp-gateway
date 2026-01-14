@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.5.0](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.4.0...frontend-v0.5.0) (2026-01-14)
+
+
+### Features
+
+* update CORS and API endpoint configurations ([c997b1c](https://github.com/DXHeroes/local-mcp-gateway/commit/c997b1c88d6297bac96aca071eef3c237c7e6da5))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.3.4
+    * @dxheroes/local-mcp-ui bumped to 0.3.4
+
 ## [0.4.0](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.3.2...frontend-v0.4.0) (2026-01-14)
 
 
