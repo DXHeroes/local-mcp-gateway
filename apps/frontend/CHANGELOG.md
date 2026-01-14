@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.4.0](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.3.2...frontend-v0.4.0) (2026-01-14)
+
+
+### Features
+
+* add logging configuration and NGINX settings ([2efd142](https://github.com/DXHeroes/local-mcp-gateway/commit/2efd1427135948ccb62daecee29547a6e8982490))
+
+
+### Bug Fixes
+
+* enhance API key configuration handling in McpServerForm ([849c740](https://github.com/DXHeroes/local-mcp-gateway/commit/849c7409f39dc39ac2b542c51888c1866fc4fc3c))
+* update server ID handling in ProfileForm and ProfilesPage ([faf2985](https://github.com/DXHeroes/local-mcp-gateway/commit/faf29859585d2a6af6fbaeeeb773fad09c48d502))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.3.3
+    * @dxheroes/local-mcp-ui bumped to 0.3.3
+
 ## [0.3.2](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.3.1...frontend-v0.3.2) (2026-01-13)
 
 

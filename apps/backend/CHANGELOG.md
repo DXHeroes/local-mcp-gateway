@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.4.0](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.3.2...backend-v0.4.0) (2026-01-14)
+
+
+### Features
+
+* add logging configuration and NGINX settings ([2efd142](https://github.com/DXHeroes/local-mcp-gateway/commit/2efd1427135948ccb62daecee29547a6e8982490))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-core bumped to 0.3.3
+    * @dxheroes/local-mcp-database bumped to 0.3.3
+    * @dxheroes/mcp-gemini-deep-research bumped to 0.3.3
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.3.3
+
 ## [0.3.2](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.3.1...backend-v0.3.2) (2026-01-13)
 
 
