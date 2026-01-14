@@ -8,8 +8,12 @@ As AI clients multiply (Claude, Cursor, IDEs) and MCP servers proliferate (GitHu
 
 **Local First**: Your data and tools stay under your control. No cloud dependency, no SaaS API keys.
 
+## How it works
+
+### 1. Create a profile for your use-case and configure the MCP servers you want to use.
 ![Local MCP Gateway Dashboard](docs/images/dashboard-preview.png)
 
+### 2. Configure the MCP servers in your AI client.
 ```json
 {
   "mcpServers": {
@@ -25,7 +29,8 @@ As AI clients multiply (Claude, Cursor, IDEs) and MCP servers proliferate (GitHu
 }
 ```
 
-![](docs/images/cursor-mcp.png)
+### 3. Use the profile in your AI client.
+![Cursor MCP Configuration](docs/images/cursor-mcp.png)
 
 ## Quick Start with Docker (Recommended)
 
