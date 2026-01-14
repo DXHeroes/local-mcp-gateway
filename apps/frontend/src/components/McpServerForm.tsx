@@ -228,10 +228,13 @@ export default function McpServerForm({
           setOauthClientSecret(server.oauthConfig.clientSecret || '');
           setOauthCallbackUrl(server.oauthConfig.callbackUrl || '');
         } else if (server.apiKeyConfig) {
-          setAuthType('api_key');
-          setApiKey(server.apiKeyConfig.apiKey);
-          setApiKeyHeaderName(server.apiKeyConfig.headerName);
-          setApiKeyHeaderValue(server.apiKeyConfig.headerValue);
+          const parsedApiKeyConfig = parseApiKeyConfig(server.apiKeyConfig);
+          if (parsedApiKeyConfig) {
+            setAuthType('api_key');
+            setApiKey(parsedApiKeyConfig.apiKey);
+            setApiKeyHeaderName(parsedApiKeyConfig.headerName);
+            setApiKeyHeaderValue(parsedApiKeyConfig.headerValue);
+          }
         } else {
           setAuthType('none');
         }
