@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/local-mcp-backend",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "NestJS API server providing MCP proxy, server aggregation, OAuth 2.1, and profile management",
   "license": "Elastic-2.0",
   "type": "module",
