@@ -19,6 +19,10 @@ As AI clients multiply (Claude, Cursor, IDEs) and MCP servers proliferate (GitHu
 ```json
 {
   "mcpServers": {
+    "mpc_gateway": {
+      "type": "http",
+      "url": "http://localhost:9631/api/mcp/gateway"
+    },
     "profile_development": {
       "type": "http",
       "url": "http://localhost:9631/api/mcp/development"
