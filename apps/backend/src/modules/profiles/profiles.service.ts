@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { ProxyService } from '../proxy/proxy.service.js';
+import { RESERVED_PROFILE_NAMES } from '../settings/settings.constants.js';
 
 interface CreateProfileDto {
   name: string;
@@ -50,6 +51,16 @@ export class ProfilesService {
     @Inject(forwardRef(() => ProxyService))
     private readonly proxyService: ProxyService
   ) {}
+
+  /**
+   * Validate profile name against reserved names
+   */
+  private validateProfileName(name: string): void {
+    const lowerName = name.toLowerCase();
+    if (RESERVED_PROFILE_NAMES.some((reserved) => reserved.toLowerCase() === lowerName)) {
+      throw new ConflictException(`Profile name "${name}" is reserved for system use`);
+    }
+  }
 
   /**
    * Get all profiles
@@ -128,6 +139,9 @@ export class ProfilesService {
    * Create a new profile
    */
   async create(dto: CreateProfileDto) {
+    // Validate against reserved names
+    this.validateProfileName(dto.name);
+
     // Check for unique name
     const existing = await this.prisma.profile.findUnique({
       where: { name: dto.name },
@@ -153,6 +167,11 @@ export class ProfilesService {
 
     if (!profile) {
       throw new NotFoundException(`Profile ${id} not found`);
+    }
+
+    // Validate new name against reserved names
+    if (dto.name) {
+      this.validateProfileName(dto.name);
     }
 
     // Check for unique name if changing

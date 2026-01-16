@@ -38,6 +38,11 @@ export { DebugLogOrderByWithRelationInputSchema } from './DebugLogOrderByWithRel
 export { DebugLogWhereUniqueInputSchema } from './DebugLogWhereUniqueInputSchema';
 export { DebugLogOrderByWithAggregationInputSchema } from './DebugLogOrderByWithAggregationInputSchema';
 export { DebugLogScalarWhereWithAggregatesInputSchema } from './DebugLogScalarWhereWithAggregatesInputSchema';
+export { GatewaySettingWhereInputSchema } from './GatewaySettingWhereInputSchema';
+export { GatewaySettingOrderByWithRelationInputSchema } from './GatewaySettingOrderByWithRelationInputSchema';
+export { GatewaySettingWhereUniqueInputSchema } from './GatewaySettingWhereUniqueInputSchema';
+export { GatewaySettingOrderByWithAggregationInputSchema } from './GatewaySettingOrderByWithAggregationInputSchema';
+export { GatewaySettingScalarWhereWithAggregatesInputSchema } from './GatewaySettingScalarWhereWithAggregatesInputSchema';
 export { MigrationWhereInputSchema } from './MigrationWhereInputSchema';
 export { MigrationOrderByWithRelationInputSchema } from './MigrationOrderByWithRelationInputSchema';
 export { MigrationWhereUniqueInputSchema } from './MigrationWhereUniqueInputSchema';
@@ -99,6 +104,13 @@ export { DebugLogUncheckedUpdateInputSchema } from './DebugLogUncheckedUpdateInp
 export { DebugLogCreateManyInputSchema } from './DebugLogCreateManyInputSchema';
 export { DebugLogUpdateManyMutationInputSchema } from './DebugLogUpdateManyMutationInputSchema';
 export { DebugLogUncheckedUpdateManyInputSchema } from './DebugLogUncheckedUpdateManyInputSchema';
+export { GatewaySettingCreateInputSchema } from './GatewaySettingCreateInputSchema';
+export { GatewaySettingUncheckedCreateInputSchema } from './GatewaySettingUncheckedCreateInputSchema';
+export { GatewaySettingUpdateInputSchema } from './GatewaySettingUpdateInputSchema';
+export { GatewaySettingUncheckedUpdateInputSchema } from './GatewaySettingUncheckedUpdateInputSchema';
+export { GatewaySettingCreateManyInputSchema } from './GatewaySettingCreateManyInputSchema';
+export { GatewaySettingUpdateManyMutationInputSchema } from './GatewaySettingUpdateManyMutationInputSchema';
+export { GatewaySettingUncheckedUpdateManyInputSchema } from './GatewaySettingUncheckedUpdateManyInputSchema';
 export { MigrationCreateInputSchema } from './MigrationCreateInputSchema';
 export { MigrationUncheckedCreateInputSchema } from './MigrationUncheckedCreateInputSchema';
 export { MigrationUpdateInputSchema } from './MigrationUpdateInputSchema';
@@ -169,6 +181,9 @@ export { DebugLogMaxOrderByAggregateInputSchema } from './DebugLogMaxOrderByAggr
 export { DebugLogMinOrderByAggregateInputSchema } from './DebugLogMinOrderByAggregateInputSchema';
 export { DebugLogSumOrderByAggregateInputSchema } from './DebugLogSumOrderByAggregateInputSchema';
 export { IntNullableWithAggregatesFilterSchema } from './IntNullableWithAggregatesFilterSchema';
+export { GatewaySettingCountOrderByAggregateInputSchema } from './GatewaySettingCountOrderByAggregateInputSchema';
+export { GatewaySettingMaxOrderByAggregateInputSchema } from './GatewaySettingMaxOrderByAggregateInputSchema';
+export { GatewaySettingMinOrderByAggregateInputSchema } from './GatewaySettingMinOrderByAggregateInputSchema';
 export { MigrationCountOrderByAggregateInputSchema } from './MigrationCountOrderByAggregateInputSchema';
 export { MigrationMaxOrderByAggregateInputSchema } from './MigrationMaxOrderByAggregateInputSchema';
 export { MigrationMinOrderByAggregateInputSchema } from './MigrationMinOrderByAggregateInputSchema';
@@ -397,6 +412,7 @@ export { McpServerToolsCacheScalarFieldEnumSchema } from './McpServerToolsCacheS
 export { OAuthTokenScalarFieldEnumSchema } from './OAuthTokenScalarFieldEnumSchema';
 export { OAuthClientRegistrationScalarFieldEnumSchema } from './OAuthClientRegistrationScalarFieldEnumSchema';
 export { DebugLogScalarFieldEnumSchema } from './DebugLogScalarFieldEnumSchema';
+export { GatewaySettingScalarFieldEnumSchema } from './GatewaySettingScalarFieldEnumSchema';
 export { MigrationScalarFieldEnumSchema } from './MigrationScalarFieldEnumSchema';
 export { SortOrderSchema } from './SortOrderSchema';
 export { NullsOrderSchema } from './NullsOrderSchema';

@@ -188,6 +188,21 @@ model DebugLog {
 }
 
 // ============================================
+// Gateway Settings
+// ============================================
+
+/// Key-value store for gateway configuration
+model GatewaySetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("gateway_settings")
+}
+
+// ============================================
 // Migration Tracking
 // ============================================
 

@@ -51,3 +51,69 @@ export const getMcpEndpointUrl = (): string => {
   // Default: relative URL (nginx proxy or dev server)
   return '';
 };
+
+/**
+ * Get the full absolute MCP endpoint base URL for display purposes.
+ * Always returns a complete URL (e.g., "http://localhost:3001") even in development.
+ * Use this for displaying URLs to users (for copying to Cursor, Claude Code, etc.)
+ */
+export const getFullMcpEndpointUrl = (): string => {
+  // If API_URL is set (from VITE_API_URL), use it
+  if (API_URL) {
+    return API_URL;
+  }
+
+  // Build full URL from window.location
+  if (typeof window !== 'undefined') {
+    const { protocol, hostname, port } = window.location;
+
+    // Docker Hub frontend runs on 9630, backend on 9631
+    if (port === '9630') {
+      return `${protocol}//${hostname}:9631`;
+    }
+
+    // Development: frontend on 3000, backend on 3001
+    if (port === '3000') {
+      return `${protocol}//${hostname}:3001`;
+    }
+
+    // Same port (production with nginx proxy or custom setup)
+    return `${protocol}//${hostname}${port ? `:${port}` : ''}`;
+  }
+
+  // Fallback for SSR or non-browser environments
+  return 'http://localhost:3001';
+};
+
+/**
+ * Get the main gateway URL for MCP connections (internal use).
+ * This endpoint proxies requests to the configured default profile.
+ * The active profile can be changed via the settings API.
+ * @returns The full URL to the gateway endpoint (e.g., "http://localhost:3001/api/mcp/gateway")
+ */
+export const getMainGatewayUrl = (): string => {
+  return `${getMcpEndpointUrl()}/api/mcp/gateway`;
+};
+
+/**
+ * Get the unified MCP endpoint URL for gateway.
+ * Supports Streamable HTTP transport (2025-11-25):
+ * - GET with Accept: text/event-stream → SSE notifications
+ * - POST → JSON-RPC requests (tools/list, tools/call)
+ * @returns Full absolute URL to the gateway endpoint
+ */
+export const getGatewayUrl = (): string => {
+  return `${getFullMcpEndpointUrl()}/api/mcp/gateway`;
+};
+
+/**
+ * Get the unified MCP endpoint URL for a specific profile.
+ * Supports Streamable HTTP transport (2025-11-25):
+ * - GET with Accept: text/event-stream → SSE notifications
+ * - POST → JSON-RPC requests (tools/list, tools/call)
+ * @param profileName - Name of the profile
+ * @returns Full absolute URL to the profile endpoint
+ */
+export const getProfileUrl = (profileName: string): string => {
+  return `${getFullMcpEndpointUrl()}/api/mcp/${profileName}`;
+};

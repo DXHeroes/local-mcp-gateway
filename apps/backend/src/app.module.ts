@@ -7,6 +7,7 @@
 
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerModule } from '@nestjs/throttler';
 import appConfig from './config/app.config.js';
 import databaseConfig from './config/database.config.js';
@@ -17,6 +18,7 @@ import { McpModule } from './modules/mcp/mcp.module.js';
 import { OAuthModule } from './modules/oauth/oauth.module.js';
 import { ProfilesModule } from './modules/profiles/profiles.module.js';
 import { ProxyModule } from './modules/proxy/proxy.module.js';
+import { SettingsModule } from './modules/settings/settings.module.js';
 
 @Module({
   imports: [
@@ -26,6 +28,9 @@ import { ProxyModule } from './modules/proxy/proxy.module.js';
       load: [appConfig, databaseConfig],
       envFilePath: ['../../.env', '.env.local', '.env'],
     }),
+
+    // Event emitter for SSE notifications
+    EventEmitterModule.forRoot(),
 
     // Rate limiting
     ThrottlerModule.forRoot([
@@ -51,6 +56,7 @@ import { ProxyModule } from './modules/proxy/proxy.module.js';
     McpModule,
     ProfilesModule,
     OAuthModule, // For OAuth MCP servers, not user authentication
+    SettingsModule, // Gateway settings
     ProxyModule,
     HealthModule,
     DebugModule,

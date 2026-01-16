@@ -24,6 +24,7 @@ import {
 import { ChevronDown, ChevronUp, Copy, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
+import GatewayConfig from '../components/GatewayConfig';
 import ProfileForm from '../components/ProfileForm';
 import { generateToonPrompt } from '../utils/promptGenerator';
 
@@ -47,7 +48,7 @@ interface ProfileWithStatus extends Profile {
   toolsCount?: number;
 }
 
-import { API_URL, getMcpEndpointUrl } from '../config/api';
+import { API_URL, getProfileUrl } from '../config/api';
 
 export default function ProfilesPage() {
   const navigate = useNavigate();
@@ -63,6 +64,10 @@ export default function ProfilesPage() {
   const [prompts, setPrompts] = useState<Record<string, string>>({});
   const [loadingPrompts, setLoadingPrompts] = useState<Record<string, boolean>>({});
   const [expandedPrompts, setExpandedPrompts] = useState<Record<string, boolean>>({});
+
+  // Gateway settings state
+  const [defaultGatewayProfile, setDefaultGatewayProfile] = useState<string | null>(null);
+  const [settingsLoading, setSettingsLoading] = useState(true);
 
   const fetchProfiles = useCallback(async () => {
     try {
@@ -105,9 +110,55 @@ export default function ProfilesPage() {
     }
   }, []);
 
+  const fetchSettings = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/settings/default-gateway-profile`);
+      if (response.ok) {
+        const data = await response.json();
+        setDefaultGatewayProfile(data.profileName);
+      } else {
+        console.warn('Failed to fetch gateway settings, using default');
+      }
+    } catch (err) {
+      console.warn('Failed to fetch gateway settings:', err);
+    } finally {
+      setSettingsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchProfiles();
-  }, [fetchProfiles]);
+    fetchSettings();
+  }, [fetchProfiles, fetchSettings]);
+
+  const handleGatewayProfileChange = async (profileName: string) => {
+    const previous = defaultGatewayProfile;
+    setDefaultGatewayProfile(profileName); // Optimistic update
+
+    try {
+      const response = await fetch(`${API_URL}/api/settings/default-gateway-profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileName }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update gateway profile');
+      }
+
+      toast({
+        title: 'Gateway profile updated',
+        description: `Active profile set to "${profileName}"`,
+      });
+    } catch {
+      setDefaultGatewayProfile(previous); // Rollback on error
+      toast({
+        title: 'Error',
+        description: 'Failed to update gateway profile',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const handleCreate = async (data: {
     name: string;
@@ -240,18 +291,13 @@ export default function ProfilesPage() {
     }
   };
 
-  const getFullEndpointUrl = (profileName: string): string => {
-    // getMcpEndpointUrl handles Docker Hub port mapping (9630 -> 9631)
-    return `${getMcpEndpointUrl()}/api/mcp/${profileName}`;
-  };
-
   const handleCopyEndpoint = async (profileName: string) => {
-    const endpoint = getFullEndpointUrl(profileName);
+    const endpoint = getProfileUrl(profileName);
     try {
       await navigator.clipboard.writeText(endpoint);
       toast({
         title: 'Copied!',
-        description: 'Gateway endpoint copied to clipboard',
+        description: 'MCP endpoint copied to clipboard',
         variant: 'default',
       });
     } catch (err) {
@@ -269,7 +315,7 @@ export default function ProfilesPage() {
 
     setLoadingPrompts((prev) => ({ ...prev, [profile.id]: true }));
     try {
-      const endpoint = getFullEndpointUrl(profile.name);
+      const endpoint = getProfileUrl(profile.name);
       const response = await fetch(`${endpoint}/info`);
       if (!response.ok) {
         throw new Error('Failed to fetch tools info');
@@ -359,6 +405,13 @@ export default function ProfilesPage() {
 
   return (
     <div className="p-6">
+      <GatewayConfig
+        profiles={profiles}
+        defaultProfileName={defaultGatewayProfile}
+        onProfileChange={handleGatewayProfileChange}
+        isLoading={settingsLoading || loading}
+      />
+
       <div className="mb-6 flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Profiles</h2>
         <Button onClick={openCreateForm}>Create Profile</Button>
@@ -429,17 +482,17 @@ export default function ProfilesPage() {
                       Tools: {profile.toolsCount || 0}
                     </Badge>
                   </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Gateway Endpoint:</p>
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">MCP Endpoint:</p>
                     <div className="flex items-center gap-2">
                       <code className="text-xs bg-muted px-2 py-1 rounded flex-1 break-all">
-                        {getFullEndpointUrl(profile.name)}
+                        {getProfileUrl(profile.name)}
                       </code>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleCopyEndpoint(profile.name)}
-                        aria-label="Copy endpoint to clipboard"
+                        aria-label="Copy MCP endpoint to clipboard"
                       >
                         Copy
                       </Button>

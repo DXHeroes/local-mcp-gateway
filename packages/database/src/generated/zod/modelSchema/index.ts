@@ -6,4 +6,5 @@ export * from './McpServerToolsCacheSchema';
 export * from './OAuthTokenSchema';
 export * from './OAuthClientRegistrationSchema';
 export * from './DebugLogSchema';
+export * from './GatewaySettingSchema';
 export * from './MigrationSchema';
