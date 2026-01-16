@@ -3,6 +3,19 @@
     {
       "type": "node-workspace",
       "updateAllPackages": true
+    },
+    {
+      "type": "linked-versions",
+      "groupName": "local-mcp-gateway",
+      "components": [
+        "backend",
+        "frontend",
+        "config",
+        "core",
+        "database",
+        "ui",
+        "mcp-gemini-deep-research"
+      ]
     }
   ],
   "include-component-in-tag": true,
