@@ -72,15 +72,16 @@ export function ProfileConfigCard({ profileName, tools }: ProfileConfigCardProps
       await navigator.clipboard.writeText(content);
       setCopyStates((prev) => ({ ...prev, [key]: true }));
       toast({
+        variant: 'success',
         title: 'Copied!',
         description,
       });
       setTimeout(() => setCopyStates((prev) => ({ ...prev, [key]: false })), 2000);
     } catch {
       toast({
+        variant: 'danger',
         title: 'Failed to copy',
         description: 'Could not copy to clipboard',
-        variant: 'destructive',
       });
     }
   };

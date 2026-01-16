@@ -47,15 +47,16 @@ export default function GatewayConfig({
       await navigator.clipboard.writeText(gatewayUrl);
       setCopySuccess(true);
       toast({
+        variant: 'success',
         title: 'Copied!',
         description: 'Gateway endpoint copied to clipboard',
       });
       setTimeout(() => setCopySuccess(false), 2000);
     } catch {
       toast({
+        variant: 'danger',
         title: 'Failed to copy',
         description: 'Could not copy URL to clipboard',
-        variant: 'destructive',
       });
     }
   };

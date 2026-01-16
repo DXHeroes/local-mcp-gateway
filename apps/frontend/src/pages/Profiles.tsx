@@ -140,15 +140,16 @@ export default function ProfilesPage() {
       }
 
       toast({
+        variant: 'success',
         title: 'Gateway profile updated',
         description: `Active profile set to "${profileName}"`,
       });
     } catch {
       setDefaultGatewayProfile(previous);
       toast({
+        variant: 'danger',
         title: 'Error',
         description: 'Failed to update gateway profile',
-        variant: 'destructive',
       });
     }
   };
@@ -269,6 +270,7 @@ export default function ProfilesPage() {
       setDeleteDialogOpen(false);
       setProfileToDelete(null);
       toast({
+        variant: 'success',
         title: 'Profile deleted',
         description: `Profile "${profileToDelete.name}" has been deleted.`,
       });
@@ -289,15 +291,16 @@ export default function ProfilesPage() {
       await navigator.clipboard.writeText(endpoint);
       setCopiedId(profileId);
       toast({
+        variant: 'success',
         title: 'Copied!',
         description: 'Endpoint copied to clipboard',
       });
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
       toast({
+        variant: 'danger',
         title: 'Failed to copy',
         description: 'Could not copy endpoint',
-        variant: 'destructive',
       });
     }
   };
@@ -503,10 +506,10 @@ function EmptyState({ onCreateClick }: { onCreateClick: () => void }) {
     try {
       await navigator.clipboard.writeText(configSnippet);
       setCopied(true);
-      toast({ title: 'Copied!', description: 'Config snippet copied to clipboard' });
+      toast({ variant: 'success', title: 'Copied!', description: 'Config snippet copied to clipboard' });
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast({ title: 'Failed to copy', variant: 'destructive' });
+      toast({ variant: 'danger', title: 'Failed to copy' });
     }
   };
 

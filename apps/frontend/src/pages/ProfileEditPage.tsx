@@ -129,7 +129,7 @@ export default function ProfileEditPage() {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load profile data';
       setError(errorMessage);
       toast({
-        variant: 'destructive',
+        variant: 'danger',
         title: 'Error',
         description: errorMessage,
       });
@@ -174,12 +174,13 @@ export default function ProfileEditPage() {
       }
 
       toast({
+        variant: 'success',
         title: isActive ? 'Server Activated' : 'Server Deactivated',
         description: `${servers.find((s) => s.id === serverId)?.name} is now ${isActive ? 'active' : 'inactive'}`,
       });
     } catch (_error) {
       toast({
-        variant: 'destructive',
+        variant: 'danger',
         title: 'Error',
         description: 'Failed to toggle server',
       });

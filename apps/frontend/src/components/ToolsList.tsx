@@ -96,6 +96,7 @@ export function ToolsList({
       }
 
       toast({
+        variant: 'success',
         title: 'Success',
         description: 'Tool customizations saved successfully',
       });
@@ -107,7 +108,7 @@ export function ToolsList({
       }
     } catch (error) {
       toast({
-        variant: 'destructive',
+        variant: 'danger',
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to save changes',
       });

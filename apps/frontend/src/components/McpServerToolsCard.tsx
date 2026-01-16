@@ -63,12 +63,13 @@ export function McpServerToolsCard({
     try {
       await onRefresh(server.id);
       toast({
+        variant: 'success',
         title: 'Refreshed',
         description: 'Tools refreshed from remote server',
       });
     } catch (_error) {
       toast({
-        variant: 'destructive',
+        variant: 'danger',
         title: 'Error',
         description: 'Failed to refresh tools',
       });

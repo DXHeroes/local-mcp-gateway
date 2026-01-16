@@ -33,9 +33,16 @@ const toastVariants = cva(
     variants: {
       variant: {
         default: 'border bg-background text-foreground',
+        success:
+          'success border-green-700 bg-green-600 [&>div]:text-white',
+        warning:
+          'warning border-amber-700 bg-amber-600 [&>div]:text-white',
+        danger:
+          'danger border-red-700 bg-red-600 [&>div]:text-white',
+        info: 'info border-blue-700 bg-blue-600 [&>div]:text-white',
+        // Keep destructive as alias for backward compatibility
         destructive:
-          'destructive group border-destructive bg-destructive text-destructive-foreground',
-        success: 'border-green-500 bg-green-50 text-green-900 dark:bg-green-900 dark:text-green-50',
+          'danger border-red-700 bg-red-600 [&>div]:text-white',
       },
     },
     defaultVariants: {
@@ -80,7 +87,15 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      'absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100 group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600',
+      'absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100',
+      // Success variant (white text on colored bg)
+      'group-[.success]:text-white/70 group-[.success]:hover:text-white group-[.success]:focus:ring-green-300',
+      // Warning variant (white text on colored bg)
+      'group-[.warning]:text-white/70 group-[.warning]:hover:text-white group-[.warning]:focus:ring-amber-300',
+      // Danger variant (white text on colored bg)
+      'group-[.danger]:text-white/70 group-[.danger]:hover:text-white group-[.danger]:focus:ring-red-300',
+      // Info variant (white text on colored bg)
+      'group-[.info]:text-white/70 group-[.info]:hover:text-white group-[.info]:focus:ring-blue-300',
       className
     )}
     toast-close=""
