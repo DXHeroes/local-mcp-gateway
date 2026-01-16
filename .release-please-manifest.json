@@ -1,9 +1,9 @@
 {
-  "apps/backend": "0.5.1",
-  "apps/frontend": "0.7.0",
-  "packages/config": "0.4.1",
-  "packages/core": "0.4.1",
-  "packages/database": "0.4.1",
-  "packages/ui": "0.4.1",
-  "mcp-servers/gemini-deep-research": "0.4.1"
+  "apps/backend": "0.6.0",
+  "apps/frontend": "0.8.0",
+  "packages/config": "0.4.2",
+  "packages/core": "0.4.2",
+  "packages/database": "0.4.2",
+  "packages/ui": "0.5.0",
+  "mcp-servers/gemini-deep-research": "0.4.2"
 }

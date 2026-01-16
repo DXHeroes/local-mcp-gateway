@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.6.0](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.5.1...backend-v0.6.0) (2026-01-16)
+
+
+### Features
+
+* **profiles:** allow deletion of default profile without re-seeding ([c20ab13](https://github.com/DXHeroes/local-mcp-gateway/commit/c20ab137bb58ed29861336c5e0835a4f20c0d5d2))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-core bumped to 0.4.2
+    * @dxheroes/local-mcp-database bumped to 0.4.2
+    * @dxheroes/mcp-gemini-deep-research bumped to 0.4.2
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.2
+
 ## [0.5.1](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.5.0...backend-v0.5.1) (2026-01-16)
 
 
