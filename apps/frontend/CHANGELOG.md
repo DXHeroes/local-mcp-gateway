@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.8.0](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.7.0...frontend-v0.8.0) (2026-01-16)
+
+
+### Features
+
+* **ui:** add toast color variants with consistent styling ([a3a8e32](https://github.com/DXHeroes/local-mcp-gateway/commit/a3a8e3216b5f5a5b49d43d5a29b3b81f27ba69d1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.2
+    * @dxheroes/local-mcp-ui bumped to 0.5.0
+
 ## [0.7.0](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.6.0...frontend-v0.7.0) (2026-01-16)
 
 
