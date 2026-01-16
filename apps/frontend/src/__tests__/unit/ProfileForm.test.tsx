@@ -122,7 +122,7 @@ describe('ProfileForm', () => {
       () => {
         const nameInput = screen.getByLabelText(/name/i) as HTMLInputElement;
         expect(nameInput.value).toBe('test-profile');
-        expect(nameInput.disabled).toBe(true); // Name is disabled in edit mode
+        expect(nameInput.disabled).toBe(false); // Name is editable in edit mode
       },
       { timeout: 5000 }
     );

@@ -17,12 +17,7 @@ import {
   Input,
   Label,
   Textarea,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
 } from '@dxheroes/local-mcp-ui';
-import { Info } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 interface Profile {
@@ -57,6 +52,7 @@ export default function ProfileForm({
   onOpenChange,
 }: ProfileFormProps) {
   const [name, setName] = useState('');
+  const [originalName, setOriginalName] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -114,9 +110,11 @@ export default function ProfileForm({
   useEffect(() => {
     if (profile) {
       setName(profile.name);
+      setOriginalName(profile.name);
       setDescription(profile.description || '');
     } else {
       setName('');
+      setOriginalName('');
       setDescription('');
       setSelectedServerIds(new Set());
     }
@@ -209,23 +207,9 @@ export default function ProfileForm({
           )}
 
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="profile-name">
-                Name <span className="text-red-500">*</span>
-              </Label>
-              {profile && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-4 w-4 text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Profile name cannot be changed after creation</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </div>
+            <Label htmlFor="profile-name">
+              Name <span className="text-red-500">*</span>
+            </Label>
             <Input
               id="profile-name"
               type="text"
@@ -233,11 +217,29 @@ export default function ProfileForm({
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
               placeholder="my-profile"
               required
-              disabled={isSubmitting || !!profile} // Can't change name when editing
+              disabled={isSubmitting}
             />
             <p className="text-xs text-muted-foreground">
               Alphanumeric characters, dashes, and underscores only
             </p>
+            {profile && name !== originalName && (
+              <Alert
+                variant="default"
+                className="mt-2 border-amber-500 bg-amber-50 dark:bg-amber-950"
+              >
+                <AlertDescription className="text-amber-800 dark:text-amber-200">
+                  Changing the name will update the URL endpoint from{' '}
+                  <code className="mx-1 px-1 py-0.5 bg-amber-100 dark:bg-amber-900 rounded text-xs">
+                    /api/mcp/{originalName}
+                  </code>{' '}
+                  to{' '}
+                  <code className="mx-1 px-1 py-0.5 bg-amber-100 dark:bg-amber-900 rounded text-xs">
+                    /api/mcp/{name || '...'}
+                  </code>
+                  . Existing connections will stop working.
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
 
           <div className="space-y-2">
