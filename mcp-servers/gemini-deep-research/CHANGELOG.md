@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.4.0](https://github.com/DXHeroes/local-mcp-gateway/compare/mcp-gemini-deep-research-v0.3.4...mcp-gemini-deep-research-v0.4.0) (2026-01-16)
+
+
+### Features
+
+* add docs page, AGENTS.md files, and UI improvements ([d24105b](https://github.com/DXHeroes/local-mcp-gateway/commit/d24105bf5face12348b5617f0deb6fba52778ca1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * peerDependencies
+    * @dxheroes/local-mcp-core bumped to 0.4.0
+
 ## [0.3.4](https://github.com/DXHeroes/local-mcp-gateway/compare/mcp-gemini-deep-research-v0.3.3...mcp-gemini-deep-research-v0.3.4) (2026-01-14)
 
 

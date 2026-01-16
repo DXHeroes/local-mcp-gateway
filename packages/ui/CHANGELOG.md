@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.4.0](https://github.com/DXHeroes/local-mcp-gateway/compare/ui-v0.3.4...ui-v0.4.0) (2026-01-16)
+
+
+### Features
+
+* add docs page, AGENTS.md files, and UI improvements ([d24105b](https://github.com/DXHeroes/local-mcp-gateway/commit/d24105bf5face12348b5617f0deb6fba52778ca1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.0
+
 ## [0.3.4](https://github.com/DXHeroes/local-mcp-gateway/compare/ui-v0.3.3...ui-v0.3.4) (2026-01-14)
 
 
