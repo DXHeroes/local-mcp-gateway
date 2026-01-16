@@ -37,7 +37,7 @@ As AI clients multiply (Claude, Cursor, IDEs) and MCP servers proliferate (GitHu
 Run Local MCP Gateway instantly without cloning the repository:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/DXHeroes/local-mcp-gateway/main/docker-compose.hub.yml -o local-mcp-gateway.yml && docker compose -f local-mcp-gateway.yml up -d
+curl -fsSL https://raw.githubusercontent.com/DXHeroes/local-mcp-gateway/main/docker-compose.hub.yml -o local-mcp-gateway.yml && docker compose -f local-mcp-gateway.yml up -d --pull always
 ```
 
 - **UI**: http://localhost:9630
