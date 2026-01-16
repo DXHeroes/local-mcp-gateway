@@ -25,10 +25,10 @@ describe('App', () => {
   it('should render Profiles page by default', () => {
     render(<App />);
 
-    // Profiles page should be rendered (either content or loading state)
-    // Check for loading state or page heading
-    const loadingText = screen.queryByText('Loading profiles...');
+    // Profiles page should be rendered (either skeleton UI or page heading)
+    // Check for skeleton loading state or page heading
+    const skeletonUI = document.querySelector('.animate-pulse');
     const pageHeading = screen.queryByRole('heading', { name: /Profiles/i });
-    expect(loadingText || pageHeading).toBeTruthy();
+    expect(skeletonUI || pageHeading).toBeTruthy();
   });
 });

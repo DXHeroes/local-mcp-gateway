@@ -91,7 +91,8 @@ describe('McpServersPage', () => {
       { timeout: 10000 }
     );
 
-    expect(screen.getByText(/Type: remote_http/i)).toBeInTheDocument();
+    // Type is shown as badge text
+    expect(screen.getByText('remote_http')).toBeInTheDocument();
   });
 
   it('should display empty state when no servers', async () => {
@@ -234,10 +235,10 @@ describe('McpServersPage', () => {
       { timeout: 10000 }
     );
 
-    expect(screen.getByText(/OAuth Configuration/i)).toBeInTheDocument();
-    expect(
-      screen.getByText(/Authorization Server: https:\/\/oauth.example.com/i)
-    ).toBeInTheDocument();
+    // OAuth is shown as a badge
+    expect(screen.getByText('OAuth')).toBeInTheDocument();
+    // Authorization server URL is shown directly
+    expect(screen.getByText('https://oauth.example.com')).toBeInTheDocument();
     expect(screen.getByText('Authorize')).toBeInTheDocument();
   });
 
@@ -292,7 +293,8 @@ describe('McpServersPage', () => {
       { timeout: 10000 }
     );
 
-    expect(screen.getByText(/API Key Configured/i)).toBeInTheDocument();
+    // API Key is shown as a badge
+    expect(screen.getByText('API Key')).toBeInTheDocument();
     expect(screen.getByText(/Header: X-API-Key/i)).toBeInTheDocument();
   });
 

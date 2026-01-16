@@ -480,10 +480,10 @@ describe('ProfileForm', () => {
         return HttpResponse.json(mockServers);
       }),
       http.get(`${API_URL}/api/profiles/1/servers`, () => {
-        return HttpResponse.json({ serverIds: ['1'] });
+        return HttpResponse.json([{ mcpServerId: '1' }]);
       }),
       http.get('/api/profiles/1/servers', () => {
-        return HttpResponse.json({ serverIds: ['1'] });
+        return HttpResponse.json([{ mcpServerId: '1' }]);
       })
     );
 

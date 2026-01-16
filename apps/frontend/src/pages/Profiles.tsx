@@ -425,6 +425,8 @@ export default function ProfilesPage() {
               </p>
 
               {/* Endpoint */}
+              {/* biome-ignore lint/a11y/useKeyWithClickEvents: onClick only stops propagation */}
+              {/* biome-ignore lint/a11y/noStaticElementInteractions: container for endpoint copy */}
               <div
                 className="flex items-center gap-2 bg-muted rounded px-2 py-1.5"
                 onClick={(e) => e.stopPropagation()}

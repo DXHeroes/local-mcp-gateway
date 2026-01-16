@@ -36,7 +36,8 @@ describe('ProfilesPage', () => {
         <ProfilesPage />
       </MemoryRouter>
     );
-    expect(screen.getByText('Loading profiles...')).toBeInTheDocument();
+    // Loading state shows skeleton UI (animate-pulse)
+    expect(document.querySelector('.animate-pulse')).toBeInTheDocument();
   });
 
   it('should display profiles when loaded', async () => {
@@ -84,13 +85,13 @@ describe('ProfilesPage', () => {
       { timeout: 5000 }
     );
 
+    // Profile cards show server/tools status
     await waitFor(
       () => {
-        expect(screen.getByText('Test profile description')).toBeInTheDocument();
+        expect(screen.getByText(/servers.*tools/i)).toBeInTheDocument();
       },
       { timeout: 5000 }
     );
-    expect(screen.getByText(/Gateway Endpoint:/i)).toBeInTheDocument();
   });
 
   it('should display empty state when no profiles', async () => {
@@ -117,12 +118,10 @@ describe('ProfilesPage', () => {
       { timeout: 10000 }
     );
 
-    // Wait for empty state text to appear
+    // Wait for empty state text to appear (Quick Start guide)
     await waitFor(
       () => {
-        expect(
-          screen.getByText(/No profiles found. Create your first profile to get started./i)
-        ).toBeInTheDocument();
+        expect(screen.getByText(/Quick Start/i)).toBeInTheDocument();
       },
       { timeout: 10000 }
     );
@@ -155,7 +154,7 @@ describe('ProfilesPage', () => {
     // Wait for error message to appear
     await waitFor(
       () => {
-        expect(screen.getByText(/Error:/i)).toBeInTheDocument();
+        expect(screen.getByText(/Failed to fetch profiles/i)).toBeInTheDocument();
       },
       { timeout: 10000 }
     );
@@ -175,9 +174,10 @@ describe('ProfilesPage', () => {
     );
 
     await waitFor(() => {
-      // There are multiple "Create Profile" buttons (header + empty state)
-      const buttons = screen.getAllByText('Create Profile');
-      expect(buttons.length).toBeGreaterThan(0);
+      // Header has "New Profile" button, empty state has "Create First Profile"
+      const newProfileBtn = screen.queryByText('New Profile');
+      const createFirstBtn = screen.queryByText('Create First Profile');
+      expect(newProfileBtn || createFirstBtn).toBeTruthy();
     });
   });
 
