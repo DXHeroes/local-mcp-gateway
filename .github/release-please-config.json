@@ -2,7 +2,8 @@
   "plugins": [
     {
       "type": "node-workspace",
-      "updateAllPackages": true
+      "updateAllPackages": true,
+      "merge": false
     },
     {
       "type": "linked-versions",
