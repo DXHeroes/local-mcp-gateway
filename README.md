@@ -8,6 +8,33 @@ As AI clients multiply (Claude, Cursor, IDEs) and MCP servers proliferate (GitHu
 
 **Local First**: Your data and tools stay under your control. No cloud dependency, no SaaS API keys.
 
+## Quick Start with Docker (Recommended)
+
+Run Local MCP Gateway instantly without cloning the repository:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/DXHeroes/local-mcp-gateway/main/docker-compose.hub.yml \
+  -o local-mcp-gateway.yml && \
+  docker compose -f local-mcp-gateway.yml up -d --pull always
+```
+
+- **UI**: http://localhost:9630
+- **MCP Endpoint**: http://localhost:9631/api/mcp/default
+- **Data**: Stored in `~/.local-mcp-gateway-data/`
+
+To stop: `docker compose -f local-mcp-gateway.yml down`
+
+For more details, see [Docker Quick Start Guide](./docs/how-to/docker-quickstart.md).
+
+## Features
+
+-   🚀 **Proxy & Aggregator**: Combine multiple MCP servers (stdio, SSE, remote) into one
+-   🛠️ **Custom MCP Support**: Write your own MCP servers in TypeScript with hot-reload
+-   🔒 **Security**: Built-in API Key management and OAuth 2.1 support
+-   📊 **Observability**: Real-time request/response logging and inspection
+-   🖥️ **Web Interface**: Modern UI to manage servers, profiles, and logs
+-   🐳 **Docker Ready**: Easy deployment with Docker Compose
+
 ## How it works
 
 ### 1. Create a profile for your use-case and configure the MCP servers you want to use.
@@ -76,33 +103,6 @@ As AI clients multiply (Claude, Cursor, IDEs) and MCP servers proliferate (GitHu
 
 ### 3. Use the profile in your AI client.
 ![Cursor MCP Configuration](docs/images/cursor-mcp.png)
-
-## Quick Start with Docker (Recommended)
-
-Run Local MCP Gateway instantly without cloning the repository:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/DXHeroes/local-mcp-gateway/main/docker-compose.hub.yml \
-  -o local-mcp-gateway.yml && \
-  docker compose -f local-mcp-gateway.yml up -d --pull always
-```
-
-- **UI**: http://localhost:9630
-- **MCP Endpoint**: http://localhost:9631/api/mcp/default
-- **Data**: Stored in `~/.local-mcp-gateway-data/`
-
-To stop: `docker compose -f local-mcp-gateway.yml down`
-
-For more details, see [Docker Quick Start Guide](./docs/how-to/docker-quickstart.md).
-
-## Features
-
--   🚀 **Proxy & Aggregator**: Combine multiple MCP servers (stdio, SSE, remote) into one
--   🛠️ **Custom MCP Support**: Write your own MCP servers in TypeScript with hot-reload
--   🔒 **Security**: Built-in API Key management and OAuth 2.1 support
--   📊 **Observability**: Real-time request/response logging and inspection
--   🖥️ **Web Interface**: Modern UI to manage servers, profiles, and logs
--   🐳 **Docker Ready**: Easy deployment with Docker Compose
 
 ## Development Setup
 
