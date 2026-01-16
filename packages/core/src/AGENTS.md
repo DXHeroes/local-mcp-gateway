@@ -42,6 +42,7 @@ src/
 
 - **[types/AGENTS.md](types/AGENTS.md)** - Type definitions
 - **[abstractions/AGENTS.md](abstractions/AGENTS.md)** - Abstract classes
+- **[services/AGENTS.md](services/AGENTS.md)** - Service abstractions
 
 ## Development Rules
 

@@ -351,6 +351,10 @@ pnpm --filter backend test:watch
 pnpm --filter backend test:e2e
 ```
 
+## Child Directories
+
+- **[src/AGENTS.md](src/AGENTS.md)** - Source code documentation
+
 ## Important Notes
 
 - **No user authentication**: All endpoints are public

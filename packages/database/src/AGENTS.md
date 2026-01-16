@@ -57,6 +57,10 @@ pnpm prisma:seed
 - `database.ts` - Database connection utilities (path resolution, etc.)
 - `index.ts` - Package exports (Prisma Client, Zod schemas)
 
+## Child Directories
+
+- **[seeds/AGENTS.md](seeds/AGENTS.md)** - Database seed scripts
+
 ## Development Rules
 
 - **Never edit generated files** - Edit `prisma/schema.prisma` instead

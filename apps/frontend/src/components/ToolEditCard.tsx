@@ -1,17 +1,19 @@
 /**
  * Tool Edit Card Component
  *
- * Allows editing of individual tool customizations with expandable details
+ * Compact card with edit modal for tool customizations
  */
 
 import {
   Badge,
   Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
   Checkbox,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   Input,
   Label,
   Tabs,
@@ -46,7 +48,7 @@ interface ToolEditCardProps {
 }
 
 export function ToolEditCard({ tool, onChange }: ToolEditCardProps) {
-  const [showDetails, setShowDetails] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [customName, setCustomName] = useState(tool.customized?.name || '');
   const [customDescription, setCustomDescription] = useState(tool.customized?.description || '');
   const [customSchemaJson, setCustomSchemaJson] = useState(
@@ -61,50 +63,43 @@ export function ToolEditCard({ tool, onChange }: ToolEditCardProps) {
     });
   };
 
-  const handleCustomNameChange = (value: string) => {
-    setCustomName(value);
-    onChange({
-      ...tool,
-      customized: {
-        name: value || tool.original.name,
-        description: customDescription || tool.original.description,
-        inputSchema: tool.customized?.inputSchema || tool.original.inputSchema,
-      },
-    });
+  const handleOpenModal = () => {
+    // Reset form to current values when opening
+    setCustomName(tool.customized?.name || '');
+    setCustomDescription(tool.customized?.description || '');
+    setCustomSchemaJson(
+      tool.customized?.inputSchema ? JSON.stringify(tool.customized.inputSchema, null, 2) : ''
+    );
+    setSchemaError(null);
+    setIsModalOpen(true);
   };
 
-  const handleCustomDescriptionChange = (value: string) => {
-    setCustomDescription(value);
-    onChange({
-      ...tool,
-      customized: {
-        name: customName || tool.original.name,
-        description: value || tool.original.description,
-        inputSchema: tool.customized?.inputSchema || tool.original.inputSchema,
-      },
-    });
-  };
-
-  const handleSchemaChange = (value: string) => {
-    setCustomSchemaJson(value);
-
-    if (!value.trim()) {
-      // Empty schema, reset to original
-      setSchemaError(null);
-      onChange({
-        ...tool,
-        customized: {
-          name: customName || tool.original.name,
-          description: customDescription || tool.original.description,
-          inputSchema: tool.original.inputSchema,
-        },
-      });
-      return;
+  const handleSaveCustomizations = () => {
+    // Validate schema if provided
+    let parsedSchema = tool.original.inputSchema;
+    if (customSchemaJson.trim()) {
+      try {
+        parsedSchema = JSON.parse(customSchemaJson);
+      } catch {
+        setSchemaError('Invalid JSON');
+        return;
+      }
     }
 
-    try {
-      const parsedSchema = JSON.parse(value);
-      setSchemaError(null);
+    // Check if there are any actual customizations
+    const hasNameChange = customName && customName !== tool.original.name;
+    const hasDescChange = customDescription && customDescription !== tool.original.description;
+    const hasSchemaChange =
+      customSchemaJson.trim() &&
+      JSON.stringify(parsedSchema) !== JSON.stringify(tool.original.inputSchema);
+
+    if (!hasNameChange && !hasDescChange && !hasSchemaChange) {
+      // No customizations, set to null
+      onChange({
+        ...tool,
+        customized: null,
+      });
+    } else {
       onChange({
         ...tool,
         customized: {
@@ -113,9 +108,9 @@ export function ToolEditCard({ tool, onChange }: ToolEditCardProps) {
           inputSchema: parsedSchema,
         },
       });
-    } catch (_error) {
-      setSchemaError('Invalid JSON');
     }
+
+    setIsModalOpen(false);
   };
 
   const handleResetCustomizations = () => {
@@ -127,6 +122,7 @@ export function ToolEditCard({ tool, onChange }: ToolEditCardProps) {
       ...tool,
       customized: null,
     });
+    setIsModalOpen(false);
   };
 
   const displayName = tool.customized?.name || tool.original.name;
@@ -134,59 +130,62 @@ export function ToolEditCard({ tool, onChange }: ToolEditCardProps) {
   const hasCustomizations = tool.customized !== null;
 
   return (
-    <Card className={tool.hasChanges ? 'border-yellow-500 border-2' : ''}>
-      <CardHeader>
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3 flex-1 min-w-0">
-            <Checkbox checked={tool.isEnabled} onCheckedChange={handleToggle} className="mt-1" />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <CardTitle className="text-base break-words">{displayName}</CardTitle>
-                {tool.hasChanges && (
-                  <Badge
-                    variant="outline"
-                    className="bg-amber-500 text-white border-amber-600 dark:bg-amber-600 dark:border-amber-500"
-                  >
-                    Server Changed
-                  </Badge>
-                )}
-                {hasCustomizations && (
-                  <Badge
-                    variant="outline"
-                    className="bg-blue-500 text-white border-blue-600 dark:bg-blue-600 dark:border-blue-500"
-                  >
-                    Customized
-                  </Badge>
-                )}
-                {tool.changeType === 'added' && (
-                  <Badge
-                    variant="outline"
-                    className="bg-green-500 text-white border-green-600 dark:bg-green-600 dark:border-green-500"
-                  >
-                    New
-                  </Badge>
-                )}
-              </div>
-              {displayDescription && (
-                <p className="text-sm text-muted-foreground mt-1 break-words">
-                  {displayDescription}
-                </p>
-              )}
-            </div>
+    <>
+      {/* Compact Card */}
+      <div
+        className={`flex items-start gap-3 p-3 rounded-lg border ${
+          tool.hasChanges ? 'border-yellow-500 border-2' : 'border-border'
+        }`}
+      >
+        <Checkbox checked={tool.isEnabled} onCheckedChange={handleToggle} className="mt-0.5" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-medium text-sm break-words">{displayName}</span>
+            {tool.hasChanges && (
+              <Badge
+                variant="outline"
+                className="bg-amber-500 text-white border-amber-600 dark:bg-amber-600 dark:border-amber-500 text-xs"
+              >
+                Server Changed
+              </Badge>
+            )}
+            {hasCustomizations && (
+              <Badge
+                variant="outline"
+                className="bg-blue-500 text-white border-blue-600 dark:bg-blue-600 dark:border-blue-500 text-xs"
+              >
+                Customized
+              </Badge>
+            )}
+            {tool.changeType === 'added' && (
+              <Badge
+                variant="outline"
+                className="bg-green-500 text-white border-green-600 dark:bg-green-600 dark:border-green-500 text-xs"
+              >
+                New
+              </Badge>
+            )}
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowDetails(!showDetails)}
-            className="shrink-0"
-          >
-            {showDetails ? 'Hide' : 'Show'} Details
-          </Button>
+          {displayDescription && (
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{displayDescription}</p>
+          )}
         </div>
-      </CardHeader>
+        <Button variant="ghost" size="sm" onClick={handleOpenModal} className="shrink-0">
+          Edit
+        </Button>
+      </div>
 
-      {showDetails && (
-        <CardContent data-testid="tool-details">
+      {/* Edit Modal */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Tool: {tool.original.name}</DialogTitle>
+            <DialogDescription>
+              Customize the tool name, description, or input schema. Leave empty to use original
+              values.
+            </DialogDescription>
+          </DialogHeader>
+
           <Tabs defaultValue="edit" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="edit">Edit</TabsTrigger>
@@ -204,7 +203,7 @@ export function ToolEditCard({ tool, onChange }: ToolEditCardProps) {
                 <Input
                   id={`custom-name-${tool.name}`}
                   value={customName}
-                  onChange={(e) => handleCustomNameChange(e.target.value)}
+                  onChange={(e) => setCustomName(e.target.value)}
                   placeholder={tool.original.name}
                 />
               </div>
@@ -219,7 +218,7 @@ export function ToolEditCard({ tool, onChange }: ToolEditCardProps) {
                 <Textarea
                   id={`custom-description-${tool.name}`}
                   value={customDescription}
-                  onChange={(e) => handleCustomDescriptionChange(e.target.value)}
+                  onChange={(e) => setCustomDescription(e.target.value)}
                   placeholder={tool.original.description || 'No description'}
                   rows={3}
                 />
@@ -235,34 +234,59 @@ export function ToolEditCard({ tool, onChange }: ToolEditCardProps) {
                 <Textarea
                   id={`custom-schema-${tool.name}`}
                   value={customSchemaJson}
-                  onChange={(e) => handleSchemaChange(e.target.value)}
+                  onChange={(e) => {
+                    setCustomSchemaJson(e.target.value);
+                    setSchemaError(null);
+                  }}
                   placeholder={JSON.stringify(tool.original.inputSchema, null, 2)}
                   className="font-mono text-xs"
                   rows={10}
                 />
                 {schemaError && <p className="text-sm text-destructive">{schemaError}</p>}
               </div>
-
-              {hasCustomizations && (
-                <div className="pt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleResetCustomizations}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    Reset All Customizations
-                  </Button>
-                </div>
-              )}
             </TabsContent>
 
             <TabsContent value="diff" className="mt-4" data-testid="diff-viewer">
-              <DiffViewer original={tool.original} customized={tool.customized} />
+              <DiffViewer
+                original={tool.original}
+                customized={
+                  customName || customDescription || customSchemaJson
+                    ? {
+                        name: customName || tool.original.name,
+                        description: customDescription || tool.original.description,
+                        inputSchema: customSchemaJson
+                          ? (() => {
+                              try {
+                                return JSON.parse(customSchemaJson);
+                              } catch {
+                                return tool.original.inputSchema;
+                              }
+                            })()
+                          : tool.original.inputSchema,
+                      }
+                    : null
+                }
+              />
             </TabsContent>
           </Tabs>
-        </CardContent>
-      )}
-    </Card>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            {hasCustomizations && (
+              <Button
+                variant="outline"
+                onClick={handleResetCustomizations}
+                className="text-destructive hover:text-destructive sm:mr-auto"
+              >
+                Reset All
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveCustomizations}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

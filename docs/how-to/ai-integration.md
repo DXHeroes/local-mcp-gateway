@@ -1,6 +1,6 @@
 # AI Integration Guide
 
-This guide explains how to integrate your Local MCP Proxy Server profiles with AI coding assistants like **Cursor** and **Claude Desktop**.
+This guide explains how to integrate your Local MCP Gateway profiles with AI coding assistants like **Cursor** and **Claude Desktop**.
 
 ## 1. Connecting to MCP Clients
 
@@ -59,24 +59,47 @@ Use this if you encounter SSL certificate errors or need a public URL. We use `l
 
 ## 2. Providing Context to AI (The "AI Prompt")
 
-Even when connected, the AI might not know *when* or *how* to use your specific tools. To solve this, the Local MCP Proxy Server provides a generated **AI Prompt**.
+Even when connected, the AI might not know *when* or *how* to use your specific tools. To solve this, the Local MCP Gateway provides generated **AI Prompts** in two formats.
 
-### What is it?
-It's a specially formatted text block using **TOON (Token-Oriented Object Notation)**. It describes:
-- The profile name and URL.
-- Every available tool.
-- The input schema for each tool.
+### Available Formats
 
-TOON is optimized for LLMs to be token-efficient and highly readable.
+#### Markdown Format
+Human-readable format that's easy to review and understand:
+- Clear headings and structured sections
+- Standard Markdown formatting
+- Best for documentation, debugging, and sharing with team members
 
-### How to use it
+#### TOON Format
+**Token-Oriented Object Notation** - optimized for LLMs:
+- Reduces token usage by 30-50% compared to JSON
+- Minimizes hallucinations
+- Best for production AI integrations
+
+### How to Use
 
 1.  Navigate to the **Profile** detail page in the frontend (`http://localhost:3000`).
-2.  Locate the **"AI Prompt"** section on the profile card.
-3.  Click the arrow to expand it (optional) or directly click the **Copy** button.
-4.  **Paste** the copied text into your conversation with the AI.
+2.  Click the **"AI Prompt"** tab on the profile card.
+3.  Choose between **Markdown** or **TOON** format using the tabs.
+4.  Click the **Copy** button.
+5.  **Paste** the copied text into your conversation with the AI.
 
-### Example Prompt
+### Example: Markdown Format
+
+```markdown
+# Profile: My Profile
+
+**Endpoint:** https://blue-sky-42.loca.lt/api/mcp/my-profile
+
+## Available Tools
+
+### weather_tool
+Get current weather
+
+**Parameters:**
+- `city` (string): The city name
+```
+
+### Example: TOON Format
 
 ```toon
 data{profile,url,tools}:
@@ -89,7 +112,19 @@ data{profile,url,tools}:
   ]
 ```
 
+### Which Format to Choose?
+
+| Use Case | Recommended Format |
+|----------|-------------------|
+| Reviewing tool configurations | Markdown |
+| Sharing with team members | Markdown |
+| Debugging tool issues | Markdown |
+| Production AI integrations | TOON |
+| Token-limited contexts | TOON |
+| Claude/Cursor daily use | TOON |
+
 ### Benefits
 - **Reduced Hallucinations**: The AI knows exactly what arguments are required.
 - **Better Tool Selection**: The descriptions help the AI understand the tool's purpose.
 - **Zero Configuration**: You don't need to manually explain your tools to the AI.
+- **Format Choice**: Pick the format that best suits your needs.

@@ -57,6 +57,10 @@ ui/
 - **Tailwind CSS v4**: Configured in `src/styles/globals.css` with `@import "tailwindcss"`, `@source` directives, and `@theme inline`
 - **TypeScript**: Extends root TypeScript config
 
+## Child Directories
+
+- **[src/AGENTS.md](src/AGENTS.md)** - Source code documentation
+
 ## Development Rules
 
 - All components must be accessible (Radix UI)

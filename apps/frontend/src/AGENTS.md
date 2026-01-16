@@ -72,6 +72,16 @@ src/
 ### Entry Point
 - `main.tsx` - React app entry point, router setup, providers
 
+## Child Directories
+
+- **[components/AGENTS.md](components/AGENTS.md)** - React components
+- **[pages/AGENTS.md](pages/AGENTS.md)** - Page components (routes)
+- **[lib/AGENTS.md](lib/AGENTS.md)** - Shared libraries and API client
+- **[config/AGENTS.md](config/AGENTS.md)** - Configuration and API hooks
+- **[utils/AGENTS.md](utils/AGENTS.md)** - Utility functions
+- **[hooks/AGENTS.md](hooks/AGENTS.md)** - Custom React hooks
+- **[__tests__/AGENTS.md](__tests__/AGENTS.md)** - Unit and integration tests
+
 ## Development Rules
 
 - TDD: Write component tests before implementation

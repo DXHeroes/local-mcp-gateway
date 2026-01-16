@@ -84,3 +84,4 @@ frontend/
 
 - **[src/AGENTS.md](src/AGENTS.md)** - Source code documentation
 - **[e2e/AGENTS.md](e2e/AGENTS.md)** - E2E tests documentation
+- **[public/AGENTS.md](public/AGENTS.md)** - Static assets

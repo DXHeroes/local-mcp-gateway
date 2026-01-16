@@ -113,6 +113,10 @@ export const mcpPackage: McpPackage = {
 - `zod` - Runtime validation
 - `@modelcontextprotocol/sdk` - MCP SDK
 
+## Child Directories
+
+- **[src/AGENTS.md](src/AGENTS.md)** - Source code documentation
+
 ## Related
 
 - **[../../mcp-servers/AGENTS.md](../../mcp-servers/AGENTS.md)** - MCP server packages

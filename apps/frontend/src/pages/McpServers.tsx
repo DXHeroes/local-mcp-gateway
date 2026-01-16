@@ -5,6 +5,7 @@
 import {
   Alert,
   AlertDescription,
+  Badge,
   Button,
   Card,
   CardHeader,
@@ -251,14 +252,14 @@ export default function McpServersPage() {
   };
 
   if (loading) {
-    return <div className="p-6">Loading MCP servers...</div>;
+    return <div className="p-4">Loading MCP servers...</div>;
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-6 flex justify-between items-center">
+    <div className="p-4">
+      <div className="mb-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold text-gray-900">MCP Servers</h2>
+          <h2 className="text-xl font-semibold text-gray-900">MCP Servers</h2>
           {refreshing && (
             <span className="text-sm text-muted-foreground flex items-center gap-2">
               <span className="inline-block w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
@@ -283,141 +284,121 @@ export default function McpServersPage() {
           <Button onClick={openCreateForm}>Add MCP Server</Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-3">
           {servers.map((server) => (
             <Card key={server.id}>
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between">
                       <CardTitle className="text-lg">{server.name}</CardTitle>
-                      {/* Connection status indicator */}
-                      <span
-                        className={`inline-block w-2 h-2 rounded-full ${
-                          server.connectionStatus === 'connected'
-                            ? 'bg-green-500'
-                            : server.connectionStatus === 'error'
-                              ? 'bg-red-500'
-                              : 'bg-gray-400'
-                        }`}
-                        title={
-                          server.connectionStatus === 'connected'
-                            ? 'Connected'
-                            : server.connectionStatus === 'error'
-                              ? `Error: ${server.connectionError || 'Unknown error'}`
-                              : 'Status unknown'
-                        }
-                      />
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/mcp-servers/${server.id}`)}
+                          aria-label={`View details for ${server.name}`}
+                        >
+                          View
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEditForm(server)}
+                          aria-label={`Edit ${server.name}`}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(server.id)}
+                          aria-label={`Delete ${server.name}`}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          Delete
+                        </Button>
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Type: {server.type}
-                      {server.type === 'builtin' && (
-                        <span className="ml-2 text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded">
-                          Built-in
-                        </span>
-                      )}
-                    </p>
-                    <div className="flex items-center gap-3 mt-2">
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      {/* Type badge */}
+                      <Badge variant={server.type === 'builtin' ? 'default' : 'secondary'}>
+                        {server.type}
+                      </Badge>
                       {/* Tools count badge */}
-                      <span className="text-xs px-2 py-1 bg-muted rounded">
+                      <Badge variant="outline">
                         {server.toolsCount ?? 0} tool{(server.toolsCount ?? 0) !== 1 ? 's' : ''}
-                      </span>
+                      </Badge>
                       {/* Connection status badge */}
-                      <span
-                        className={`text-xs px-2 py-1 rounded ${
+                      <Badge
+                        variant={
                           server.connectionStatus === 'connected'
-                            ? 'bg-green-100 text-green-800'
+                            ? 'success'
                             : server.connectionStatus === 'error'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-gray-100 text-gray-800'
-                        }`}
+                              ? 'destructive'
+                              : 'secondary'
+                        }
                       >
                         {server.connectionStatus === 'connected'
                           ? 'Connected'
                           : server.connectionStatus === 'error'
                             ? 'Error'
                             : 'Unknown'}
-                      </span>
+                      </Badge>
                     </div>
-                    {/* Validation details */}
-                    {server.validationDetails && (
-                      <p
-                        className={`text-xs mt-2 ${
-                          server.connectionStatus === 'connected'
-                            ? 'text-green-700'
-                            : server.connectionStatus === 'error'
-                              ? 'text-red-700'
-                              : 'text-gray-600'
-                        }`}
-                      >
-                        {server.validationDetails}
-                      </p>
+                    {/* Validation error alert */}
+                    {server.connectionStatus === 'error' && server.connectionError && (
+                      <Alert variant="destructive" className="mt-3 py-2">
+                        <AlertDescription className="text-xs">
+                          {server.connectionError}
+                        </AlertDescription>
+                      </Alert>
                     )}
+                    {/* Validation details for connected servers */}
+                    {server.connectionStatus === 'connected' && server.validationDetails && (
+                      <p className="text-xs mt-2 text-green-700">{server.validationDetails}</p>
+                    )}
+                    {/* API Key warning for builtin servers */}
+                    {server.type === 'builtin' &&
+                      server.metadata?.requiresApiKey &&
+                      !server.apiKeyConfig && (
+                        <Alert variant="default" className="mt-3 py-2 border-amber-200 bg-amber-50">
+                          <AlertDescription className="text-xs text-amber-800">
+                            <span className="font-medium">API Key Required:</span>{' '}
+                            {server.metadata.apiKeyHint ||
+                              'This built-in server requires an API key to function. Click Edit to configure.'}
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                    {/* OAuth configuration */}
                     {server.oauthConfig && (
-                      <div className="mt-4">
-                        <p className="text-sm font-medium">OAuth Configuration</p>
-                        <p className="text-xs text-muted-foreground">
-                          Authorization Server: {server.oauthConfig.authorizationServerUrl}
-                        </p>
+                      <div className="mt-3 flex items-center gap-2">
+                        <Badge variant="outline">OAuth</Badge>
+                        <span className="text-xs text-muted-foreground truncate max-w-xs">
+                          {server.oauthConfig.authorizationServerUrl}
+                        </span>
                         <Button
                           size="sm"
+                          variant="outline"
                           onClick={() => handleOAuthAuthorize(server.id)}
-                          className="mt-2"
                         >
                           Authorize
                         </Button>
                       </div>
                     )}
+                    {/* API Key configured */}
                     {server.apiKeyConfig &&
                       (() => {
                         const parsed = parseApiKeyConfig(server.apiKeyConfig);
                         return parsed ? (
-                          <div className="mt-4">
-                            <p className="text-sm font-medium">API Key Configured</p>
-                            <p className="text-xs text-muted-foreground">
+                          <div className="mt-3 flex items-center gap-2">
+                            <Badge variant="outline">API Key</Badge>
+                            <span className="text-xs text-muted-foreground">
                               Header: {parsed.headerName}
-                            </p>
+                            </span>
                           </div>
                         ) : null;
                       })()}
-                    {server.type === 'builtin' &&
-                      server.metadata?.requiresApiKey &&
-                      !server.apiKeyConfig && (
-                        <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
-                          <p className="text-sm font-medium text-amber-800">API Key Required</p>
-                          <p className="text-xs text-amber-700">
-                            {server.metadata.apiKeyHint ||
-                              'This built-in server requires an API key to function. Click Edit to configure.'}
-                          </p>
-                        </div>
-                      )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => navigate(`/mcp-servers/${server.id}`)}
-                      aria-label={`View details for ${server.name}`}
-                    >
-                      View Details
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openEditForm(server)}
-                      aria-label={`Edit ${server.name}`}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(server.id)}
-                      aria-label={`Delete ${server.name}`}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      Delete
-                    </Button>
                   </div>
                 </div>
               </CardHeader>

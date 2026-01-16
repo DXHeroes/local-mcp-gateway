@@ -170,17 +170,17 @@ export default function DebugLogsPage() {
   };
 
   if (loading) {
-    return <div className="p-6">Loading debug logs...</div>;
+    return <div className="p-4">Loading debug logs...</div>;
   }
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Debug Logs</h2>
+    <div className="p-4">
+      <h2 className="text-xl font-semibold text-gray-900 mb-4">Debug Logs</h2>
 
       {error && <div className="mb-4 p-4 text-red-600 bg-red-50 rounded-md">Error: {error}</div>}
 
       {/* Controls */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
+      <div className="bg-white rounded-lg shadow p-4 mb-4">
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-4">
             <h3 className="text-sm font-medium text-gray-700">Filters</h3>
@@ -298,13 +298,13 @@ export default function DebugLogsPage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {logs.map((log) => {
             const profile = profiles.find((p) => p.id === log.profileId);
             const server = log.mcpServerId ? servers.find((s) => s.id === log.mcpServerId) : null;
 
             return (
-              <div key={log.id} className="bg-white rounded-lg shadow p-6">
+              <div key={log.id} className="bg-white rounded-lg shadow p-4">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <div className="flex items-center gap-2 mb-2">

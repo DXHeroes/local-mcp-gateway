@@ -14,6 +14,8 @@ import {
 } from '@dxheroes/local-mcp-ui';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
+import { ToolInfoCard } from '../components/ToolInfoCard';
+import { API_URL } from '../config/api';
 
 interface McpServer {
   id: string;
@@ -57,8 +59,6 @@ interface DebugLog {
   durationMs?: number;
   createdAt: number;
 }
-
-import { API_URL } from '../config/api';
 
 export default function McpServerDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -200,12 +200,12 @@ export default function McpServerDetailPage() {
   };
 
   if (loading) {
-    return <div className="p-6">Loading server details...</div>;
+    return <div className="p-4">Loading server details...</div>;
   }
 
   if (error || !server) {
     return (
-      <div className="p-6">
+      <div className="p-4">
         <Alert variant="destructive">
           <AlertDescription>
             {error || 'Server not found'}
@@ -219,10 +219,10 @@ export default function McpServerDetailPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="p-4">
+      <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{server.name}</h2>
+          <h2 className="text-xl font-semibold text-gray-900">{server.name}</h2>
           <p className="text-sm text-muted-foreground mt-1">Type: {server.type}</p>
         </div>
         <Button onClick={() => navigate('/mcp-servers')} variant="outline">
@@ -231,7 +231,7 @@ export default function McpServerDetailPage() {
       </div>
 
       {/* Connection Status */}
-      <Card className="mb-6">
+      <Card className="mb-4">
         <CardHeader>
           <CardTitle>Connection Status</CardTitle>
         </CardHeader>
@@ -261,7 +261,7 @@ export default function McpServerDetailPage() {
       </Card>
 
       {/* Tools List */}
-      <Card className="mb-6">
+      <Card className="mb-4">
         <CardHeader>
           <CardTitle>Tools ({tools.length})</CardTitle>
         </CardHeader>
@@ -269,24 +269,14 @@ export default function McpServerDetailPage() {
           {tools.length === 0 ? (
             <p className="text-sm text-muted-foreground">No tools available</p>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {tools.map((tool) => (
-                <div key={tool.name} className="border-b pb-4 last:border-0">
-                  <h4 className="font-semibold text-lg">{tool.name}</h4>
-                  {tool.description && (
-                    <p className="text-sm text-muted-foreground mt-1">{tool.description}</p>
-                  )}
-                  {tool.inputSchema != null && (
-                    <details className="mt-2">
-                      <summary className="text-sm text-muted-foreground cursor-pointer">
-                        View input schema
-                      </summary>
-                      <pre className="mt-2 p-2 bg-muted rounded text-xs overflow-x-auto">
-                        {JSON.stringify(tool.inputSchema, null, 2)}
-                      </pre>
-                    </details>
-                  )}
-                </div>
+                <ToolInfoCard
+                  key={tool.name}
+                  name={tool.name}
+                  description={tool.description}
+                  inputSchema={tool.inputSchema}
+                />
               ))}
             </div>
           )}
@@ -305,7 +295,7 @@ export default function McpServerDetailPage() {
               a profile.
             </p>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {debugLogs.map((log) => (
                 <Card key={log.id} className="border">
                   <CardHeader>
@@ -330,7 +320,7 @@ export default function McpServerDetailPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {log.durationMs !== undefined && (
                         <p className="text-xs text-muted-foreground">
                           Duration: {log.durationMs}ms

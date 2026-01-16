@@ -284,6 +284,10 @@ pnpm test:watch
 - `zod` - Runtime validation
 - `zod-prisma-types` (dev) - Zod schema generator
 
+## Child Directories
+
+- **[src/AGENTS.md](src/AGENTS.md)** - Source code documentation
+
 ## Related Files
 
 - **Prisma Service**: `apps/backend/src/modules/database/prisma.service.ts`

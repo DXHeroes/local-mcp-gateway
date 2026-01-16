@@ -60,6 +60,10 @@ export default defineConfig(
 );
 ```
 
+## Child Directories
+
+- **[src/AGENTS.md](src/AGENTS.md)** - Source code documentation
+
 ## Development Rules
 
 - Keep configurations minimal and shared

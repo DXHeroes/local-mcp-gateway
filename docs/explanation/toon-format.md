@@ -25,7 +25,7 @@ users[2]{id,name,role}:
 2.  **Schema Awareness**: The header explicitly defines what each field means, reducing hallucinations.
 3.  **Readability**: It looks like a clean table or CSV, which models parse easily.
 
-## Usage in Local MCP Proxy
+## Usage in Local MCP Gateway
 
 We use TOON to generate the **AI Prompt** for your profiles.
 
@@ -53,4 +53,21 @@ data{profile,url,tools}:
 ```
 
 By pasting this into Claude or Cursor, you give the AI a "map" of your tools without overwhelming its context window with verbose JSON.
+
+## Alternative: Markdown Format
+
+While TOON is optimized for token efficiency, the gateway also provides a **Markdown format** as an alternative:
+
+### When to Use Markdown
+- **Human Review**: When you want to review tool configurations before sharing with AI
+- **Documentation**: For internal documentation or README files
+- **Debugging**: When troubleshooting tool configuration issues
+- **Team Sharing**: When sharing configurations with non-technical team members
+
+### When to Use TOON
+- **Production Use**: When token efficiency matters
+- **Daily AI Work**: For regular interactions with Claude or Cursor
+- **Large Tool Sets**: When you have many tools and need to minimize context usage
+
+Both formats are available in the UI on the Profile detail page under the "AI Prompt" tab.
 

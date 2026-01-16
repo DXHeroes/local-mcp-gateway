@@ -229,10 +229,10 @@ export default function ProfileEditPage() {
 
   if (error || !profile || !profileId) {
     return (
-      <div className="p-6">
+      <div className="p-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-destructive mb-2">Error</h2>
+            <h2 className="text-xl font-semibold text-destructive mb-2">Error</h2>
             <p className="text-muted-foreground mb-4">{error || 'Profile not found'}</p>
             <Button onClick={() => navigate('/profiles')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -245,10 +245,10 @@ export default function ProfileEditPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-4">
           <Button
             variant="ghost"
             size="sm"
@@ -259,7 +259,7 @@ export default function ProfileEditPage() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Profiles
           </Button>
-          <h1 className="text-3xl font-bold" data-testid="profile-edit-heading">
+          <h1 className="text-xl font-semibold" data-testid="profile-edit-heading">
             {profile.name}
           </h1>
           {profile.description && (
@@ -280,7 +280,7 @@ export default function ProfileEditPage() {
             <Button onClick={() => navigate('/profiles')}>Add Servers to Profile</Button>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {servers.map((server) => (
               <McpServerToolsCard
                 key={server.id}

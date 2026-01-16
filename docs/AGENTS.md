@@ -26,6 +26,15 @@ docs/
 - **Validation**: Links must be valid relative paths.
 - **Style**: Clear, concise, and developer-focused.
 
+## Child Directories
+
+- **[introduction/AGENTS.md](introduction/AGENTS.md)** - Getting started guides
+- **[tutorials/AGENTS.md](tutorials/AGENTS.md)** - Step-by-step learning paths
+- **[how-to/AGENTS.md](how-to/AGENTS.md)** - Practical task guides
+- **[reference/AGENTS.md](reference/AGENTS.md)** - Technical reference
+- **[explanation/AGENTS.md](explanation/AGENTS.md)** - Architecture and concepts
+- **[diagrams/AGENTS.md](diagrams/AGENTS.md)** - Mermaid diagrams
+
 ## Related Files
 
 - [README.md](./README.md) - Documentation Home

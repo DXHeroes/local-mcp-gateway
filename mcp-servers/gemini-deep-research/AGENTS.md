@@ -100,6 +100,10 @@ pnpm --filter @dxheroes/mcp-gemini-deep-research clean
 - `zod` - Input validation
 - `@dxheroes/local-mcp-core` (peer) - Core abstractions
 
+## Child Directories
+
+- **[src/AGENTS.md](src/AGENTS.md)** - Source code documentation
+
 ## Related Files
 
 - **MCP Servers Guide**: `mcp-servers/AGENTS.md`

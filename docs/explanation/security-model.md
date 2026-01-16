@@ -20,12 +20,12 @@ We use `localtunnel` to create a public HTTPS URL.
     - **Warning**: We explicitly warn users that this is a public tunnel. Do not share this URL.
 
 ### 2. Authentication & Authorization
-The Proxy supports two auth mechanisms for **connecting to backend tools** (not for protecting the gateway itself):
+The Gateway supports two auth mechanisms for **connecting to backend tools** (not for protecting the gateway itself):
 
 - **OAuth 2.1**: For connecting to third-party services (GitHub, Linear). Tokens are encrypted at rest.
 - **API Keys**: Keys are stored encrypted in the SQLite database.
     - Keys are **never** returned to the client.
-    - The Proxy injects them into headers *after* receiving the request from the AI.
+    - The Gateway injects them into headers *after* receiving the request from the AI.
 
 ### 3. Input Validation
 - All requests are validated against Zod schemas.
@@ -33,7 +33,7 @@ The Proxy supports two auth mechanisms for **connecting to backend tools** (not 
 
 ### 4. Data Sanitization
 - **Logs**: The `debug-logger` middleware automatically redacts known sensitive fields (headers, keys) before writing to the database or console.
-- **Prompts**: The TOON prompt generator only includes metadata (names, descriptions), not actual data or keys.
+- **Prompts**: The AI prompt generator (both Markdown and TOON formats) only includes metadata (names, descriptions), not actual data or keys.
 
 ## Best Practices for Users
 

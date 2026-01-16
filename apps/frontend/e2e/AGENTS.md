@@ -52,6 +52,10 @@ test.describe('Profiles', () => {
 });
 ```
 
+## Child Directories
+
+- **[pages/AGENTS.md](pages/AGENTS.md)** - Page Object Model classes
+
 ## Related Documentation
 
 - [../../../docs/development/testing.md](../../../docs/development/testing.md) - Testing guide

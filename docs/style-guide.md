@@ -1,6 +1,6 @@
 # Documentation Style Guide
 
-Thank you for contributing to the Local MCP Proxy documentation! This guide ensures our documentation remains consistent, clear, and helpful.
+Thank you for contributing to the Local MCP Gateway documentation! This guide ensures our documentation remains consistent, clear, and helpful.
 
 ## Tone and Voice
 

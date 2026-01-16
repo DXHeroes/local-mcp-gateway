@@ -3,11 +3,18 @@
  */
 
 import type { ReactNode } from 'react';
-import { Link } from 'react-router';
+import { NavLink } from 'react-router';
 
 interface LayoutProps {
   children: ReactNode;
 }
+
+const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+  `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${
+    isActive
+      ? 'border-primary text-foreground'
+      : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
+  }`;
 
 export default function Layout({ children }: LayoutProps) {
   return (
@@ -17,33 +24,27 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold text-gray-900">Local MCP Gateway</h1>
+                <h1 className="text-lg font-semibold text-gray-900">Local MCP Gateway</h1>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                <Link
-                  to="/profiles"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
+                <NavLink to="/profiles" className={navLinkClass}>
                   Profiles
-                </Link>
-                <Link
-                  to="/mcp-servers"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
+                </NavLink>
+                <NavLink to="/mcp-servers" className={navLinkClass}>
                   MCP Servers
-                </Link>
-                <Link
-                  to="/debug-logs"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
+                </NavLink>
+                <NavLink to="/debug-logs" className={navLinkClass}>
                   Debug Logs
-                </Link>
+                </NavLink>
+                <NavLink to="/docs" className={navLinkClass}>
+                  Docs
+                </NavLink>
               </div>
             </div>
           </div>
         </div>
       </nav>
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">{children}</main>
+      <main className="max-w-7xl mx-auto py-4 sm:px-6 lg:px-8">{children}</main>
     </div>
   );
 }
