@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/local-mcp-frontend",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "React 19 dashboard for managing MCP servers, profiles, API keys, and inspecting MCP traffic",
   "license": "Elastic-2.0",
   "type": "module",
