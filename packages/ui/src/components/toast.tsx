@@ -33,16 +33,12 @@ const toastVariants = cva(
     variants: {
       variant: {
         default: 'border bg-background text-foreground',
-        success:
-          'success border-green-700 bg-green-600 [&>div]:text-white',
-        warning:
-          'warning border-amber-700 bg-amber-600 [&>div]:text-white',
-        danger:
-          'danger border-red-700 bg-red-600 [&>div]:text-white',
+        success: 'success border-green-700 bg-green-600 [&>div]:text-white',
+        warning: 'warning border-amber-700 bg-amber-600 [&>div]:text-white',
+        danger: 'danger border-red-700 bg-red-600 [&>div]:text-white',
         info: 'info border-blue-700 bg-blue-600 [&>div]:text-white',
         // Keep destructive as alias for backward compatibility
-        destructive:
-          'danger border-red-700 bg-red-600 [&>div]:text-white',
+        destructive: 'danger border-red-700 bg-red-600 [&>div]:text-white',
       },
     },
     defaultVariants: {

@@ -506,7 +506,11 @@ function EmptyState({ onCreateClick }: { onCreateClick: () => void }) {
     try {
       await navigator.clipboard.writeText(configSnippet);
       setCopied(true);
-      toast({ variant: 'success', title: 'Copied!', description: 'Config snippet copied to clipboard' });
+      toast({
+        variant: 'success',
+        title: 'Copied!',
+        description: 'Config snippet copied to clipboard',
+      });
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast({ variant: 'danger', title: 'Failed to copy' });
