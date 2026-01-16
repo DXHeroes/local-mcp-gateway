@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/local-mcp-core",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "type": "module",
   "description": "Core types, interfaces, and utilities for MCP server management and package discovery",
   "license": "Elastic-2.0",

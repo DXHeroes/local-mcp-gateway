@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.1](https://github.com/DXHeroes/local-mcp-gateway/compare/ui-v0.5.0...ui-v0.5.1) (2026-01-16)
+
+
+### Bug Fixes
+
+* resolve biome formatting issues in toast and profiles ([673e8d2](https://github.com/DXHeroes/local-mcp-gateway/commit/673e8d2b388208022fc4cde809725c3fcd130664))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.3
+
 ## [0.5.0](https://github.com/DXHeroes/local-mcp-gateway/compare/ui-v0.4.1...ui-v0.5.0) (2026-01-16)
 
 
