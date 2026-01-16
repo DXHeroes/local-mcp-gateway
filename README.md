@@ -16,21 +16,60 @@ As AI clients multiply (Claude, Cursor, IDEs) and MCP servers proliferate (GitHu
 ![Local MCP Gateway Dashboard](docs/images/dashboard-preview-v2.png)
 
 ### 2. Configure the MCP servers in your AI client.
+
+#### 2.1. Using the default gateway API endpoint
 ```json
 {
   "mcpServers": {
     "mpc_gateway": {
       "type": "http",
       "url": "http://localhost:9631/api/mcp/gateway"
-    },
+    }
+  }
+}
+```
+
+#### 2.2. Using a specific "development" profile
+```json
+{
+  "mcpServers": {
     "profile_development": {
       "type": "http",
       "url": "http://localhost:9631/api/mcp/development"
-    },
+    }
+  }
+}
+```
+
+#### 2.3. Using a specific "marketing" profile
+```json
+{
+  "mcpServers": {
     "profile_marketing": {
       "type": "http",
       "url": "http://localhost:9631/api/mcp/marketing"
     }
+  }
+}
+```
+
+#### 2.4. Using multiple profiles and turn them on and off in your favorite AI client
+
+```json
+{
+  "mcpServers": {
+    "mpc_gateway": {
+      "type": "http",
+      "url": "http://localhost:9631/api/mcp/gateway"
+    }
+  },
+  "profile_marketing": {
+    "type": "http",
+    "url": "http://localhost:9631/api/mcp/marketing"
+  },
+  "profile_development": {
+    "type": "http",
+    "url": "http://localhost:9631/api/mcp/development"
   }
 }
 ```
