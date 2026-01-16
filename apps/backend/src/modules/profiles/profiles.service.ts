@@ -4,6 +4,7 @@
  * Business logic for profile management.
  */
 
+import { randomUUID } from 'node:crypto';
 import {
   ConflictException,
   forwardRef,
@@ -13,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { ProxyService } from '../proxy/proxy.service.js';
-import { RESERVED_PROFILE_NAMES } from '../settings/settings.constants.js';
+import { RESERVED_PROFILE_NAMES, SETTING_KEYS } from '../settings/settings.constants.js';
 
 interface CreateProfileDto {
   name: string;
@@ -201,9 +202,13 @@ export class ProfilesService {
       throw new NotFoundException(`Profile ${id} not found`);
     }
 
-    // Prevent deleting default profile
+    // If deleting default profile, mark it as intentionally deleted
     if (profile.name === 'default') {
-      throw new ConflictException('Cannot delete the default profile');
+      await this.prisma.gatewaySetting.upsert({
+        where: { key: SETTING_KEYS.DEFAULT_PROFILE_DELETED },
+        update: { value: 'true' },
+        create: { id: randomUUID(), key: SETTING_KEYS.DEFAULT_PROFILE_DELETED, value: 'true' },
+      });
     }
 
     await this.prisma.profile.delete({ where: { id } });

@@ -8,6 +8,7 @@ import { randomUUID } from 'node:crypto';
 import type { DiscoveredMcpPackage } from '@dxheroes/local-mcp-core';
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
+import { SETTING_KEYS } from '../settings/settings.constants.js';
 
 interface McpServerConfig {
   builtinId?: string;
@@ -42,6 +43,16 @@ export class McpSeedService {
   }
 
   private async ensureDefaultProfile(): Promise<void> {
+    // Check if user intentionally deleted the default profile
+    const deletedSetting = await this.prisma.gatewaySetting.findUnique({
+      where: { key: SETTING_KEYS.DEFAULT_PROFILE_DELETED },
+    });
+
+    if (deletedSetting?.value === 'true') {
+      this.logger.log('Default profile was deleted by user, skipping creation');
+      return;
+    }
+
     const defaultProfile = await this.prisma.profile.findUnique({
       where: { name: 'default' },
     });

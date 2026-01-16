@@ -7,6 +7,7 @@
 // Setting keys
 export const SETTING_KEYS = {
   DEFAULT_GATEWAY_PROFILE: 'default_gateway_profile',
+  DEFAULT_PROFILE_DELETED: 'default_profile_deleted',
 } as const;
 
 // Default values for settings
