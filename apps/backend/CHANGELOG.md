@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.5.1](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.5.0...backend-v0.5.1) (2026-01-16)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-core bumped to 0.4.1
+    * @dxheroes/local-mcp-database bumped to 0.4.1
+    * @dxheroes/mcp-gemini-deep-research bumped to 0.4.1
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.1
+
 ## [0.5.0](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.4.1...backend-v0.5.0) (2026-01-16)
 
 

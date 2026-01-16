@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.7.0](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.6.0...frontend-v0.7.0) (2026-01-16)
+
+
+### Features
+
+* allow profile name editing with URL change warning ([6656c6e](https://github.com/DXHeroes/local-mcp-gateway/commit/6656c6e597bcdb457135a52a71b0c24066fed5ef))
+
+
+### Bug Fixes
+
+* update tests to match new UI components ([8f79066](https://github.com/DXHeroes/local-mcp-gateway/commit/8f79066a3ff0a5e912e13a5f8bfa1f8e6d8935b4))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.1
+    * @dxheroes/local-mcp-ui bumped to 0.4.1
+
 ## [0.6.0](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.5.0...frontend-v0.6.0) (2026-01-16)
 
 
