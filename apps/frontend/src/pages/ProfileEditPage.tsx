@@ -6,9 +6,10 @@
 
 import { Button, useToast } from '@dxheroes/local-mcp-ui';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { McpServerToolsCard } from '../components/McpServerToolsCard';
+import { ProfileConfigCard } from '../components/ProfileConfigCard';
 import { API_URL } from '../config/api';
 
 interface Profile {
@@ -203,6 +204,21 @@ export default function ProfileEditPage() {
     );
   };
 
+  // Aggregate tools from active servers for ProfileConfigCard
+  const aggregatedTools = useMemo(() => {
+    return servers
+      .filter((server) => server.isActive && server.tools)
+      .flatMap((server) =>
+        (server.tools || [])
+          .filter((tool) => tool.isEnabled)
+          .map((tool) => ({
+            name: tool.customized?.name || tool.original.name,
+            description: tool.customized?.description || tool.original.description,
+            inputSchema: tool.customized?.inputSchema || tool.original.inputSchema,
+          }))
+      );
+  }, [servers]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -253,6 +269,9 @@ export default function ProfileEditPage() {
             Configure MCP servers and customize tools for this profile
           </p>
         </div>
+
+        {/* Profile Configuration */}
+        <ProfileConfigCard profileName={profile.name} tools={aggregatedTools} />
 
         {/* Servers List */}
         {servers.length === 0 ? (
