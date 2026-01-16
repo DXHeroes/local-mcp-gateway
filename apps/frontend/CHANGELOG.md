@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.6.0](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.5.0...frontend-v0.6.0) (2026-01-16)
+
+
+### Features
+
+* add docs page, AGENTS.md files, and UI improvements ([d24105b](https://github.com/DXHeroes/local-mcp-gateway/commit/d24105bf5face12348b5617f0deb6fba52778ca1))
+* add gateway settings and upgrade to Streamable HTTP transport ([ba22c9f](https://github.com/DXHeroes/local-mcp-gateway/commit/ba22c9f033071e43a50462280233a0bb1ad34ed7))
+* convert AI prompts to tabbed interface and remove input_schema ([60b46b5](https://github.com/DXHeroes/local-mcp-gateway/commit/60b46b5a5130af982a6a91d9b889a2297203a176))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.0
+    * @dxheroes/local-mcp-ui bumped to 0.4.0
+
 ## [0.5.0](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.4.0...frontend-v0.5.0) (2026-01-14)
 
 

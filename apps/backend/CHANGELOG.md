@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.5.0](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.4.1...backend-v0.5.0) (2026-01-16)
+
+
+### Features
+
+* add docs page, AGENTS.md files, and UI improvements ([d24105b](https://github.com/DXHeroes/local-mcp-gateway/commit/d24105bf5face12348b5617f0deb6fba52778ca1))
+* add gateway settings and upgrade to Streamable HTTP transport ([ba22c9f](https://github.com/DXHeroes/local-mcp-gateway/commit/ba22c9f033071e43a50462280233a0bb1ad34ed7))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-core bumped to 0.4.0
+    * @dxheroes/local-mcp-database bumped to 0.4.0
+    * @dxheroes/mcp-gemini-deep-research bumped to 0.4.0
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.0
+
 ## [0.4.1](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.4.0...backend-v0.4.1) (2026-01-14)
 
 
