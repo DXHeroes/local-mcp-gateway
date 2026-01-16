@@ -17,7 +17,7 @@ As AI clients multiply (Claude, Cursor, IDEs) and MCP servers proliferate (GitHu
 
 ### 2. Configure the MCP servers in your AI client.
 
-#### 2.1. Using the default gateway API endpoint
+#### 2.1. Using the default gateway API endpoint that changes the profile dynamically according to the profile set in the UI
 ```json
 {
   "mcpServers": {
