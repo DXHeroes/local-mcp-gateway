@@ -11,6 +11,8 @@ As AI clients multiply (Claude, Cursor, IDEs) and MCP servers proliferate (GitHu
 ## How it works
 
 ### 1. Create a profile for your use-case and configure the MCP servers you want to use.
+*or you can use the default gateway API endpoint and change your profile dynamically in the MCP Gateway UI*
+
 ![Local MCP Gateway Dashboard](docs/images/dashboard-preview.png)
 
 ### 2. Configure the MCP servers in your AI client.
