@@ -1,6 +1,6 @@
 {
   "name": "local-mcp-gateway",
-  "version": "0.2.0",
+  "version": "0.8.0",
   "private": true,
   "description": "Aggregate multiple MCP servers into a single endpoint with web UI, OAuth 2.1, and profile-based tool management",
   "scripts": {

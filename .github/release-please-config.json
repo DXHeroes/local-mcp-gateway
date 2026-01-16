@@ -9,6 +9,7 @@
       "type": "linked-versions",
       "groupName": "local-mcp-gateway",
       "components": [
+        "local-mcp-gateway",
         "backend",
         "frontend",
         "config",
@@ -16,31 +17,43 @@
         "database",
         "ui",
         "mcp-gemini-deep-research"
-      ]
+      ],
+      "merge": true
     }
   ],
-  "include-component-in-tag": true,
+  "include-component-in-tag": false,
   "packages": {
+    ".": {
+      "component": "local-mcp-gateway",
+      "changelog-path": "CHANGELOG.md"
+    },
     "apps/backend": {
-      "component": "backend"
+      "component": "backend",
+      "changelog-path": "CHANGELOG.md"
     },
     "apps/frontend": {
-      "component": "frontend"
+      "component": "frontend",
+      "changelog-path": "CHANGELOG.md"
     },
     "packages/config": {
-      "component": "config"
+      "component": "config",
+      "changelog-path": "CHANGELOG.md"
     },
     "packages/core": {
-      "component": "core"
+      "component": "core",
+      "changelog-path": "CHANGELOG.md"
     },
     "packages/database": {
-      "component": "database"
+      "component": "database",
+      "changelog-path": "CHANGELOG.md"
     },
     "packages/ui": {
-      "component": "ui"
+      "component": "ui",
+      "changelog-path": "CHANGELOG.md"
     },
     "mcp-servers/gemini-deep-research": {
-      "component": "mcp-gemini-deep-research"
+      "component": "mcp-gemini-deep-research",
+      "changelog-path": "CHANGELOG.md"
     }
   },
   "release-type": "node",
