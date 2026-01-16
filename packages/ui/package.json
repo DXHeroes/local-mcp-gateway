@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/local-mcp-ui",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "type": "module",
   "description": "Reusable React UI components built on shadcn/ui and Radix primitives",
   "license": "Elastic-2.0",
