@@ -433,6 +433,13 @@ export class RemoteHttpMcpServer extends McpServer {
   }
 
   /**
+   * Clear cached tools so the next `listTools()` fetches fresh data.
+   */
+  clearToolsCache(): void {
+    this.cachedTools = null;
+  }
+
+  /**
    * Call a tool by name
    */
   async callTool(name: string, args: unknown): Promise<unknown> {

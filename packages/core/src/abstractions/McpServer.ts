@@ -23,6 +23,15 @@ export abstract class McpServer {
   abstract listTools(): Promise<McpTool[]>;
 
   /**
+   * Clear any cached tools so the next `listTools()` fetches fresh data.
+   *
+   * Implementations that cache tools should override this method.
+   */
+  clearToolsCache(): void {
+    // Default no-op - implementations can override.
+  }
+
+  /**
    * Call a tool by name
    * @param name - Tool name
    * @param args - Tool arguments
