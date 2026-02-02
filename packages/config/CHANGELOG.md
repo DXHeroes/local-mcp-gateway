@@ -1,5 +1,7 @@
 # Changelog
 
+## [0.4.4](https://github.com/DXHeroes/local-mcp-gateway/compare/config-v0.4.3...config-v0.4.4) (2026-02-02)
+
 ## [0.4.3](https://github.com/DXHeroes/local-mcp-gateway/compare/config-v0.4.2...config-v0.4.3) (2026-01-16)
 
 ## [0.4.2](https://github.com/DXHeroes/local-mcp-gateway/compare/config-v0.4.1...config-v0.4.2) (2026-01-16)
