@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.2](https://github.com/DXHeroes/local-mcp-gateway/compare/ui-v0.5.1...ui-v0.5.2) (2026-02-02)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.4
+
 ## [0.5.1](https://github.com/DXHeroes/local-mcp-gateway/compare/ui-v0.5.0...ui-v0.5.1) (2026-01-16)
 
 

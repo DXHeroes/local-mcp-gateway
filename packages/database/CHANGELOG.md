@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.4.4](https://github.com/DXHeroes/local-mcp-gateway/compare/database-v0.4.3...database-v0.4.4) (2026-02-02)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.4
+  * peerDependencies
+    * @dxheroes/local-mcp-core bumped to 0.5.0
+
 ## [0.4.3](https://github.com/DXHeroes/local-mcp-gateway/compare/database-v0.4.2...database-v0.4.3) (2026-01-16)
 
 

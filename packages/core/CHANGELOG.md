@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.5.0](https://github.com/DXHeroes/local-mcp-gateway/compare/core-v0.4.3...core-v0.5.0) (2026-02-02)
+
+
+### Features
+
+* **mcp:** add clearToolsCache method to McpServer and its implementations ([60ae3fe](https://github.com/DXHeroes/local-mcp-gateway/commit/60ae3feab84559f5f688cf1bcc0cb3147d4a64b0))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.4
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.4
+  * peerDependencies
+    * @dxheroes/local-mcp-database bumped to 0.4.4
+
 ## [0.4.3](https://github.com/DXHeroes/local-mcp-gateway/compare/core-v0.4.2...core-v0.4.3) (2026-01-16)
 
 
