@@ -4,7 +4,11 @@
  * Business logic for MCP server management.
  */
 
-import { RemoteHttpMcpServer, RemoteSseMcpServer } from '@dxheroes/local-mcp-core';
+import {
+  ExternalMcpServer,
+  RemoteHttpMcpServer,
+  RemoteSseMcpServer,
+} from '@dxheroes/local-mcp-core';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { DebugService } from '../debug/debug.service.js';
@@ -230,6 +234,30 @@ export class McpService {
       return { tools };
     }
 
+    // For external (NPX/stdio) servers, spawn and fetch tools
+    if (server.type === 'external') {
+      const config = this.parseConfig(server.config) as {
+        command: string;
+        args?: string[];
+        env?: Record<string, string>;
+        workingDirectory?: string;
+        autoRestart?: boolean;
+        maxRestartAttempts?: number;
+        startupTimeout?: number;
+        shutdownTimeout?: number;
+      };
+
+      const externalServer = new ExternalMcpServer(config);
+      try {
+        await externalServer.initialize();
+        const tools = await externalServer.listTools();
+        return { tools };
+      } finally {
+        // Shutdown after fetching tools
+        await externalServer.shutdown();
+      }
+    }
+
     // For cached tools from external servers (fallback)
     const tools = await this.prisma.mcpServerToolsCache.findMany({
       where: { mcpServerId: id },
@@ -379,6 +407,38 @@ export class McpService {
         validationError = error instanceof Error ? error.message : 'Unknown error';
         validationDetails = `Connection failed: ${validationError}`;
         console.error(`[McpService] Remote SSE validation error for ${server.name}:`, error);
+      }
+    }
+
+    // For external (NPX/stdio) servers, validate by spawning and checking
+    if (server.type === 'external' && status === 'unknown') {
+      const config = this.parseConfig(server.config) as {
+        command: string;
+        args?: string[];
+        env?: Record<string, string>;
+        workingDirectory?: string;
+      };
+
+      if (!config.command) {
+        status = 'error';
+        validationError = 'Command is required for external MCP servers';
+        validationDetails = 'Missing command configuration';
+      } else {
+        try {
+          const externalServer = new ExternalMcpServer(config);
+          await externalServer.initialize();
+          const tools = await externalServer.listTools();
+          status = 'connected';
+          validationDetails = `Connected successfully (stdio). ${tools.length} tools available.`;
+          console.log(`[McpService] External validation for ${server.name}: ${tools.length} tools`);
+          // Shutdown after validation
+          await externalServer.shutdown();
+        } catch (error) {
+          status = 'error';
+          validationError = error instanceof Error ? error.message : 'Unknown error';
+          validationDetails = `Connection failed: ${validationError}`;
+          console.error(`[McpService] External validation error for ${server.name}:`, error);
+        }
       }
     }
 

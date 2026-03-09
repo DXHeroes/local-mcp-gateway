@@ -36,7 +36,7 @@ export class UpdateMcpServerDto {
 
   @IsString()
   @IsOptional()
-  type?: 'builtin' | 'stdio' | 'sse' | 'streamable-http';
+  type?: 'builtin' | 'external' | 'remote_http' | 'remote_sse';
 
   @IsOptional()
   config?: Record<string, unknown> | string;

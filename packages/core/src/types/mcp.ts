@@ -40,12 +40,22 @@ export interface JsonRpcResponse {
 }
 
 /**
+ * JSON Schema type for tool input schemas from MCP protocol
+ */
+export interface JsonSchema {
+  type?: string;
+  properties?: Record<string, unknown>;
+  required?: string[];
+  [key: string]: unknown;
+}
+
+/**
  * MCP tool definition
  */
 export interface McpTool {
   name: string;
   description: string;
-  inputSchema: z.ZodType;
+  inputSchema: z.ZodType | JsonSchema;
 }
 
 /**
@@ -65,6 +75,33 @@ export interface ExternalMcpConfig {
   command: string;
   args?: string[];
   env?: Record<string, string>;
+  workingDirectory?: string;
+  autoRestart?: boolean;
+  maxRestartAttempts?: number;
+  startupTimeout?: number;
+  shutdownTimeout?: number;
+}
+
+/**
+ * External process state
+ */
+export type ExternalProcessState =
+  | 'stopped'
+  | 'starting'
+  | 'running'
+  | 'restarting'
+  | 'crashed'
+  | 'stopping';
+
+/**
+ * External process information
+ */
+export interface ExternalProcessInfo {
+  state: ExternalProcessState;
+  pid?: number;
+  startedAt?: Date;
+  restartCount: number;
+  lastError?: string;
 }
 
 /**

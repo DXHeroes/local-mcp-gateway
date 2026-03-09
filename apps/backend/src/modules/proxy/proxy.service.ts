@@ -5,7 +5,11 @@
  */
 
 import type { ApiKeyConfig as CoreApiKeyConfig, McpServer } from '@dxheroes/local-mcp-core';
-import { RemoteHttpMcpServer, RemoteSseMcpServer } from '@dxheroes/local-mcp-core';
+import {
+  ExternalMcpServer,
+  RemoteHttpMcpServer,
+  RemoteSseMcpServer,
+} from '@dxheroes/local-mcp-core';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { DebugService } from '../debug/debug.service.js';
@@ -37,6 +41,15 @@ export interface McpResponse {
 interface ServerConfig {
   builtinId?: string;
   url?: string;
+  // External server config
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
+  workingDirectory?: string;
+  autoRestart?: boolean;
+  maxRestartAttempts?: number;
+  startupTimeout?: number;
+  shutdownTimeout?: number;
 }
 
 interface StoredApiKeyConfig {
@@ -505,6 +518,23 @@ export class ProxyService {
       await remoteServer.initialize();
       this.serverInstances.set(server.id, remoteServer);
       return remoteServer;
+    }
+
+    // For external servers (NPX/stdio), create ExternalMcpServer
+    if (server.type === 'external' && config?.command) {
+      const externalServer = new ExternalMcpServer({
+        command: config.command,
+        args: config.args,
+        env: config.env,
+        workingDirectory: config.workingDirectory,
+        autoRestart: config.autoRestart,
+        maxRestartAttempts: config.maxRestartAttempts,
+        startupTimeout: config.startupTimeout,
+        shutdownTimeout: config.shutdownTimeout,
+      });
+      await externalServer.initialize();
+      this.serverInstances.set(server.id, externalServer);
+      return externalServer;
     }
 
     return null;

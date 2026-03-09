@@ -27,6 +27,12 @@
     },
     "mcp-servers/gemini-deep-research": {
       "component": "mcp-gemini-deep-research"
+    },
+    "mcp-servers/merk": {
+      "component": "mcp-merk"
+    },
+    "mcp-servers/toggl": {
+      "component": "mcp-toggl"
     }
   },
   "release-type": "node",

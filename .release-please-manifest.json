@@ -5,5 +5,7 @@
   "packages/core": "0.5.0",
   "packages/database": "0.4.4",
   "packages/ui": "0.5.2",
-  "mcp-servers/gemini-deep-research": "0.4.4"
+  "mcp-servers/gemini-deep-research": "0.4.4",
+  "mcp-servers/merk": "1.0.0",
+  "mcp-servers/toggl": "1.0.0"
 }

@@ -3,6 +3,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { ExternalMcpServer } from '../../src/abstractions/ExternalMcpServer.js';
 import { McpServerFactory } from '../../src/abstractions/McpServerFactory.js';
 import { RemoteHttpMcpServer } from '../../src/abstractions/RemoteHttpMcpServer.js';
 import { RemoteSseMcpServer } from '../../src/abstractions/RemoteSseMcpServer.js';
@@ -112,19 +113,21 @@ describe('McpServerFactory', () => {
       );
     });
 
-    it('should throw error for external server type', () => {
+    it('should create ExternalMcpServer for external type', () => {
       const entity: McpServerEntity = {
         id: 'test-id',
         name: 'test-server',
         type: 'external',
-        config: {},
+        config: {
+          command: 'npx',
+          args: ['-y', '@anthropic/mcp-server-fetch'],
+        },
         createdAt: Date.now(),
         updatedAt: Date.now(),
       };
 
-      expect(() => McpServerFactory.create(entity)).toThrow(
-        'External MCP server loading not yet implemented'
-      );
+      const server = McpServerFactory.create(entity);
+      expect(server).toBeInstanceOf(ExternalMcpServer);
     });
 
     it('should throw error for unknown server type', () => {
@@ -315,19 +318,21 @@ describe('McpServerFactory', () => {
       );
     });
 
-    it('should throw error for external server type', async () => {
+    it('should create ExternalMcpServer for external type', async () => {
       const entity: McpServerEntity = {
         id: 'test-id',
         name: 'test-server',
         type: 'external',
-        config: {},
+        config: {
+          command: 'npx',
+          args: ['-y', '@anthropic/mcp-server-fetch'],
+        },
         createdAt: Date.now(),
         updatedAt: Date.now(),
       };
 
-      await expect(McpServerFactory.createAsync(entity)).rejects.toThrow(
-        'External MCP server loading not yet implemented'
-      );
+      const server = await McpServerFactory.createAsync(entity);
+      expect(server).toBeInstanceOf(ExternalMcpServer);
     });
   });
 
@@ -380,8 +385,10 @@ describe('McpServerFactory', () => {
         {
           id: 'server-2',
           name: 'server-2',
-          type: 'external',
-          config: {},
+          type: 'custom',
+          config: {
+            modulePath: '/path/to/module',
+          },
           createdAt: Date.now(),
           updatedAt: Date.now(),
         },

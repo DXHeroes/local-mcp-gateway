@@ -8,7 +8,7 @@ MCP server that provides comprehensive AI-powered research capabilities using **
 
 - **ID**: `gemini-deep-research`
 - **Name**: Gemini Deep Research
-- **Version**: 1.0.0
+- **Version**: 0.4.3
 - **Requires API Key**: Yes (Google AI Studio)
 
 ## Structure
@@ -30,15 +30,13 @@ gemini-deep-research/
 
 ### `deep_research`
 
-Conducts comprehensive research on any topic.
+Conducts comprehensive research on any topic using Google's Deep Research Agent.
 
 **Input Parameters:**
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `topic` | string | Yes | Research topic or question (max 2000 chars) |
-| `depth` | enum | No | `quick` (5-10 points), `standard` (15-20), `comprehensive` |
-| `outputFormat` | enum | No | `markdown`, `structured`, `outline` |
-| `focusAreas` | string[] | No | Specific areas to focus on |
+| `topic` | string | Yes | Research topic or question (max 10000 chars) |
+| `formatInstructions` | string | No | Optional formatting instructions for the output |
 
 **Example:**
 ```json
@@ -46,12 +44,20 @@ Conducts comprehensive research on any topic.
   "name": "deep_research",
   "arguments": {
     "topic": "Impact of AI on software development productivity",
-    "depth": "standard",
-    "outputFormat": "markdown",
-    "focusAreas": ["code generation", "testing", "documentation"]
+    "formatInstructions": "Format as a technical report with: 1. Executive Summary, 2. Key Findings, 3. Conclusions"
   }
 }
 ```
+
+### `deep_research_followup`
+
+Ask a follow-up question about a completed research.
+
+**Input Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `interactionId` | string | Yes | Interaction ID from a previous deep_research call |
+| `question` | string | Yes | Follow-up question (max 2000 chars) |
 
 ## API Key Setup
 
@@ -96,7 +102,7 @@ pnpm --filter @dxheroes/mcp-gemini-deep-research clean
 
 ## Dependencies
 
-- `@google/generative-ai` - Google AI SDK
+- `@google/genai` - Google GenAI SDK
 - `zod` - Input validation
 - `@dxheroes/local-mcp-core` (peer) - Core abstractions
 

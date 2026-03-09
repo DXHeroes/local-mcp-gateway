@@ -50,6 +50,12 @@ importers:
       '@dxheroes/mcp-gemini-deep-research':
         specifier: workspace:*
         version: link:../../mcp-servers/gemini-deep-research
+      '@dxheroes/mcp-merk':
+        specifier: workspace:*
+        version: link:../../mcp-servers/merk
+      '@dxheroes/mcp-toggl':
+        specifier: workspace:*
+        version: link:../../mcp-servers/toggl
       '@modelcontextprotocol/sdk':
         specifier: ^1.25.2
         version: 1.25.2(hono@4.10.6)(zod@4.3.5)
@@ -227,6 +233,38 @@ importers:
       vitest:
         specifier: ^4.0.8
         version: 4.0.8(@types/node@25.0.6)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(msw@2.12.7(@types/node@25.0.6)(typescript@5.9.3))(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.1)
+
+  mcp-servers/merk:
+    dependencies:
+      '@dxheroes/local-mcp-core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      zod:
+        specifier: ^4.3.5
+        version: 4.3.5
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.8
+        version: 4.0.17(@types/node@25.0.6)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(msw@2.12.7(@types/node@25.0.6)(typescript@5.9.3))(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.1)
+
+  mcp-servers/toggl:
+    dependencies:
+      '@dxheroes/local-mcp-core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      zod:
+        specifier: ^4.3.5
+        version: 4.3.5
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.8
+        version: 4.0.17(@types/node@25.0.6)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(msw@2.12.7(@types/node@25.0.6)(typescript@5.9.3))(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.1)
 
   packages/config:
     devDependencies:

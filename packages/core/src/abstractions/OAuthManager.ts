@@ -55,7 +55,6 @@ export interface OAuthClientRegistrationRepository {
 export class OAuthManager {
   constructor(
     private tokenRepository: OAuthTokenRepository,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private _clientRegistrationRepository: OAuthClientRegistrationRepository // Reserved for future DCR implementation
   ) {}
 

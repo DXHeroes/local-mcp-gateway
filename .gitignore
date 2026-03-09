@@ -69,4 +69,3 @@ packages/database/src/generated/prisma/
 .temp/
 .tmp/
 tmp/
-

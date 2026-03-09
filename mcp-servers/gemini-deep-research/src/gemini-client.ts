@@ -21,17 +21,43 @@ export interface DeepResearchResult {
 }
 
 /**
- * Extract text from Content_2 union type
- * Content_2 can be TextContent, ImageContent, etc.
+ * Extract text from a Content_2 item.
+ * Content_2 is a union type; TextContent has `type: 'text'` and `text?: string`.
  */
-function extractTextFromContent(content: unknown): string {
-  if (content && typeof content === 'object' && 'type' in content) {
-    const typedContent = content as { type: string; text?: string };
-    if (typedContent.type === 'text' && typeof typedContent.text === 'string') {
-      return typedContent.text;
-    }
+export function extractTextFromContent(content: { type: string; text?: string }): string {
+  if (content.type === 'text' && typeof content.text === 'string') {
+    return content.text;
   }
   return '';
+}
+
+/**
+ * Extract citation sources from an Interaction result.
+ *
+ * The SDK's TextContent has `annotations?: Array<Annotation>` where
+ * Annotation is `{ source?: string; start_index?: number; end_index?: number }`.
+ */
+export function extractCitations(result: {
+  outputs?: Array<{ type: string; annotations?: Array<{ source?: string }> }>;
+}): string[] {
+  const citations: string[] = [];
+
+  try {
+    const outputs = result.outputs || [];
+    for (const output of outputs) {
+      if (output.type === 'text' && output.annotations) {
+        for (const annotation of output.annotations) {
+          if (annotation.source) {
+            citations.push(annotation.source);
+          }
+        }
+      }
+    }
+  } catch {
+    // Silently ignore extraction errors
+  }
+
+  return [...new Set(citations)]; // Deduplicate
 }
 
 /**
@@ -43,6 +69,7 @@ function extractTextFromContent(content: unknown): string {
 export class GeminiClient {
   private client: GoogleGenAI;
   private agentName = 'deep-research-pro-preview-12-2025';
+  private followUpModel = 'gemini-2.5-pro';
 
   constructor(apiKey: string) {
     this.client = new GoogleGenAI({ apiKey });
@@ -100,11 +127,12 @@ export class GeminiClient {
     }
 
     // Start background research task
-    // The agent has access to google_search and url_context tools by default
+    // store: true is required for background interactions to be retrievable
     const interaction = await this.client.interactions.create({
       input: prompt,
       agent: this.agentName,
       background: true,
+      store: true,
     });
 
     const interactionId = interaction.id;
@@ -123,7 +151,9 @@ export class GeminiClient {
         // Find the last text content in outputs
         let content = '';
         for (let i = outputs.length - 1; i >= 0; i--) {
-          const text = extractTextFromContent(outputs[i]);
+          const output = outputs[i];
+          if (!output) continue;
+          const text = extractTextFromContent(output);
           if (text) {
             content = text;
             break;
@@ -135,7 +165,7 @@ export class GeminiClient {
         return {
           content,
           interactionId: result.id,
-          citations: this.extractCitations(result),
+          citations: extractCitations(result),
           status: 'completed',
         };
       }
@@ -151,7 +181,29 @@ export class GeminiClient {
         };
       }
 
-      // Log progress
+      if (result.status === 'cancelled') {
+        console.warn(`[GeminiDeepResearch] Research cancelled: ${interactionId}`);
+
+        return {
+          content: '',
+          interactionId: result.id,
+          status: 'failed',
+          error: 'Research was cancelled.',
+        };
+      }
+
+      if (result.status === 'requires_action') {
+        console.warn(`[GeminiDeepResearch] Research requires action: ${interactionId}`);
+
+        return {
+          content: '',
+          interactionId: result.id,
+          status: 'failed',
+          error: 'Research requires action that cannot be handled automatically.',
+        };
+      }
+
+      // Log progress (status is 'in_progress')
       const elapsedMin = Math.round((Date.now() - startTime) / 60000);
       console.log(`[GeminiDeepResearch] Research in progress (${elapsedMin}min): ${interactionId}`);
 
@@ -165,6 +217,8 @@ export class GeminiClient {
   /**
    * Ask a follow-up question about a completed research
    *
+   * Follow-ups use a model (not an agent) with previous_interaction_id.
+   *
    * @param previousInteractionId - The ID of the completed research interaction
    * @param question - The follow-up question to ask
    * @returns Research result with the answer
@@ -172,7 +226,7 @@ export class GeminiClient {
   async followUp(previousInteractionId: string, question: string): Promise<DeepResearchResult> {
     const interaction = await this.client.interactions.create({
       input: question,
-      agent: this.agentName,
+      model: this.followUpModel,
       previous_interaction_id: previousInteractionId,
     });
 
@@ -180,7 +234,9 @@ export class GeminiClient {
     // Find text content in outputs
     let content = '';
     for (let i = outputs.length - 1; i >= 0; i--) {
-      const text = extractTextFromContent(outputs[i]);
+      const output = outputs[i];
+      if (!output) continue;
+      const text = extractTextFromContent(output);
       if (text) {
         content = text;
         break;
@@ -192,50 +248,5 @@ export class GeminiClient {
       interactionId: interaction.id,
       status: 'completed',
     };
-  }
-
-  /**
-   * Extract citations from the interaction result
-   *
-   * The Deep Research agent returns grounded results with citations.
-   * This method extracts citation URLs from the result.
-   */
-  private extractCitations(result: unknown): string[] {
-    // The API response structure may include citations in various forms
-    // This is a best-effort extraction based on common patterns
-    const citations: string[] = [];
-
-    try {
-      const resultObj = result as Record<string, unknown>;
-
-      // Check for citations in outputs
-      const outputs = (resultObj.outputs || []) as Array<Record<string, unknown>>;
-      for (const output of outputs) {
-        // Check for annotations in TextContent
-        if (output.type === 'text' && output.annotations) {
-          const annotations = output.annotations as Array<Record<string, unknown>>;
-          for (const annotation of annotations) {
-            if (annotation.type === 'cite_source' && annotation.uri) {
-              citations.push(annotation.uri as string);
-            }
-          }
-        }
-
-        // Check for grounding metadata
-        const groundingMetadata = output.groundingMetadata as Record<string, unknown> | undefined;
-        if (groundingMetadata?.groundingChunks) {
-          const chunks = groundingMetadata.groundingChunks as Array<Record<string, unknown>>;
-          for (const chunk of chunks) {
-            if (chunk.web && typeof (chunk.web as Record<string, unknown>).uri === 'string') {
-              citations.push((chunk.web as Record<string, unknown>).uri as string);
-            }
-          }
-        }
-      }
-    } catch {
-      // Silently ignore extraction errors
-    }
-
-    return [...new Set(citations)]; // Deduplicate
   }
 }

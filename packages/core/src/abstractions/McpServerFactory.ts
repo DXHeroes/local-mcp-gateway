@@ -5,12 +5,18 @@
  *
  * NOTE: In the new architecture, builtin MCP servers are handled by the
  * NestJS backend's McpRegistry via auto-discovery from mcp-servers/ packages.
- * This factory is primarily used for remote HTTP/SSE servers.
+ * This factory is primarily used for remote HTTP/SSE servers and external (NPX) servers.
  */
 
 import type { OAuthToken } from '../types/database.js';
-import type { ApiKeyConfig, RemoteHttpMcpConfig, RemoteSseMcpConfig } from '../types/mcp.js';
+import type {
+  ApiKeyConfig,
+  ExternalMcpConfig,
+  RemoteHttpMcpConfig,
+  RemoteSseMcpConfig,
+} from '../types/mcp.js';
 import type { McpServerEntity } from '../types/profile.js';
+import { ExternalMcpServer } from './ExternalMcpServer.js';
 import type { McpServer } from './McpServer.js';
 import { RemoteHttpMcpServer } from './RemoteHttpMcpServer.js';
 import { RemoteSseMcpServer } from './RemoteSseMcpServer.js';
@@ -57,8 +63,8 @@ export class McpServerFactory {
         );
       }
       case 'external': {
-        // External MCP (spawned process) will be implemented later
-        throw new Error('External MCP server loading not yet implemented');
+        const config = entity.config as ExternalMcpConfig;
+        return new ExternalMcpServer(config);
       }
       default:
         throw new Error(`Unknown MCP server type: ${entity.type}`);

@@ -3,6 +3,7 @@
  */
 
 export * from './ApiKeyManager.js';
+export * from './ExternalMcpServer.js';
 export * from './McpServer.js';
 export * from './McpServerFactory.js';
 export * from './OAuthDiscoveryService.js';

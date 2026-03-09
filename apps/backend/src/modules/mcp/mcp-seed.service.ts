@@ -1,11 +1,11 @@
 /**
  * MCP Seed Service
  *
- * Seeds MCP server records from discovered packages.
+ * Seeds MCP server records from discovered packages and external presets.
  */
 
 import { randomUUID } from 'node:crypto';
-import type { DiscoveredMcpPackage } from '@dxheroes/local-mcp-core';
+import type { DiscoveredMcpPackage, ExternalMcpConfig } from '@dxheroes/local-mcp-core';
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import { SETTING_KEYS } from '../settings/settings.constants.js';
@@ -14,6 +14,77 @@ interface McpServerConfig {
   builtinId?: string;
 }
 
+/**
+ * External MCP server presets - popular NPX-based MCP servers
+ * These are seeded but NOT assigned to any profile
+ */
+interface ExternalMcpPreset {
+  name: string;
+  description: string;
+  config: ExternalMcpConfig;
+}
+
+const EXTERNAL_MCP_PRESETS: ExternalMcpPreset[] = [
+  {
+    name: 'Playwright MCP',
+    description:
+      'Browser automation with Playwright - page interactions, screenshots, PDF generation',
+    config: {
+      command: 'npx',
+      args: ['-y', '@playwright/mcp@latest'],
+      autoRestart: true,
+    },
+  },
+  {
+    name: 'Sequential Thinking',
+    description:
+      'Dynamic problem-solving through structured thoughts - analysis, planning, revision',
+    config: {
+      command: 'npx',
+      args: ['-y', '@anthropic/mcp-server-sequential-thinking'],
+      autoRestart: true,
+    },
+  },
+  {
+    name: 'Filesystem MCP',
+    description: 'File system access - read, write, search, and manage files',
+    config: {
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp'],
+      autoRestart: true,
+    },
+  },
+  {
+    name: 'Memory MCP',
+    description:
+      'Knowledge graph-based persistent memory - store and retrieve entities and relations',
+    config: {
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-memory'],
+      autoRestart: true,
+    },
+  },
+  {
+    name: 'GitHub MCP',
+    description: 'GitHub API access - repositories, issues, pull requests, and more',
+    config: {
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-github'],
+      autoRestart: true,
+    },
+  },
+  {
+    name: 'Example: Fetch MCP',
+    description:
+      'Example MCP server calling public APIs - use as a template for your own external MCP scripts',
+    config: {
+      command: 'npx',
+      args: ['-y', '@anthropic/mcp-server-fetch'],
+      autoRestart: true,
+    },
+  },
+];
+
 @Injectable()
 export class McpSeedService {
   private readonly logger = new Logger(McpSeedService.name);
@@ -21,7 +92,7 @@ export class McpSeedService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * Run seed data for all discovered MCP packages
+   * Run seed data for all discovered MCP packages and external presets
    *
    * Seeding is idempotent - only creates records that don't exist
    */
@@ -31,6 +102,7 @@ export class McpSeedService {
     // Ensure default profile exists
     await this.ensureDefaultProfile();
 
+    // Seed builtin packages
     for (const { package: pkg, packageName } of packages) {
       try {
         await this.seedPackage(pkg, packageName);
@@ -39,7 +111,49 @@ export class McpSeedService {
       }
     }
 
+    // Seed external presets
+    await this.seedExternalPresets();
+
     this.logger.log('MCP seeding complete');
+  }
+
+  /**
+   * Seed external MCP server presets
+   * These are NOT assigned to any profile - users manually add them
+   */
+  private async seedExternalPresets(): Promise<void> {
+    this.logger.log(`Seeding ${EXTERNAL_MCP_PRESETS.length} external MCP presets`);
+
+    for (const preset of EXTERNAL_MCP_PRESETS) {
+      try {
+        // Check if this external server already exists (by name)
+        const existingServer = await this.prisma.mcpServer.findFirst({
+          where: {
+            name: preset.name,
+            type: 'external',
+          },
+        });
+
+        if (existingServer) {
+          this.logger.debug(`External preset ${preset.name} already exists, skipping`);
+          continue;
+        }
+
+        // Create the external MCP server record
+        await this.prisma.mcpServer.create({
+          data: {
+            id: randomUUID(),
+            name: preset.name,
+            type: 'external',
+            config: JSON.stringify(preset.config),
+          },
+        });
+
+        this.logger.log(`Created external MCP preset: ${preset.name}`);
+      } catch (error) {
+        this.logger.error(`Failed to seed external preset ${preset.name}: ${error}`);
+      }
+    }
   }
 
   private async ensureDefaultProfile(): Promise<void> {

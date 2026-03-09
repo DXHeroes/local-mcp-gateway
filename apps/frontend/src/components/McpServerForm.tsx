@@ -105,7 +105,22 @@ type BuiltinServerFormData = {
   };
 };
 
-export type McpServerFormData = RemoteServerFormData | BuiltinServerFormData;
+type ExternalServerFormData = {
+  name: string;
+  type: 'external';
+  config: {
+    command: string;
+    args?: string[];
+    env?: Record<string, string>;
+    workingDirectory?: string;
+    autoRestart?: boolean;
+  };
+};
+
+export type McpServerFormData =
+  | RemoteServerFormData
+  | BuiltinServerFormData
+  | ExternalServerFormData;
 
 // Helper to parse apiKeyConfig (can be string or object)
 const parseApiKeyConfig = (
@@ -151,10 +166,17 @@ export default function McpServerForm({
   onOpenChange,
 }: McpServerFormProps) {
   const [name, setName] = useState('');
-  const [type, setType] = useState<'remote_http' | 'remote_sse'>('remote_http');
+  const [type, setType] = useState<'remote_http' | 'remote_sse' | 'external'>('remote_http');
   const [url, setUrl] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // External server config
+  const [command, setCommand] = useState('');
+  const [args, setArgs] = useState('');
+  const [envVars, setEnvVars] = useState('');
+  const [workingDirectory, setWorkingDirectory] = useState('');
+  const [autoRestart, setAutoRestart] = useState(true);
 
   // Authentication type: 'none' | 'oauth' | 'api_key'
   const [authType, setAuthType] = useState<'none' | 'oauth' | 'api_key'>('none');
@@ -208,6 +230,29 @@ export default function McpServerForm({
         // Builtin servers don't have URL or type selection
         setUrl('');
         setType('remote_http'); // Default, but not used
+      } else if (server.type === 'external') {
+        // Handle external servers
+        setType('external');
+        const config = parseConfig(server.config) as {
+          command?: string;
+          args?: string[];
+          env?: Record<string, string>;
+          workingDirectory?: string;
+          autoRestart?: boolean;
+        };
+        setCommand(config.command || '');
+        setArgs(config.args?.join(' ') || '');
+        setEnvVars(
+          config.env
+            ? Object.entries(config.env)
+                .map(([k, v]) => `${k}=${v}`)
+                .join('\n')
+            : ''
+        );
+        setWorkingDirectory(config.workingDirectory || '');
+        setAutoRestart(config.autoRestart ?? true);
+        setAuthType('none');
+        setUrl('');
       } else {
         // Handle remote servers
         setType(
@@ -255,6 +300,12 @@ export default function McpServerForm({
       setApiKey('');
       setApiKeyHeaderName('Authorization');
       setApiKeyHeaderValue('Bearer {apiKey}');
+      // Reset external server fields
+      setCommand('');
+      setArgs('');
+      setEnvVars('');
+      setWorkingDirectory('');
+      setAutoRestart(true);
     }
     setShowApiKey(false);
     setError(null);
@@ -301,6 +352,60 @@ export default function McpServerForm({
                 headerValue: apiKeyHeaderValue.trim().replace('{apiKey}', apiKey.trim()),
               }
             : undefined,
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to save MCP server');
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // External server validation and submission
+    if (type === 'external') {
+      if (!command.trim()) {
+        setError('Command is required for external MCP servers');
+        return;
+      }
+
+      // Parse args (space-separated)
+      const parsedArgs = args.trim() ? args.trim().split(/\s+/) : undefined;
+
+      // Parse env vars (KEY=VALUE per line)
+      let parsedEnv: Record<string, string> | undefined;
+      if (envVars.trim()) {
+        parsedEnv = {};
+        const lines = envVars.trim().split('\n');
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine || trimmedLine.startsWith('#')) continue;
+          const eqIndex = trimmedLine.indexOf('=');
+          if (eqIndex === -1) {
+            setError(`Invalid environment variable format: ${trimmedLine}`);
+            return;
+          }
+          const key = trimmedLine.substring(0, eqIndex).trim();
+          const value = trimmedLine.substring(eqIndex + 1);
+          if (!key) {
+            setError(`Invalid environment variable key: ${trimmedLine}`);
+            return;
+          }
+          parsedEnv[key] = value;
+        }
+      }
+
+      try {
+        setIsSubmitting(true);
+        await onSave({
+          name: name.trim(),
+          type: 'external',
+          config: {
+            command: command.trim(),
+            args: parsedArgs,
+            env: parsedEnv,
+            workingDirectory: workingDirectory.trim() || undefined,
+            autoRestart,
+          },
         });
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to save MCP server');
@@ -445,7 +550,7 @@ export default function McpServerForm({
             </Card>
           )}
 
-          {/* Type and URL fields - only for remote servers */}
+          {/* Type selection - only for new servers */}
           {!isBuiltin && (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -456,7 +561,7 @@ export default function McpServerForm({
                   <Select
                     value={type}
                     onValueChange={(value: string) =>
-                      setType(value as 'remote_http' | 'remote_sse')
+                      setType(value as 'remote_http' | 'remote_sse' | 'external')
                     }
                     disabled={isSubmitting}
                   >
@@ -466,59 +571,158 @@ export default function McpServerForm({
                     <SelectContent>
                       <SelectItem value="remote_http">Remote HTTP</SelectItem>
                       <SelectItem value="remote_sse">Remote SSE</SelectItem>
+                      <SelectItem value="external">External (NPX/Stdio)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="server-url">
-                  URL <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="server-url"
-                  type="url"
-                  value={url}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUrl(e.target.value)}
-                  placeholder="https://example.com/mcp"
-                  required
-                  disabled={isSubmitting}
-                />
-              </div>
+              {/* External server fields */}
+              {type === 'external' && (
+                <Card className="bg-purple-50 border-purple-200">
+                  <CardContent className="pt-4 space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="server-command" className="text-sm">
+                        Command <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="server-command"
+                        type="text"
+                        value={command}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setCommand(e.target.value)
+                        }
+                        placeholder="npx"
+                        required
+                        disabled={isSubmitting}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        The command to run (e.g., npx, node, python)
+                      </p>
+                    </div>
 
-              {/* Authentication Type Selection - only for remote servers */}
-              <div className="space-y-2">
-                <Label className="text-base font-medium">Authentication</Label>
-                <RadioGroup
-                  value={authType}
-                  onValueChange={(value) => setAuthType(value as 'none' | 'oauth' | 'api_key')}
-                  disabled={isSubmitting}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="none" id="auth-none" />
-                    <Label htmlFor="auth-none" className="font-normal cursor-pointer">
-                      None
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="oauth" id="auth-oauth" />
-                    <Label htmlFor="auth-oauth" className="font-normal cursor-pointer">
-                      OAuth Authentication
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="api_key" id="auth-api-key" />
-                    <Label htmlFor="auth-api-key" className="font-normal cursor-pointer">
-                      API Key Authentication
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="server-args" className="text-sm">
+                        Arguments
+                      </Label>
+                      <Input
+                        id="server-args"
+                        type="text"
+                        value={args}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setArgs(e.target.value)
+                        }
+                        placeholder="-y @playwright/mcp"
+                        disabled={isSubmitting}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Space-separated arguments (e.g., -y @playwright/mcp)
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="server-env" className="text-sm">
+                        Environment Variables
+                      </Label>
+                      <textarea
+                        id="server-env"
+                        className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={envVars}
+                        onChange={(e) => setEnvVars(e.target.value)}
+                        placeholder="API_KEY=your_key&#10;DEBUG=true"
+                        disabled={isSubmitting}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        One per line: KEY=VALUE format. Lines starting with # are ignored.
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="server-cwd" className="text-sm">
+                        Working Directory
+                      </Label>
+                      <Input
+                        id="server-cwd"
+                        type="text"
+                        value={workingDirectory}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setWorkingDirectory(e.target.value)
+                        }
+                        placeholder="/path/to/directory (optional)"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="auto-restart"
+                        checked={autoRestart}
+                        onChange={(e) => setAutoRestart(e.target.checked)}
+                        disabled={isSubmitting}
+                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      />
+                      <Label htmlFor="auto-restart" className="text-sm font-normal cursor-pointer">
+                        Auto-restart on crash
+                      </Label>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* URL field - only for remote servers */}
+              {type !== 'external' && (
+                <div className="space-y-2">
+                  <Label htmlFor="server-url">
+                    URL <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="server-url"
+                    type="url"
+                    value={url}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUrl(e.target.value)}
+                    placeholder="https://example.com/mcp"
+                    required
+                    disabled={isSubmitting}
+                  />
+                </div>
+              )}
+
+              {/* Authentication Type Selection - only for remote servers (not external) */}
+              {type !== 'external' && (
+                <div className="space-y-2">
+                  <Label className="text-base font-medium">Authentication</Label>
+                  <RadioGroup
+                    value={authType}
+                    onValueChange={(value) => setAuthType(value as 'none' | 'oauth' | 'api_key')}
+                    disabled={isSubmitting}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="none" id="auth-none" />
+                      <Label htmlFor="auth-none" className="font-normal cursor-pointer">
+                        None
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="oauth" id="auth-oauth" />
+                      <Label htmlFor="auth-oauth" className="font-normal cursor-pointer">
+                        OAuth Authentication
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="api_key" id="auth-api-key" />
+                      <Label htmlFor="auth-api-key" className="font-normal cursor-pointer">
+                        API Key Authentication
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              )}
             </>
           )}
 
           {/* OAuth Configuration - only for remote servers */}
-          {!isBuiltin && authType === 'oauth' && (
+          {!isBuiltin && type !== 'external' && authType === 'oauth' && (
             <Card>
               <CardContent className="pt-6">
                 <div className="space-y-4">
@@ -687,8 +891,8 @@ export default function McpServerForm({
             </Card>
           )}
 
-          {/* API Key Configuration - for remote servers */}
-          {!isBuiltin && authType === 'api_key' && (
+          {/* API Key Configuration - for remote servers (not external) */}
+          {!isBuiltin && type !== 'external' && authType === 'api_key' && (
             <Card>
               <CardContent className="pt-6">
                 <div className="space-y-4">

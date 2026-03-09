@@ -5,6 +5,7 @@
 export type { ApiKeyRepository } from './abstractions/ApiKeyManager.js';
 export {
   ApiKeyManager,
+  ExternalMcpServer,
   McpServer,
   McpServerFactory,
   OAuthDiscoveryService,
