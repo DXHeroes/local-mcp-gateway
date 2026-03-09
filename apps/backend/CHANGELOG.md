@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.7.0](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.6.2...backend-v0.7.0) (2026-03-09)
+
+
+### Features
+
+* **mcp:** introduce external MCP server support and enhance seeding functionality ([9f99183](https://github.com/DXHeroes/local-mcp-gateway/commit/9f99183d02c42a572bc82c7c599822d4feb4a4b8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-core bumped to 0.6.0
+    * @dxheroes/local-mcp-database bumped to 0.4.5
+    * @dxheroes/mcp-gemini-deep-research bumped to 0.5.0
+    * @dxheroes/mcp-merk bumped to 0.3.0
+    * @dxheroes/mcp-toggl bumped to 0.3.0
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.5
+
 ## [0.6.2](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.6.1...backend-v0.6.2) (2026-02-02)
 
 
