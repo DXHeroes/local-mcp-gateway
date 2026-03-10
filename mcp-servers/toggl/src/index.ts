@@ -31,11 +31,7 @@ export const mcpPackage: McpPackage = {
     return new TogglMcpServer(apiKeyConfig);
   },
 
-  seed: {
-    defaultProfile: 'default',
-    defaultOrder: 10,
-    defaultActive: true,
-  },
+  seed: {},
 };
 
 export type { McpPackage } from '@dxheroes/local-mcp-core';
