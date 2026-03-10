@@ -41,7 +41,7 @@ const EXTERNAL_MCP_PRESETS: ExternalMcpPreset[] = [
       'Dynamic problem-solving through structured thoughts - analysis, planning, revision',
     config: {
       command: 'npx',
-      args: ['-y', '@anthropic/mcp-server-sequential-thinking'],
+      args: ['-y', '@modelcontextprotocol/server-sequential-thinking'],
       autoRestart: true,
     },
   },
@@ -70,16 +70,6 @@ const EXTERNAL_MCP_PRESETS: ExternalMcpPreset[] = [
     config: {
       command: 'npx',
       args: ['-y', '@modelcontextprotocol/server-github'],
-      autoRestart: true,
-    },
-  },
-  {
-    name: 'Example: Fetch MCP',
-    description:
-      'Example MCP server calling public APIs - use as a template for your own external MCP scripts',
-    config: {
-      command: 'npx',
-      args: ['-y', '@anthropic/mcp-server-fetch'],
       autoRestart: true,
     },
   },
