@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.8.0](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.7.1...backend-v0.8.0) (2026-03-10)
+
+
+### Features
+
+* **mcp:** add Python/uv to Docker image and re-add Fetch MCP preset ([f4943ea](https://github.com/DXHeroes/local-mcp-gateway/commit/f4943ea91e1dfc1356dab5c0423cb5d26c5f7ecf))
+
+
+### Bug Fixes
+
+* **mcp:** fix broken external MCP preset package names ([938038f](https://github.com/DXHeroes/local-mcp-gateway/commit/938038f0c3a86283bd91ec7d3066728b350b6c1f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-core bumped to 0.6.2
+    * @dxheroes/local-mcp-database bumped to 0.4.7
+    * @dxheroes/mcp-gemini-deep-research bumped to 0.5.2
+    * @dxheroes/mcp-merk bumped to 0.3.2
+    * @dxheroes/mcp-toggl bumped to 0.3.2
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.7
+
 ## [0.7.1](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.7.0...backend-v0.7.1) (2026-03-10)
 
 
