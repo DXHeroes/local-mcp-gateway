@@ -73,6 +73,16 @@ const EXTERNAL_MCP_PRESETS: ExternalMcpPreset[] = [
       autoRestart: true,
     },
   },
+  {
+    name: 'Fetch MCP',
+    description:
+      'Web content fetching - retrieve and convert web pages to markdown for AI consumption',
+    config: {
+      command: 'uvx',
+      args: ['mcp-server-fetch'],
+      autoRestart: true,
+    },
+  },
 ];
 
 @Injectable()

@@ -29,6 +29,11 @@ WORKDIR /app
 # Install pnpm for production
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
+# Install Python and uv for Python-based MCP servers (e.g. mcp-server-fetch via uvx)
+RUN apk add --no-cache python3 && \
+    wget -qO- https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:$PATH"
+
 # Create data directory
 RUN mkdir -p /data
 
