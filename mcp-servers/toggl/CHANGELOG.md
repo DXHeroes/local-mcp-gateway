@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.1](https://github.com/DXHeroes/local-mcp-gateway/compare/mcp-toggl-v0.3.0...mcp-toggl-v0.3.1) (2026-03-10)
+
+
+### Bug Fixes
+
+* **mcp:** stop auto-assigning builtin packages to default profile ([7d67df6](https://github.com/DXHeroes/local-mcp-gateway/commit/7d67df682c5592538379b94ef9f28ea3597cda68))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * peerDependencies
+    * @dxheroes/local-mcp-core bumped to 0.6.1
+
 ## [0.3.0](https://github.com/DXHeroes/local-mcp-gateway/compare/mcp-toggl-v1.0.0...mcp-toggl-v0.3.0) (2026-03-09)
 
 

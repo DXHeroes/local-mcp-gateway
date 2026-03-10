@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.1](https://github.com/DXHeroes/local-mcp-gateway/compare/mcp-gemini-deep-research-v0.5.0...mcp-gemini-deep-research-v0.5.1) (2026-03-10)
+
+
+### Bug Fixes
+
+* **mcp:** stop auto-assigning builtin packages to default profile ([7d67df6](https://github.com/DXHeroes/local-mcp-gateway/commit/7d67df682c5592538379b94ef9f28ea3597cda68))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * peerDependencies
+    * @dxheroes/local-mcp-core bumped to 0.6.1
+
 ## [0.5.0](https://github.com/DXHeroes/local-mcp-gateway/compare/mcp-gemini-deep-research-v0.4.4...mcp-gemini-deep-research-v0.5.0) (2026-03-09)
 
 
