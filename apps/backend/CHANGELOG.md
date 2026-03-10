@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.9.0](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.8.0...backend-v0.9.0) (2026-03-10)
+
+
+### Features
+
+* add mandatory org context, Better Auth, and MCP preset gallery ([18ddf94](https://github.com/DXHeroes/local-mcp-gateway/commit/18ddf94d5269a9b77e9e251b96b6fc56bd496ad1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-core bumped to 0.7.0
+    * @dxheroes/local-mcp-database bumped to 0.5.0
+    * @dxheroes/mcp-gemini-deep-research bumped to 0.5.3
+    * @dxheroes/mcp-merk bumped to 0.3.3
+    * @dxheroes/mcp-toggl bumped to 0.3.3
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.8
+
 ## [0.8.0](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.7.1...backend-v0.8.0) (2026-03-10)
 
 

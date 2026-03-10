@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.10.0](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.9.2...frontend-v0.10.0) (2026-03-10)
+
+
+### Features
+
+* add mandatory org context, Better Auth, and MCP preset gallery ([18ddf94](https://github.com/DXHeroes/local-mcp-gateway/commit/18ddf94d5269a9b77e9e251b96b6fc56bd496ad1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.8
+    * @dxheroes/local-mcp-ui bumped to 0.5.6
+
 ## [0.9.2](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.9.1...frontend-v0.9.2) (2026-03-10)
 
 

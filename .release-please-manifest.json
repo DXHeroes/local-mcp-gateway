@@ -1,11 +1,11 @@
 {
-  "apps/backend": "0.8.0",
-  "apps/frontend": "0.9.2",
-  "packages/config": "0.4.7",
-  "packages/core": "0.6.2",
-  "packages/database": "0.4.7",
-  "packages/ui": "0.5.5",
-  "mcp-servers/gemini-deep-research": "0.5.2",
-  "mcp-servers/merk": "0.3.2",
-  "mcp-servers/toggl": "0.3.2"
+  "apps/backend": "0.9.0",
+  "apps/frontend": "0.10.0",
+  "packages/config": "0.4.8",
+  "packages/core": "0.7.0",
+  "packages/database": "0.5.0",
+  "packages/ui": "0.5.6",
+  "mcp-servers/gemini-deep-research": "0.5.3",
+  "mcp-servers/merk": "0.3.3",
+  "mcp-servers/toggl": "0.3.3"
 }

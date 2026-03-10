@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.0](https://github.com/DXHeroes/local-mcp-gateway/compare/database-v0.4.7...database-v0.5.0) (2026-03-10)
+
+
+### Features
+
+* add mandatory org context, Better Auth, and MCP preset gallery ([18ddf94](https://github.com/DXHeroes/local-mcp-gateway/commit/18ddf94d5269a9b77e9e251b96b6fc56bd496ad1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.8
+
 ## [0.4.7](https://github.com/DXHeroes/local-mcp-gateway/compare/database-v0.4.6...database-v0.4.7) (2026-03-10)
 
 
