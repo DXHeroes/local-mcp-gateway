@@ -2,21 +2,8 @@
  * Database connection and utilities using Prisma ORM
  */
 
-import { existsSync, mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from './generated/prisma/index.js';
-
-/**
- * Ensure the directory for the database file exists
- * @param filePath - Database file path
- */
-export function ensureDirectoryExists(filePath: string): void {
-  const dir = dirname(filePath);
-  if (!existsSync(dir)) {
-    mkdirSync(dir, { recursive: true });
-  }
-}
 
 /**
  * Get the database URL from environment variable
@@ -31,30 +18,11 @@ export function getDatabaseUrl(): string {
 }
 
 /**
- * Create a Prisma SQLite adapter with proper directory setup
- * @returns PrismaBetterSqlite3 adapter instance
- */
-export function createPrismaAdapter(): PrismaBetterSqlite3 {
-  const databaseUrl = getDatabaseUrl();
-
-  // Ensure directory exists for file-based databases
-  if (databaseUrl.startsWith('file:')) {
-    const filePath = databaseUrl.replace('file:', '');
-    if (!filePath.startsWith(':memory:')) {
-      ensureDirectoryExists(filePath);
-    }
-  }
-
-  return new PrismaBetterSqlite3({ url: databaseUrl });
-}
-
-/**
- * Create a new Prisma Client instance with SQLite adapter
+ * Create a new Prisma Client instance
  * @returns PrismaClient instance
  */
 export function createPrismaClient(): PrismaClient {
-  const adapter = createPrismaAdapter();
-
+  const adapter = new PrismaPg({ connectionString: getDatabaseUrl() });
   return new PrismaClient({
     adapter,
     log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],

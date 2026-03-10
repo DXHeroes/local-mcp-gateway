@@ -2,16 +2,23 @@
  * Profiles Service
  *
  * Business logic for profile management.
+ * All queries are scoped to the user's active organization.
+ * System records (organizationId=null) are visible to all orgs.
  */
 
 import { randomUUID } from 'node:crypto';
 import {
   ConflictException,
+  ForbiddenException,
   forwardRef,
   Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
+/** Sentinel value for unauthenticated MCP access — can only see system profiles */
+const UNAUTHENTICATED_ID = '__unauthenticated__';
+
 import { PrismaService } from '../database/prisma.service.js';
 import { ProxyService } from '../proxy/proxy.service.js';
 import { RESERVED_PROFILE_NAMES, SETTING_KEYS } from '../settings/settings.constants.js';
@@ -53,6 +60,10 @@ export class ProfilesService {
     private readonly proxyService: ProxyService
   ) {}
 
+  private isAnonymous(userId: string): boolean {
+    return userId === UNAUTHENTICATED_ID;
+  }
+
   /**
    * Validate profile name against reserved names
    */
@@ -64,30 +75,85 @@ export class ProfilesService {
   }
 
   /**
-   * Get all profiles
+   * Check that a user can access a profile within the active org
    */
-  async findAll() {
+  private async assertAccess(profileId: string, userId: string, orgId: string): Promise<void> {
+    if (this.isAnonymous(userId)) return;
+
+    const profile = await this.prisma.profile.findUnique({
+      where: { id: profileId },
+      select: { userId: true, organizationId: true },
+    });
+    if (!profile) throw new NotFoundException(`Profile ${profileId} not found`);
+
+    // System record (no org) — accessible to all
+    if (!profile.organizationId) return;
+
+    // Must belong to the active org
+    if (profile.organizationId !== orgId) {
+      throw new ForbiddenException('You do not have access to this profile');
+    }
+  }
+
+  /**
+   * Check that a user can mutate a profile within the active org
+   */
+  private async assertOwnership(profileId: string, userId: string, orgId: string): Promise<void> {
+    if (this.isAnonymous(userId)) return;
+
+    const profile = await this.prisma.profile.findUnique({
+      where: { id: profileId },
+      select: { userId: true, organizationId: true },
+    });
+    if (!profile) throw new NotFoundException(`Profile ${profileId} not found`);
+
+    // System records (organizationId=null) can be modified by anyone
+    if (!profile.organizationId) return;
+
+    // Must belong to the active org
+    if (profile.organizationId !== orgId) {
+      throw new ForbiddenException('You do not own this profile');
+    }
+  }
+
+  /**
+   * Get all profiles visible in the active org (org profiles + system profiles)
+   */
+  async findAll(userId: string, orgId?: string) {
+    const include = {
+      mcpServers: {
+        include: { mcpServer: true },
+        orderBy: { order: 'asc' as const },
+      },
+    };
+
+    if (this.isAnonymous(userId)) {
+      return this.prisma.profile.findMany({
+        include,
+        orderBy: { name: 'asc' },
+      });
+    }
+
     return this.prisma.profile.findMany({
-      include: {
-        mcpServers: {
-          include: {
-            mcpServer: true,
-          },
-          orderBy: {
-            order: 'asc',
-          },
-        },
+      where: {
+        OR: [
+          { organizationId: orgId }, // org profiles
+          { organizationId: null }, // system profiles
+        ],
       },
-      orderBy: {
-        name: 'asc',
-      },
+      include,
+      orderBy: { name: 'asc' },
     });
   }
 
   /**
    * Get a specific profile by ID
    */
-  async findById(id: string) {
+  async findById(id: string, userId: string, orgId?: string) {
+    if (orgId) {
+      await this.assertAccess(id, userId, orgId);
+    }
+
     const profile = await this.prisma.profile.findUnique({
       where: { id },
       include: {
@@ -96,9 +162,7 @@ export class ProfilesService {
             mcpServer: true,
             tools: true,
           },
-          orderBy: {
-            order: 'asc',
-          },
+          orderBy: { order: 'asc' },
         },
       },
     });
@@ -111,23 +175,34 @@ export class ProfilesService {
   }
 
   /**
-   * Get a specific profile by name
+   * Get a specific profile by name within the active org
    */
-  async findByName(name: string) {
-    const profile = await this.prisma.profile.findUnique({
-      where: { name },
-      include: {
-        mcpServers: {
+  async findByName(name: string, userId: string, orgId?: string) {
+    // Try org-scoped first, then system
+    let profile = orgId
+      ? await this.prisma.profile.findUnique({
+          where: { organizationId_name: { organizationId: orgId, name } },
           include: {
-            mcpServer: true,
-            tools: true,
+            mcpServers: {
+              include: { mcpServer: true, tools: true },
+              orderBy: { order: 'asc' },
+            },
           },
-          orderBy: {
-            order: 'asc',
+        })
+      : null;
+
+    if (!profile) {
+      // Try system profile (organizationId=null)
+      profile = await this.prisma.profile.findFirst({
+        where: { name, organizationId: null },
+        include: {
+          mcpServers: {
+            include: { mcpServer: true, tools: true },
+            orderBy: { order: 'asc' },
           },
         },
-      },
-    });
+      });
+    }
 
     if (!profile) {
       throw new NotFoundException(`Profile with name "${name}" not found`);
@@ -137,25 +212,28 @@ export class ProfilesService {
   }
 
   /**
-   * Create a new profile
+   * Create a new profile in the active org
    */
-  async create(dto: CreateProfileDto) {
+  async create(dto: CreateProfileDto, userId: string, orgId?: string) {
     // Validate against reserved names
     this.validateProfileName(dto.name);
 
-    // Check for unique name
-    const existing = await this.prisma.profile.findUnique({
-      where: { name: dto.name },
-    });
-
-    if (existing) {
-      throw new ConflictException(`Profile with name "${dto.name}" already exists`);
+    // Check for unique name within the org
+    if (orgId) {
+      const existing = await this.prisma.profile.findUnique({
+        where: { organizationId_name: { organizationId: orgId, name: dto.name } },
+      });
+      if (existing) {
+        throw new ConflictException(`Profile with name "${dto.name}" already exists`);
+      }
     }
 
     return this.prisma.profile.create({
       data: {
         name: dto.name,
         description: dto.description,
+        userId: this.isAnonymous(userId) ? null : userId,
+        organizationId: orgId ?? null,
       },
     });
   }
@@ -163,9 +241,12 @@ export class ProfilesService {
   /**
    * Update a profile
    */
-  async update(id: string, dto: UpdateProfileDto) {
-    const profile = await this.prisma.profile.findUnique({ where: { id } });
+  async update(id: string, dto: UpdateProfileDto, userId: string, orgId?: string) {
+    if (orgId) {
+      await this.assertOwnership(id, userId, orgId);
+    }
 
+    const profile = await this.prisma.profile.findUnique({ where: { id } });
     if (!profile) {
       throw new NotFoundException(`Profile ${id} not found`);
     }
@@ -175,14 +256,16 @@ export class ProfilesService {
       this.validateProfileName(dto.name);
     }
 
-    // Check for unique name if changing
+    // Check for unique name if changing (within the same org)
     if (dto.name && dto.name !== profile.name) {
-      const existing = await this.prisma.profile.findUnique({
-        where: { name: dto.name },
-      });
-
-      if (existing) {
-        throw new ConflictException(`Profile with name "${dto.name}" already exists`);
+      const targetOrgId = profile.organizationId;
+      if (targetOrgId) {
+        const existing = await this.prisma.profile.findUnique({
+          where: { organizationId_name: { organizationId: targetOrgId, name: dto.name } },
+        });
+        if (existing) {
+          throw new ConflictException(`Profile with name "${dto.name}" already exists`);
+        }
       }
     }
 
@@ -195,9 +278,12 @@ export class ProfilesService {
   /**
    * Delete a profile
    */
-  async delete(id: string) {
-    const profile = await this.prisma.profile.findUnique({ where: { id } });
+  async delete(id: string, userId: string, orgId?: string) {
+    if (orgId) {
+      await this.assertOwnership(id, userId, orgId);
+    }
 
+    const profile = await this.prisma.profile.findUnique({ where: { id } });
     if (!profile) {
       throw new NotFoundException(`Profile ${id} not found`);
     }
@@ -217,13 +303,9 @@ export class ProfilesService {
   /**
    * Get servers for a profile
    */
-  async getServers(profileId: string) {
-    const profile = await this.prisma.profile.findUnique({
-      where: { id: profileId },
-    });
-
-    if (!profile) {
-      throw new NotFoundException(`Profile ${profileId} not found`);
+  async getServers(profileId: string, userId: string, orgId?: string) {
+    if (orgId) {
+      await this.assertAccess(profileId, userId, orgId);
     }
 
     return this.prisma.profileMcpServer.findMany({
@@ -232,16 +314,18 @@ export class ProfilesService {
         mcpServer: true,
         tools: true,
       },
-      orderBy: {
-        order: 'asc',
-      },
+      orderBy: { order: 'asc' },
     });
   }
 
   /**
    * Add an MCP server to a profile
    */
-  async addServer(profileId: string, dto: AddServerToProfileDto) {
+  async addServer(profileId: string, dto: AddServerToProfileDto, userId: string, orgId?: string) {
+    if (orgId) {
+      await this.assertOwnership(profileId, userId, orgId);
+    }
+
     // Check profile exists
     const profile = await this.prisma.profile.findUnique({ where: { id: profileId } });
     if (!profile) {
@@ -275,16 +359,24 @@ export class ProfilesService {
         order: dto.order ?? 0,
         isActive: dto.isActive ?? true,
       },
-      include: {
-        mcpServer: true,
-      },
+      include: { mcpServer: true },
     });
   }
 
   /**
    * Update a server in a profile
    */
-  async updateServer(profileId: string, serverId: string, dto: UpdateServerInProfileDto) {
+  async updateServer(
+    profileId: string,
+    serverId: string,
+    dto: UpdateServerInProfileDto,
+    userId: string,
+    orgId?: string
+  ) {
+    if (orgId) {
+      await this.assertOwnership(profileId, userId, orgId);
+    }
+
     const link = await this.prisma.profileMcpServer.findUnique({
       where: {
         profileId_mcpServerId: {
@@ -301,16 +393,18 @@ export class ProfilesService {
     return this.prisma.profileMcpServer.update({
       where: { id: link.id },
       data: dto,
-      include: {
-        mcpServer: true,
-      },
+      include: { mcpServer: true },
     });
   }
 
   /**
    * Remove a server from a profile
    */
-  async removeServer(profileId: string, serverId: string) {
+  async removeServer(profileId: string, serverId: string, userId: string, orgId?: string) {
+    if (orgId) {
+      await this.assertOwnership(profileId, userId, orgId);
+    }
+
     const link = await this.prisma.profileMcpServer.findUnique({
       where: {
         profileId_mcpServerId: {
@@ -332,7 +426,17 @@ export class ProfilesService {
   /**
    * Get tools for a server in a profile with customizations
    */
-  async getServerTools(profileId: string, serverId: string, _refresh = false) {
+  async getServerTools(
+    profileId: string,
+    serverId: string,
+    _refresh = false,
+    userId: string,
+    orgId?: string
+  ) {
+    if (orgId) {
+      await this.assertAccess(profileId, userId, orgId);
+    }
+
     // Check profile exists
     const profile = await this.prisma.profile.findUnique({ where: { id: profileId } });
     if (!profile) {
@@ -347,9 +451,7 @@ export class ProfilesService {
           mcpServerId: serverId,
         },
       },
-      include: {
-        tools: true,
-      },
+      include: { tools: true },
     });
 
     if (!link) {
@@ -389,7 +491,17 @@ export class ProfilesService {
   /**
    * Update tool customizations for a server in a profile
    */
-  async updateServerTools(profileId: string, serverId: string, tools: UpdateToolDto[]) {
+  async updateServerTools(
+    profileId: string,
+    serverId: string,
+    tools: UpdateToolDto[],
+    userId: string,
+    orgId?: string
+  ) {
+    if (orgId) {
+      await this.assertOwnership(profileId, userId, orgId);
+    }
+
     // Check profile exists
     const profile = await this.prisma.profile.findUnique({ where: { id: profileId } });
     if (!profile) {
@@ -440,6 +552,6 @@ export class ProfilesService {
     });
 
     // Return updated tools by calling getServerTools
-    return this.getServerTools(profileId, serverId);
+    return this.getServerTools(profileId, serverId, false, userId, orgId);
   }
 }

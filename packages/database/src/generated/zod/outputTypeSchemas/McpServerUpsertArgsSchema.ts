@@ -6,6 +6,8 @@ import { McpServerCreateInputSchema } from '../inputTypeSchemas/McpServerCreateI
 import { McpServerUncheckedCreateInputSchema } from '../inputTypeSchemas/McpServerUncheckedCreateInputSchema'
 import { McpServerUpdateInputSchema } from '../inputTypeSchemas/McpServerUpdateInputSchema'
 import { McpServerUncheckedUpdateInputSchema } from '../inputTypeSchemas/McpServerUncheckedUpdateInputSchema'
+import { UserArgsSchema } from "../outputTypeSchemas/UserArgsSchema"
+import { OrganizationArgsSchema } from "../outputTypeSchemas/OrganizationArgsSchema"
 import { ProfileMcpServerFindManyArgsSchema } from "../outputTypeSchemas/ProfileMcpServerFindManyArgsSchema"
 import { OAuthTokenArgsSchema } from "../outputTypeSchemas/OAuthTokenArgsSchema"
 import { OAuthClientRegistrationFindManyArgsSchema } from "../outputTypeSchemas/OAuthClientRegistrationFindManyArgsSchema"
@@ -22,8 +24,12 @@ export const McpServerSelectSchema: z.ZodType<Prisma.McpServerSelect> = z.object
   config: z.boolean().optional(),
   oauthConfig: z.boolean().optional(),
   apiKeyConfig: z.boolean().optional(),
+  userId: z.boolean().optional(),
+  organizationId: z.boolean().optional(),
   createdAt: z.boolean().optional(),
   updatedAt: z.boolean().optional(),
+  user: z.union([z.boolean(),z.lazy(() => UserArgsSchema)]).optional(),
+  organization: z.union([z.boolean(),z.lazy(() => OrganizationArgsSchema)]).optional(),
   profiles: z.union([z.boolean(),z.lazy(() => ProfileMcpServerFindManyArgsSchema)]).optional(),
   oauthToken: z.union([z.boolean(),z.lazy(() => OAuthTokenArgsSchema)]).optional(),
   oauthClientRegistrations: z.union([z.boolean(),z.lazy(() => OAuthClientRegistrationFindManyArgsSchema)]).optional(),

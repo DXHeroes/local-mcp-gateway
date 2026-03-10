@@ -64,7 +64,7 @@ export class SettingsService {
     }
 
     // Validate that profile exists
-    const profile = await this.prisma.profile.findUnique({
+    const profile = await this.prisma.profile.findFirst({
       where: { name: trimmedName },
     });
 

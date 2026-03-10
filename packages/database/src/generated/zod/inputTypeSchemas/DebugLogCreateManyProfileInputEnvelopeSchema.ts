@@ -5,6 +5,7 @@ import { DebugLogCreateManyProfileInputSchema } from './DebugLogCreateManyProfil
 
 export const DebugLogCreateManyProfileInputEnvelopeSchema: z.ZodType<Prisma.DebugLogCreateManyProfileInputEnvelope> = z.strictObject({
   data: z.union([ z.lazy(() => DebugLogCreateManyProfileInputSchema), z.lazy(() => DebugLogCreateManyProfileInputSchema).array() ]),
+  skipDuplicates: z.boolean().optional(),
 });
 
 export default DebugLogCreateManyProfileInputEnvelopeSchema;

@@ -4,6 +4,7 @@ import { ProfileMcpServerToolCreateManyInputSchema } from '../inputTypeSchemas/P
 
 export const ProfileMcpServerToolCreateManyAndReturnArgsSchema: z.ZodType<Prisma.ProfileMcpServerToolCreateManyAndReturnArgs> = z.object({
   data: z.union([ ProfileMcpServerToolCreateManyInputSchema, ProfileMcpServerToolCreateManyInputSchema.array() ]),
+  skipDuplicates: z.boolean().optional(),
 }).strict();
 
 export default ProfileMcpServerToolCreateManyAndReturnArgsSchema;

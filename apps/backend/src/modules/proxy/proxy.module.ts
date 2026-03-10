@@ -6,6 +6,7 @@
  */
 
 import { Module } from '@nestjs/common';
+import { AuthModule } from '../auth/auth.module.js';
 import { DebugModule } from '../debug/debug.module.js';
 import { McpModule } from '../mcp/mcp.module.js';
 import { SettingsModule } from '../settings/settings.module.js';
@@ -13,7 +14,7 @@ import { ProxyController } from './proxy.controller.js';
 import { ProxyService } from './proxy.service.js';
 
 @Module({
-  imports: [McpModule, DebugModule, SettingsModule],
+  imports: [McpModule, DebugModule, SettingsModule, AuthModule],
   controllers: [ProxyController],
   providers: [ProxyService],
   exports: [ProxyService],

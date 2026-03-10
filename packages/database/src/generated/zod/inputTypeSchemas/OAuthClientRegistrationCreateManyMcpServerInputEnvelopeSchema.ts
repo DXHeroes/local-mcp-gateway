@@ -5,6 +5,7 @@ import { OAuthClientRegistrationCreateManyMcpServerInputSchema } from './OAuthCl
 
 export const OAuthClientRegistrationCreateManyMcpServerInputEnvelopeSchema: z.ZodType<Prisma.OAuthClientRegistrationCreateManyMcpServerInputEnvelope> = z.strictObject({
   data: z.union([ z.lazy(() => OAuthClientRegistrationCreateManyMcpServerInputSchema), z.lazy(() => OAuthClientRegistrationCreateManyMcpServerInputSchema).array() ]),
+  skipDuplicates: z.boolean().optional(),
 });
 
 export default OAuthClientRegistrationCreateManyMcpServerInputEnvelopeSchema;

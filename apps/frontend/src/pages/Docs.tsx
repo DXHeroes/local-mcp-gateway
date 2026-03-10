@@ -193,7 +193,7 @@ export default function DocsPage() {
               <p className="text-gray-700">
                 A <strong>Profile</strong> is a logical grouping of MCP servers. Each profile gets a
                 unique endpoint (e.g.,{' '}
-                <code className="bg-gray-100 px-1 rounded">/api/mcp/work</code>). Use different
+                <code className="bg-gray-100 px-1 rounded">/api/mcp/my-org/work</code>). Use different
                 profiles for different contexts: Work, Personal, Debug, etc.
               </p>
             </div>
@@ -242,7 +242,7 @@ export default function DocsPage() {
               <strong>UI</strong>: http://localhost:9630
             </p>
             <p>
-              <strong>MCP Endpoint</strong>: http://localhost:9631/api/mcp/default
+              <strong>MCP Endpoint</strong>: http://localhost:9631/api/mcp/gateway
             </p>
           </div>
         </section>
@@ -298,7 +298,7 @@ pnpm dev`}
   "mcpServers": {
     "gateway": {
       "type": "http",
-      "url": "http://localhost:${apiPort}/api/mcp/default"
+      "url": "http://localhost:${apiPort}/api/mcp/gateway"
     }
   }
 }`}
@@ -322,7 +322,7 @@ pnpm dev`}
         "-y",
         "@anthropic-ai/claude-code-mcp",
         "--url",
-        "http://localhost:${apiPort}/api/mcp/default"
+        "http://localhost:${apiPort}/api/mcp/gateway"
       ]
     }
   }

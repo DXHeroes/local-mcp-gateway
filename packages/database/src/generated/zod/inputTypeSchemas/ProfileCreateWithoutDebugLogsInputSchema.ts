@@ -1,6 +1,8 @@
 import type { Prisma } from '../../prisma';
 
 import { z } from 'zod';
+import { UserCreateNestedOneWithoutProfilesInputSchema } from './UserCreateNestedOneWithoutProfilesInputSchema';
+import { OrganizationCreateNestedOneWithoutProfilesInputSchema } from './OrganizationCreateNestedOneWithoutProfilesInputSchema';
 import { ProfileMcpServerCreateNestedManyWithoutProfileInputSchema } from './ProfileMcpServerCreateNestedManyWithoutProfileInputSchema';
 
 export const ProfileCreateWithoutDebugLogsInputSchema: z.ZodType<Prisma.ProfileCreateWithoutDebugLogsInput> = z.strictObject({
@@ -9,6 +11,8 @@ export const ProfileCreateWithoutDebugLogsInputSchema: z.ZodType<Prisma.ProfileC
   description: z.string().optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
+  user: z.lazy(() => UserCreateNestedOneWithoutProfilesInputSchema).optional(),
+  organization: z.lazy(() => OrganizationCreateNestedOneWithoutProfilesInputSchema).optional(),
   mcpServers: z.lazy(() => ProfileMcpServerCreateNestedManyWithoutProfileInputSchema).optional(),
 });
 

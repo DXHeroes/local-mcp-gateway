@@ -4,6 +4,7 @@ import { DebugLogCreateManyInputSchema } from '../inputTypeSchemas/DebugLogCreat
 
 export const DebugLogCreateManyArgsSchema: z.ZodType<Prisma.DebugLogCreateManyArgs> = z.object({
   data: z.union([ DebugLogCreateManyInputSchema, DebugLogCreateManyInputSchema.array() ]),
+  skipDuplicates: z.boolean().optional(),
 }).strict();
 
 export default DebugLogCreateManyArgsSchema;

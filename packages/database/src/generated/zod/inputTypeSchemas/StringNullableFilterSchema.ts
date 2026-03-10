@@ -1,6 +1,7 @@
 import type { Prisma } from '../../prisma';
 
 import { z } from 'zod';
+import { QueryModeSchema } from './QueryModeSchema';
 import { NestedStringNullableFilterSchema } from './NestedStringNullableFilterSchema';
 
 export const StringNullableFilterSchema: z.ZodType<Prisma.StringNullableFilter> = z.strictObject({
@@ -14,6 +15,7 @@ export const StringNullableFilterSchema: z.ZodType<Prisma.StringNullableFilter> 
   contains: z.string().optional(),
   startsWith: z.string().optional(),
   endsWith: z.string().optional(),
+  mode: z.lazy(() => QueryModeSchema).optional(),
   not: z.union([ z.string(),z.lazy(() => NestedStringNullableFilterSchema) ]).optional().nullable(),
 });
 

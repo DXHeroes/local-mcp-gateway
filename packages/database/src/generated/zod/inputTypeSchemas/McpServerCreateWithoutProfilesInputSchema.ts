@@ -1,6 +1,8 @@
 import type { Prisma } from '../../prisma';
 
 import { z } from 'zod';
+import { UserCreateNestedOneWithoutMcpServersInputSchema } from './UserCreateNestedOneWithoutMcpServersInputSchema';
+import { OrganizationCreateNestedOneWithoutMcpServersInputSchema } from './OrganizationCreateNestedOneWithoutMcpServersInputSchema';
 import { OAuthTokenCreateNestedOneWithoutMcpServerInputSchema } from './OAuthTokenCreateNestedOneWithoutMcpServerInputSchema';
 import { OAuthClientRegistrationCreateNestedManyWithoutMcpServerInputSchema } from './OAuthClientRegistrationCreateNestedManyWithoutMcpServerInputSchema';
 import { McpServerToolsCacheCreateNestedManyWithoutMcpServerInputSchema } from './McpServerToolsCacheCreateNestedManyWithoutMcpServerInputSchema';
@@ -15,6 +17,8 @@ export const McpServerCreateWithoutProfilesInputSchema: z.ZodType<Prisma.McpServ
   apiKeyConfig: z.string().optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
+  user: z.lazy(() => UserCreateNestedOneWithoutMcpServersInputSchema).optional(),
+  organization: z.lazy(() => OrganizationCreateNestedOneWithoutMcpServersInputSchema).optional(),
   oauthToken: z.lazy(() => OAuthTokenCreateNestedOneWithoutMcpServerInputSchema).optional(),
   oauthClientRegistrations: z.lazy(() => OAuthClientRegistrationCreateNestedManyWithoutMcpServerInputSchema).optional(),
   toolsCache: z.lazy(() => McpServerToolsCacheCreateNestedManyWithoutMcpServerInputSchema).optional(),

@@ -4,6 +4,7 @@ import { MigrationCreateManyInputSchema } from '../inputTypeSchemas/MigrationCre
 
 export const MigrationCreateManyAndReturnArgsSchema: z.ZodType<Prisma.MigrationCreateManyAndReturnArgs> = z.object({
   data: z.union([ MigrationCreateManyInputSchema, MigrationCreateManyInputSchema.array() ]),
+  skipDuplicates: z.boolean().optional(),
 }).strict();
 
 export default MigrationCreateManyAndReturnArgsSchema;

@@ -2,6 +2,8 @@
  * MCP Service
  *
  * Business logic for MCP server management.
+ * All queries are scoped to the user's active organization.
+ * System records (organizationId=null, including builtin) are visible to all.
  */
 
 import {
@@ -9,11 +11,16 @@ import {
   RemoteHttpMcpServer,
   RemoteSseMcpServer,
 } from '@dxheroes/local-mcp-core';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+
+/** Sentinel value for unauthenticated MCP access — can only see system servers */
+const UNAUTHENTICATED_ID = '__unauthenticated__';
+
 import { PrismaService } from '../database/prisma.service.js';
 import { DebugService } from '../debug/debug.service.js';
 import type { CreateMcpServerDto } from './dto/create-mcp-server.dto.js';
 import type { UpdateMcpServerDto } from './dto/update-mcp-server.dto.js';
+import { MCP_PRESETS } from './mcp-presets.js';
 import { McpRegistry } from './mcp-registry.js';
 
 @Injectable()
@@ -24,41 +31,80 @@ export class McpService {
     private readonly debugService: DebugService
   ) {}
 
-  /**
-   * Get all MCP servers
-   */
-  async findAll() {
-    const servers = await this.prisma.mcpServer.findMany({
-      include: {
-        profiles: {
-          include: {
-            profile: true,
-          },
-        },
-      },
-      orderBy: { name: 'asc' },
+  private isAnonymous(userId: string): boolean {
+    return userId === UNAUTHENTICATED_ID;
+  }
+
+  private async assertAccess(serverId: string, userId: string, orgId?: string): Promise<void> {
+    if (this.isAnonymous(userId)) return;
+
+    const server = await this.prisma.mcpServer.findUnique({
+      where: { id: serverId },
+      select: { userId: true, organizationId: true },
     });
+    if (!server) throw new NotFoundException(`MCP server ${serverId} not found`);
+
+    // System record (no org) — accessible to all
+    if (!server.organizationId) return;
+
+    // Must belong to the active org
+    if (orgId && server.organizationId === orgId) return;
+
+    throw new ForbiddenException('You do not have access to this MCP server');
+  }
+
+  private async assertOwnership(serverId: string, userId: string, orgId?: string): Promise<void> {
+    if (this.isAnonymous(userId)) return;
+
+    const server = await this.prisma.mcpServer.findUnique({
+      where: { id: serverId },
+      select: { userId: true, organizationId: true },
+    });
+    if (!server) throw new NotFoundException(`MCP server ${serverId} not found`);
+    if (!server.organizationId) return; // system record
+
+    if (orgId && server.organizationId === orgId) return;
+
+    throw new ForbiddenException('You do not own this MCP server');
+  }
+
+  /**
+   * Get all MCP servers visible in the active org (org servers + system servers)
+   */
+  async findAll(userId: string, orgId?: string) {
+    const include = { profiles: { include: { profile: true as const } } };
+    const orderBy = { name: 'asc' as const };
+
+    const servers = this.isAnonymous(userId)
+      ? await this.prisma.mcpServer.findMany({ include, orderBy })
+      : await this.prisma.mcpServer.findMany({
+          where: {
+            OR: [
+              { organizationId: orgId }, // org servers
+              { organizationId: null }, // system servers
+            ],
+          },
+          include,
+          orderBy,
+        });
 
     // Enrich with metadata from registry for builtin servers
     return servers.map((server) => {
       const builtinId = this.getBuiltinId(server.config);
-
-      if (builtinId && this.registry.has(builtinId)) {
-        const metadata = this.registry.get(builtinId)?.metadata;
-        return {
-          ...server,
-          metadata,
-        };
-      }
-
-      return server;
+      return builtinId && this.registry.has(builtinId)
+        ? { ...server, metadata: this.registry.get(builtinId)?.metadata }
+        : server;
     });
   }
 
   /**
    * Get a specific MCP server
    */
-  async findById(id: string) {
+  async findById(id: string, userId?: string, orgId?: string) {
+    if (userId) {
+      await this.assertAccess(id, userId, orgId);
+    }
+
     const server = await this.prisma.mcpServer.findUnique({
       where: { id },
       include: {
@@ -80,21 +126,15 @@ export class McpService {
     // Enrich with metadata from registry for builtin servers
     const builtinId = this.getBuiltinId(server.config);
 
-    if (builtinId && this.registry.has(builtinId)) {
-      const metadata = this.registry.get(builtinId)?.metadata;
-      return {
-        ...server,
-        metadata,
-      };
-    }
-
-    return server;
+    return builtinId && this.registry.has(builtinId)
+      ? { ...server, metadata: this.registry.get(builtinId)?.metadata }
+      : server;
   }
 
   /**
-   * Create a new MCP server
+   * Create a new MCP server in the active org
    */
-  async create(dto: CreateMcpServerDto) {
+  async create(dto: CreateMcpServerDto, userId: string, orgId?: string) {
     return this.prisma.mcpServer.create({
       data: {
         name: dto.name,
@@ -102,6 +142,8 @@ export class McpService {
         config: JSON.stringify(dto.config || {}),
         apiKeyConfig: dto.apiKeyConfig ? JSON.stringify(dto.apiKeyConfig) : null,
         oauthConfig: dto.oauthConfig ? JSON.stringify(dto.oauthConfig) : null,
+        userId: this.isAnonymous(userId) ? null : userId,
+        organizationId: orgId ?? null,
       },
     });
   }
@@ -109,9 +151,10 @@ export class McpService {
   /**
    * Update an MCP server
    */
-  async update(id: string, dto: UpdateMcpServerDto) {
-    const server = await this.prisma.mcpServer.findUnique({ where: { id } });
+  async update(id: string, dto: UpdateMcpServerDto, userId: string, orgId?: string) {
+    await this.assertOwnership(id, userId, orgId);
 
+    const server = await this.prisma.mcpServer.findUnique({ where: { id } });
     if (!server) {
       throw new NotFoundException(`MCP server ${id} not found`);
     }
@@ -136,9 +179,10 @@ export class McpService {
   /**
    * Delete an MCP server
    */
-  async delete(id: string) {
-    const server = await this.prisma.mcpServer.findUnique({ where: { id } });
+  async delete(id: string, userId: string, orgId?: string) {
+    await this.assertOwnership(id, userId, orgId);
 
+    const server = await this.prisma.mcpServer.findUnique({ where: { id } });
     if (!server) {
       throw new NotFoundException(`MCP server ${id} not found`);
     }
@@ -149,7 +193,11 @@ export class McpService {
   /**
    * Get tools from an MCP server
    */
-  async getTools(id: string) {
+  async getTools(id: string, userId?: string, orgId?: string) {
+    if (userId) {
+      await this.assertAccess(id, userId, orgId);
+    }
+
     const startTime = Date.now();
 
     // Create debug log entry
@@ -268,7 +316,11 @@ export class McpService {
   /**
    * Get MCP server status with real validation
    */
-  async getStatus(id: string) {
+  async getStatus(id: string, userId?: string, orgId?: string) {
+    if (userId) {
+      await this.assertAccess(id, userId, orgId);
+    }
+
     const startTime = Date.now();
 
     // Create debug log entry
@@ -336,19 +388,16 @@ export class McpService {
 
         try {
           const instance = pkg.createServer(apiKeyConfig);
-          // Call validate() method
           const validation = await instance.validate();
           status = validation.valid ? 'connected' : 'error';
           validationError = validation.error;
           validationDetails = validation.valid
             ? 'API key validated successfully'
             : `Validation failed: ${validation.error}`;
-          console.log(`[McpService] Validation result for ${server.name}:`, validation);
         } catch (error) {
           status = 'error';
           validationError = error instanceof Error ? error.message : 'Unknown error';
           validationDetails = `Connection test failed: ${validationError}`;
-          console.error(`[McpService] Validation error for ${server.name}:`, error);
         }
       }
     } else if (!hasApiKey && requiresApiKey) {
@@ -375,14 +424,10 @@ export class McpService {
         const tools = await remoteServer.listTools();
         status = 'connected';
         validationDetails = `Connected successfully. ${tools.length} tools available.`;
-        console.log(
-          `[McpService] Remote HTTP validation for ${server.name}: ${tools.length} tools`
-        );
       } catch (error) {
         status = 'error';
         validationError = error instanceof Error ? error.message : 'Unknown error';
         validationDetails = `Connection failed: ${validationError}`;
-        console.error(`[McpService] Remote HTTP validation error for ${server.name}:`, error);
       }
     }
 
@@ -401,12 +446,10 @@ export class McpService {
         const tools = await remoteServer.listTools();
         status = 'connected';
         validationDetails = `Connected successfully (SSE). ${tools.length} tools available.`;
-        console.log(`[McpService] Remote SSE validation for ${server.name}: ${tools.length} tools`);
       } catch (error) {
         status = 'error';
         validationError = error instanceof Error ? error.message : 'Unknown error';
         validationDetails = `Connection failed: ${validationError}`;
-        console.error(`[McpService] Remote SSE validation error for ${server.name}:`, error);
       }
     }
 
@@ -430,14 +473,11 @@ export class McpService {
           const tools = await externalServer.listTools();
           status = 'connected';
           validationDetails = `Connected successfully (stdio). ${tools.length} tools available.`;
-          console.log(`[McpService] External validation for ${server.name}: ${tools.length} tools`);
-          // Shutdown after validation
           await externalServer.shutdown();
         } catch (error) {
           status = 'error';
           validationError = error instanceof Error ? error.message : 'Unknown error';
           validationDetails = `Connection failed: ${validationError}`;
-          console.error(`[McpService] External validation error for ${server.name}:`, error);
         }
       }
     }
@@ -459,6 +499,40 @@ export class McpService {
       details: validationDetails,
       validatedAt: new Date().toISOString(),
     };
+  }
+
+  /**
+   * Add a preset MCP server to the user's organization
+   */
+  async addPreset(presetId: string, userId: string, orgId: string) {
+    const preset = MCP_PRESETS.find((p) => p.id === presetId);
+    if (!preset) {
+      throw new NotFoundException(`Preset "${presetId}" not found`);
+    }
+
+    // Check if a server with this name already exists in the org
+    const existing = await this.prisma.mcpServer.findFirst({
+      where: {
+        name: preset.name,
+        organizationId: orgId,
+      },
+    });
+
+    if (existing) {
+      throw new ConflictException(
+        `MCP server "${preset.name}" already exists in your organization`
+      );
+    }
+
+    return this.prisma.mcpServer.create({
+      data: {
+        name: preset.name,
+        type: preset.type,
+        config: JSON.stringify(preset.config),
+        userId,
+        organizationId: orgId,
+      },
+    });
   }
 
   /**

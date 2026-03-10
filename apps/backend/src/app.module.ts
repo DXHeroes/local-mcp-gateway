@@ -2,15 +2,18 @@
  * Root Application Module
  *
  * Configures all NestJS modules for the Local MCP Gateway.
- * No authentication module - immediate access to all features.
+ * Auth is globally applied via AuthGuard with @Public() bypass.
  */
 
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerModule } from '@nestjs/throttler';
 import appConfig from './config/app.config.js';
 import databaseConfig from './config/database.config.js';
+import { AuthGuard } from './modules/auth/auth.guard.js';
+import { AuthModule } from './modules/auth/auth.module.js';
 import { DatabaseModule } from './modules/database/database.module.js';
 import { DebugModule } from './modules/debug/debug.module.js';
 import { HealthModule } from './modules/health/health.module.js';
@@ -19,6 +22,7 @@ import { OAuthModule } from './modules/oauth/oauth.module.js';
 import { ProfilesModule } from './modules/profiles/profiles.module.js';
 import { ProxyModule } from './modules/proxy/proxy.module.js';
 import { SettingsModule } from './modules/settings/settings.module.js';
+import { SharingModule } from './modules/sharing/sharing.module.js';
 
 @Module({
   imports: [
@@ -51,15 +55,24 @@ import { SettingsModule } from './modules/settings/settings.module.js';
       },
     ]),
 
-    // Core modules (no authentication - immediate access)
+    // Core modules
     DatabaseModule,
+    AuthModule,
     McpModule,
     ProfilesModule,
-    OAuthModule, // For OAuth MCP servers, not user authentication
-    SettingsModule, // Gateway settings
+    OAuthModule,
+    SettingsModule,
     ProxyModule,
     HealthModule,
     DebugModule,
+    SharingModule,
+  ],
+  providers: [
+    // Global auth guard — all routes require auth unless marked @Public()
+    {
+      provide: APP_GUARD,
+      useExisting: AuthGuard,
+    },
   ],
 })
 export class AppModule {}

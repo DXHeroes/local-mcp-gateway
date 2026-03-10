@@ -28,8 +28,14 @@
     "docker:down": "docker-compose down",
     "create-custom-mcp": "node scripts/create-custom-mcp.js",
     "create-package": "node scripts/create-package.js",
+    "db:create": "docker compose up -d postgres",
+    "db:migrate": "pnpm --filter @dxheroes/local-mcp-database prisma:migrate:deploy",
+    "db:migrate:dev": "pnpm --filter @dxheroes/local-mcp-database prisma:migrate:dev",
     "db:seed": "pnpm --filter @dxheroes/local-mcp-database prisma:seed",
-    "db:reset": "rm -f ~/.local-mcp-gateway-data/local-mcp-gateway.db && pnpm db:seed"
+    "db:reset": "pnpm --filter @dxheroes/local-mcp-database db:reset",
+    "db:studio": "pnpm --filter @dxheroes/local-mcp-database prisma:studio",
+    "db:push": "pnpm --filter @dxheroes/local-mcp-database prisma:push",
+    "db:generate": "pnpm --filter @dxheroes/local-mcp-database prisma:generate"
   },
   "keywords": [
     "mcp",
@@ -42,22 +48,22 @@
   ],
   "author": "",
   "license": "Elastic-2.0",
-  "packageManager": "pnpm@10.28.0",
+  "packageManager": "pnpm@10.32.0",
   "engines": {
     "node": ">=22.0.0",
     "pnpm": ">=9.0.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.11",
-    "@modelcontextprotocol/sdk": "^1.25.2",
-    "@playwright/test": "^1.57.0",
-    "@types/node": "^25.0.6",
-    "@vitest/coverage-v8": "^4.0.17",
+    "@biomejs/biome": "^2.4.6",
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^25.4.0",
+    "@vitest/coverage-v8": "^4.0.18",
     "concurrently": "^9.2.1",
     "tsx": "^4.21.0",
-    "turbo": "^2.7.4",
+    "turbo": "^2.8.15",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.17"
+    "vitest": "^4.0.18"
   },
   "workspaces": [
     "packages/*",

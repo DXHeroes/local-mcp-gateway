@@ -14,6 +14,8 @@ export const McpServerUncheckedCreateInputSchema: z.ZodType<Prisma.McpServerUnch
   config: z.string().optional(),
   oauthConfig: z.string().optional().nullable(),
   apiKeyConfig: z.string().optional().nullable(),
+  userId: z.string().optional().nullable(),
+  organizationId: z.string().optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
   profiles: z.lazy(() => ProfileMcpServerUncheckedCreateNestedManyWithoutMcpServerInputSchema).optional(),

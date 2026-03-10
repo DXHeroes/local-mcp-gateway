@@ -32,14 +32,15 @@ interface Tool {
 interface ProfileConfigCardProps {
   profileName: string;
   tools: Tool[];
+  orgSlug?: string;
 }
 
-export function ProfileConfigCard({ profileName, tools }: ProfileConfigCardProps) {
+export function ProfileConfigCard({ profileName, tools, orgSlug }: ProfileConfigCardProps) {
   const { toast } = useToast();
   const [copyStates, setCopyStates] = useState<Record<string, boolean>>({});
   const [activePromptTab, setActivePromptTab] = useState<'markdown' | 'toon'>('markdown');
 
-  const profileUrl = getProfileUrl(profileName);
+  const profileUrl = getProfileUrl(profileName, orgSlug);
 
   // Generate MCP Server JSON config
   const mcpServerConfig = JSON.stringify(

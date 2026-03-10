@@ -5,8 +5,10 @@
  */
 
 import { Controller, Delete, Get, HttpCode, HttpStatus, Query } from '@nestjs/common';
+import { SkipOrgCheck } from '../auth/decorators/skip-org-check.decorator.js';
 import { DebugService } from './debug.service.js';
 
+@SkipOrgCheck()
 @Controller('debug')
 export class DebugController {
   constructor(private readonly debugService: DebugService) {}

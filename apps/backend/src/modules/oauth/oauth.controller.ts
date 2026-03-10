@@ -5,6 +5,7 @@
  */
 
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
+import { SkipOrgCheck } from '../auth/decorators/skip-org-check.decorator.js';
 import { OAuthService } from './oauth.service.js';
 
 interface StartOAuthDto {
@@ -32,6 +33,7 @@ interface StoreTokenDto {
   expiresIn?: number;
 }
 
+@SkipOrgCheck()
 @Controller('oauth')
 export class OAuthController {
   constructor(private readonly oauthService: OAuthService) {}

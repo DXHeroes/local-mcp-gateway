@@ -2,11 +2,11 @@
  * Prisma database seed script
  *
  * Creates initial data for the application:
- * - Default profile
- * - Context7 MCP Server (external remote HTTP server)
+ * - Default system profile (for non-auth/unauthenticated access)
  *
  * Note: Built-in MCP servers are seeded automatically by the backend's
  * McpSeedService when it discovers MCP packages in mcp-servers/.
+ * External MCP presets are available via the gallery UI.
  */
 
 import { createPrismaClient } from '../database.js';
@@ -14,71 +14,35 @@ import { createPrismaClient } from '../database.js';
 const prisma = createPrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding database...');
+  console.log('Seeding database...');
 
-  // Create default profile
-  const defaultProfile = await prisma.profile.upsert({
-    where: { name: 'default' },
-    update: {},
-    create: {
-      name: 'default',
-      description: 'Default MCP profile for general use',
-    },
+  // Create default system profile (organizationId=null) for unauthenticated access
+  let defaultProfile = await prisma.profile.findFirst({
+    where: { name: 'default', organizationId: null },
   });
 
-  console.log('✅ Created default profile:', defaultProfile.id);
-
-  // Create Context7 MCP Server (if not exists)
-  let context7Server = await prisma.mcpServer.findFirst({
-    where: { name: 'Context7' },
-  });
-
-  if (!context7Server) {
-    context7Server = await prisma.mcpServer.create({
+  if (!defaultProfile) {
+    defaultProfile = await prisma.profile.create({
       data: {
-        name: 'Context7',
-        type: 'remote_http',
-        config: JSON.stringify({ url: 'https://mcp.context7.com/mcp' }),
+        name: 'default',
+        description: 'Default MCP profile for unauthenticated access',
+        organizationId: null,
       },
     });
-    console.log('✅ Created Context7 MCP server:', context7Server.id);
+    console.log('Created default system profile:', defaultProfile.id);
   } else {
-    console.log('ℹ️ Context7 MCP server already exists:', context7Server.id);
+    console.log('Default system profile already exists:', defaultProfile.id);
   }
 
-  // Link Context7 to default profile (if not already linked)
-  const existingLink = await prisma.profileMcpServer.findUnique({
-    where: {
-      profileId_mcpServerId: {
-        profileId: defaultProfile.id,
-        mcpServerId: context7Server.id,
-      },
-    },
-  });
-
-  if (!existingLink) {
-    await prisma.profileMcpServer.create({
-      data: {
-        profileId: defaultProfile.id,
-        mcpServerId: context7Server.id,
-        order: 0,
-      },
-    });
-    console.log('✅ Linked Context7 to default profile');
-  } else {
-    console.log('ℹ️ Context7 already linked to default profile');
-  }
-
+  console.log('Seeding complete!');
   console.log('');
-  console.log('🎉 Seeding complete!');
-  console.log('');
-  console.log('Note: Built-in MCP servers will be seeded automatically when the backend starts');
-  console.log('and discovers MCP packages in the mcp-servers/ directory.');
+  console.log('Note: Built-in MCP servers are seeded automatically when the backend starts.');
+  console.log('External MCP presets can be added from the gallery in the UI.');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Seeding failed:', e);
+    console.error('Seeding failed:', e);
     process.exit(1);
   })
   .finally(async () => {

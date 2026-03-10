@@ -6,6 +6,7 @@
 
 import { Body, Controller, Get, Put } from '@nestjs/common';
 import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import { SkipOrgCheck } from '../auth/decorators/skip-org-check.decorator.js';
 import { SettingsService } from './settings.service.js';
 
 export class UpdateDefaultGatewayProfileDto {
@@ -15,6 +16,7 @@ export class UpdateDefaultGatewayProfileDto {
   profileName: string;
 }
 
+@SkipOrgCheck()
 @Controller('settings')
 export class SettingsController {
   constructor(private readonly settingsService: SettingsService) {}

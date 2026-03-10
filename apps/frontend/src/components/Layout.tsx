@@ -1,9 +1,13 @@
 /**
  * Layout component
+ *
+ * Navigation bar with user info and sign out when authenticated.
  */
 
+import { LogOut, User } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router';
+import { authClient } from '../lib/auth-client';
 
 interface LayoutProps {
   children: ReactNode;
@@ -17,6 +21,13 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   }`;
 
 export default function Layout({ children }: LayoutProps) {
+  const { data: session } = authClient.useSession();
+
+  const handleSignOut = async () => {
+    await authClient.signOut();
+    window.location.href = '/';
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm">
@@ -39,8 +50,36 @@ export default function Layout({ children }: LayoutProps) {
                 <NavLink to="/docs" className={navLinkClass}>
                   Docs
                 </NavLink>
+                {session && (
+                  <NavLink to="/organizations" className={navLinkClass}>
+                    Organizations
+                  </NavLink>
+                )}
               </div>
             </div>
+
+            {session && (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  {session.user.image ? (
+                    <img src={session.user.image} alt="" className="w-7 h-7 rounded-full" />
+                  ) : (
+                    <User className="w-5 h-5 text-gray-400" />
+                  )}
+                  <span className="text-sm text-gray-700 hidden md:inline">
+                    {session.user.name}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="inline-flex items-center gap-1 px-2 py-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                  title="Sign out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </nav>

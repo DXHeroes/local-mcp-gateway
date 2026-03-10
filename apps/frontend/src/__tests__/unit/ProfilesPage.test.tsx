@@ -64,10 +64,16 @@ describe('ProfilesPage', () => {
       http.get('/api/profiles/1/servers', () => {
         return HttpResponse.json({ serverIds: [] });
       }),
-      http.get(`${API_URL}/api/mcp/test-profile/info`, () => {
+      http.get(`${API_URL}/api/mcp/gateway/info`, () => {
         return HttpResponse.json({ tools: [] });
       }),
-      http.get('/api/mcp/test-profile/info', () => {
+      http.get('/api/mcp/gateway/info', () => {
+        return HttpResponse.json({ tools: [] });
+      }),
+      http.get(`${API_URL}/api/mcp/:orgSlug/:profileName/info`, () => {
+        return HttpResponse.json({ tools: [] });
+      }),
+      http.get('/api/mcp/:orgSlug/:profileName/info', () => {
         return HttpResponse.json({ tools: [] });
       })
     );
@@ -205,10 +211,16 @@ describe('ProfilesPage', () => {
       http.get('/api/profiles/1/servers', () => {
         return HttpResponse.json({ serverIds: [] });
       }),
-      http.get(`${API_URL}/api/mcp/my-profile/info`, () => {
+      http.get(`${API_URL}/api/mcp/gateway/info`, () => {
         return HttpResponse.json({ tools: [] });
       }),
-      http.get('/api/mcp/my-profile/info', () => {
+      http.get('/api/mcp/gateway/info', () => {
+        return HttpResponse.json({ tools: [] });
+      }),
+      http.get(`${API_URL}/api/mcp/:orgSlug/:profileName/info`, () => {
+        return HttpResponse.json({ tools: [] });
+      }),
+      http.get('/api/mcp/:orgSlug/:profileName/info', () => {
         return HttpResponse.json({ tools: [] });
       })
     );

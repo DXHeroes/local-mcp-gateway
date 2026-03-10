@@ -13,6 +13,7 @@ import {
 } from '@dxheroes/local-mcp-ui';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
+import McpPresetGallery from '../components/McpPresetGallery';
 import McpServerForm, { type McpServerFormData } from '../components/McpServerForm';
 
 interface McpServerMetadata {
@@ -39,6 +40,7 @@ interface McpServer {
   id: string;
   name: string;
   type: 'external' | 'custom' | 'remote_http' | 'remote_sse' | 'builtin';
+  userId?: string;
   config: Record<string, unknown>;
   oauthConfig?: {
     authorizationServerUrl: string;
@@ -69,6 +71,7 @@ interface McpServerWithStatus extends McpServer {
 }
 
 import { API_URL } from '../config/api';
+import { authClient } from '../lib/auth-client';
 
 // Helper to parse apiKeyConfig which may be a JSON string from the database
 const parseApiKeyConfig = (
@@ -87,6 +90,7 @@ const parseApiKeyConfig = (
 
 export default function McpServersPage() {
   const navigate = useNavigate();
+  const { data: session } = authClient.useSession();
   const [servers, setServers] = useState<McpServerWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -345,6 +349,10 @@ export default function McpServersPage() {
                             ? 'Error'
                             : 'Unknown'}
                       </Badge>
+                      {/* Shared badge */}
+                      {session?.user && server.userId && server.userId !== session.user.id && (
+                        <Badge variant="secondary">Shared</Badge>
+                      )}
                     </div>
                     {/* Validation error alert */}
                     {server.connectionStatus === 'error' && server.connectionError && (
@@ -406,6 +414,11 @@ export default function McpServersPage() {
           ))}
         </div>
       )}
+
+      <McpPresetGallery
+        existingServerNames={servers.map((s) => s.name)}
+        onAdd={() => fetchServers(true)}
+      />
 
       <McpServerForm
         server={editingServer}

@@ -5,6 +5,7 @@ import { McpServerToolsCacheCreateManyMcpServerInputSchema } from './McpServerTo
 
 export const McpServerToolsCacheCreateManyMcpServerInputEnvelopeSchema: z.ZodType<Prisma.McpServerToolsCacheCreateManyMcpServerInputEnvelope> = z.strictObject({
   data: z.union([ z.lazy(() => McpServerToolsCacheCreateManyMcpServerInputSchema), z.lazy(() => McpServerToolsCacheCreateManyMcpServerInputSchema).array() ]),
+  skipDuplicates: z.boolean().optional(),
 });
 
 export default McpServerToolsCacheCreateManyMcpServerInputEnvelopeSchema;

@@ -5,12 +5,14 @@
  */
 
 import { Button, useToast } from '@dxheroes/local-mcp-ui';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Share2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { McpServerToolsCard } from '../components/McpServerToolsCard';
 import { ProfileConfigCard } from '../components/ProfileConfigCard';
+import ShareModal from '../components/ShareModal';
 import { API_URL } from '../config/api';
+import { authClient } from '../lib/auth-client';
 
 interface Profile {
   id: string;
@@ -48,11 +50,14 @@ export default function ProfileEditPage() {
   const { profileId } = useParams<{ profileId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { data: session } = authClient.useSession();
+  const { data: activeOrg } = authClient.useActiveOrganization();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [servers, setServers] = useState<ServerWithTools[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
 
   const fetchProfileData = useCallback(async () => {
     if (!profileId) return;
@@ -260,9 +265,22 @@ export default function ProfileEditPage() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Profiles
           </Button>
-          <h1 className="text-xl font-semibold" data-testid="profile-edit-heading">
-            {profile.name}
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-semibold" data-testid="profile-edit-heading">
+              {profile.name}
+            </h1>
+            {session?.user && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShareModalOpen(true)}
+              >
+                <Share2 className="h-4 w-4 mr-1" />
+                Share
+              </Button>
+            )}
+          </div>
           {profile.description && (
             <p className="text-muted-foreground mt-1">{profile.description}</p>
           )}
@@ -272,7 +290,7 @@ export default function ProfileEditPage() {
         </div>
 
         {/* Profile Configuration */}
-        <ProfileConfigCard profileName={profile.name} tools={aggregatedTools} />
+        <ProfileConfigCard profileName={profile.name} tools={aggregatedTools} orgSlug={activeOrg?.slug} />
 
         {/* Servers List */}
         {servers.length === 0 ? (
@@ -292,6 +310,15 @@ export default function ProfileEditPage() {
               />
             ))}
           </div>
+        )}
+
+        {profileId && (
+          <ShareModal
+            isOpen={shareModalOpen}
+            onClose={() => setShareModalOpen(false)}
+            resourceType="profile"
+            resourceId={profileId}
+          />
         )}
       </div>
     </div>

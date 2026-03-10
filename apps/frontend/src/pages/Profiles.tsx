@@ -13,6 +13,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  Badge,
   Button,
   Card,
   DropdownMenu,
@@ -28,11 +29,20 @@ import { useNavigate } from 'react-router';
 import GatewayConfig from '../components/GatewayConfig';
 import ProfileForm from '../components/ProfileForm';
 import { API_URL, getGatewayUrl, getProfileUrl } from '../config/api';
+import { authClient } from '../lib/auth-client';
+
+// Get active org slug for org-scoped MCP URLs
+function useOrgSlug(): string | undefined {
+  const { data: activeOrg } = authClient.useActiveOrganization();
+  return activeOrg?.slug;
+}
 
 interface Profile {
   id: string;
   name: string;
   description?: string;
+  userId?: string;
+  isShared?: boolean;
   createdAt: number;
   updatedAt: number;
 }
@@ -50,6 +60,8 @@ interface ProfileWithStatus extends Profile {
 
 export default function ProfilesPage() {
   const navigate = useNavigate();
+  const { data: session } = authClient.useSession();
+  const orgSlug = useOrgSlug();
   const [profiles, setProfiles] = useState<ProfileWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +92,10 @@ export default function ProfilesPage() {
           let toolsCount = 0;
 
           try {
-            const infoResponse = await fetch(`${API_URL}/api/mcp/${profile.name}/info`);
+            const infoUrl = orgSlug
+              ? `${API_URL}/api/mcp/${orgSlug}/${profile.name}/info`
+              : `${API_URL}/api/mcp/gateway/info`;
+            const infoResponse = await fetch(infoUrl);
             if (infoResponse.ok) {
               const infoData = await infoResponse.json();
               toolsCount = Array.isArray(infoData.tools) ? infoData.tools.length : 0;
@@ -286,7 +301,7 @@ export default function ProfilesPage() {
     profileName: string
   ) => {
     e.stopPropagation();
-    const endpoint = getProfileUrl(profileName);
+    const endpoint = getProfileUrl(profileName, orgSlug);
     try {
       await navigator.clipboard.writeText(endpoint);
       setCopiedId(profileId);
@@ -389,6 +404,11 @@ export default function ProfilesPage() {
                     className={`h-2 w-2 rounded-full shrink-0 ${getStatusDot(profile.serverStatus)}`}
                   />
                   <h3 className="font-medium text-base truncate">{profile.name}</h3>
+                  {session?.user && profile.userId && profile.userId !== session.user.id && (
+                    <Badge variant="secondary" className="text-xs shrink-0">
+                      Shared
+                    </Badge>
+                  )}
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -435,7 +455,7 @@ export default function ProfilesPage() {
                 onClick={(e) => e.stopPropagation()}
               >
                 <code className="flex-1 text-xs font-mono truncate select-all cursor-text">
-                  {getProfileUrl(profile.name)}
+                  {getProfileUrl(profile.name, orgSlug)}
                 </code>
                 <Button
                   variant="ghost"

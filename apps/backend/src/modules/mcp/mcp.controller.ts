@@ -2,6 +2,7 @@
  * MCP Controller
  *
  * REST API endpoints for MCP server management.
+ * All routes scoped to the authenticated user's active organization.
  */
 
 import {
@@ -15,8 +16,13 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
+import type { AuthUser } from '../auth/auth.service.js';
+import { ActiveOrgId } from '../auth/decorators/active-org-id.decorator.js';
+import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
+import { SkipOrgCheck } from '../auth/decorators/skip-org-check.decorator.js';
 import { CreateMcpServerDto } from './dto/create-mcp-server.dto.js';
 import { UpdateMcpServerDto } from './dto/update-mcp-server.dto.js';
+import { MCP_PRESETS } from './mcp-presets.js';
 import { McpService } from './mcp.service.js';
 import { McpRegistry } from './mcp-registry.js';
 
@@ -32,26 +38,49 @@ export class McpController {
    */
   @Get('available')
   getAvailablePackages() {
-    const metadata = this.registry.getAllMetadata();
-    console.log('[McpController] getAllMetadata result:', metadata);
-    console.log('[McpController] registry has packages:', this.registry.getAll().length);
-    return metadata;
+    return this.registry.getAllMetadata();
   }
 
   /**
-   * Get all configured MCP servers
+   * Get all available MCP presets (gallery)
+   */
+  @Get('presets')
+  @SkipOrgCheck()
+  getPresets() {
+    return MCP_PRESETS;
+  }
+
+  /**
+   * Add a preset to the user's active organization
+   */
+  @Post('presets/:presetId/add')
+  @HttpCode(HttpStatus.CREATED)
+  async addPreset(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string,
+    @Param('presetId') presetId: string
+  ) {
+    return this.mcpService.addPreset(presetId, user.id, orgId);
+  }
+
+  /**
+   * Get all configured MCP servers visible to user in the active org
    */
   @Get()
-  async getAll() {
-    return this.mcpService.findAll();
+  async getAll(@CurrentUser() user: AuthUser, @ActiveOrgId() orgId: string) {
+    return this.mcpService.findAll(user.id, orgId);
   }
 
   /**
    * Get a specific MCP server
    */
   @Get(':id')
-  async getOne(@Param('id') id: string) {
-    return this.mcpService.findById(id);
+  async getOne(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string,
+    @Param('id') id: string
+  ) {
+    return this.mcpService.findById(id, user.id, orgId);
   }
 
   /**
@@ -59,16 +88,25 @@ export class McpController {
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() dto: CreateMcpServerDto) {
-    return this.mcpService.create(dto);
+  async create(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string,
+    @Body() dto: CreateMcpServerDto
+  ) {
+    return this.mcpService.create(dto, user.id, orgId);
   }
 
   /**
    * Update an MCP server configuration
    */
   @Put(':id')
-  async update(@Param('id') id: string, @Body() dto: UpdateMcpServerDto) {
-    return this.mcpService.update(id, dto);
+  async update(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateMcpServerDto
+  ) {
+    return this.mcpService.update(id, dto, user.id, orgId);
   }
 
   /**
@@ -76,23 +114,36 @@ export class McpController {
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param('id') id: string) {
-    await this.mcpService.delete(id);
+  async delete(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string,
+    @Param('id') id: string
+  ) {
+    await this.mcpService.delete(id, user.id, orgId);
   }
 
   /**
    * Get tools from an MCP server
    */
   @Get(':id/tools')
-  async getTools(@Param('id') id: string) {
-    return this.mcpService.getTools(id);
+  async getTools(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string,
+    @Param('id') id: string
+  ) {
+    return this.mcpService.getTools(id, user.id, orgId);
   }
 
   /**
    * Get MCP server status
    */
   @Get(':id/status')
-  async getStatus(@Param('id') id: string) {
-    return this.mcpService.getStatus(id);
+  async getStatus(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string,
+    @Param('id') id: string
+  ) {
+    return this.mcpService.getStatus(id, user.id, orgId);
   }
+
 }

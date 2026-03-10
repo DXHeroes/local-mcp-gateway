@@ -1,9 +1,9 @@
 #!/bin/sh
 set -e
 
-echo "Running database migrations..."
+echo "Pushing database schema..."
 cd /app/packages/database
-npx prisma migrate deploy --config ./dist/prisma.config.js
+npx prisma db push --skip-generate --config ./dist/prisma.config.js
 
 echo "Starting application..."
 cd /app/apps/backend

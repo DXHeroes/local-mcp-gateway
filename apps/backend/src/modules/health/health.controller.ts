@@ -5,8 +5,10 @@
  */
 
 import { Controller, Get } from '@nestjs/common';
+import { Public } from '../auth/decorators/public.decorator.js';
 import { PrismaService } from '../database/prisma.service.js';
 
+@Public()
 @Controller('health')
 export class HealthController {
   constructor(private readonly prisma: PrismaService) {}
@@ -19,6 +21,18 @@ export class HealthController {
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Auth configuration for frontend feature detection.
+   * Returns which auth methods are available.
+   */
+  @Get('auth-config')
+  getAuthConfig() {
+    return {
+      emailAndPassword: true,
+      google: !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET,
     };
   }
 

@@ -3,6 +3,7 @@
  *
  * MCP proxy endpoints for profiles and gateway.
  * Supports MCP Streamable HTTP transport (2025-11-25 spec) with SSE notifications.
+ * Profile endpoints use org slug: /api/mcp/:orgSlug/:profileName
  *
  * @see https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#streamable-http
  */
@@ -18,29 +19,54 @@ import {
   Post,
   Req,
   Res,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import type { Request, Response } from 'express';
 import { fromEvent, map } from 'rxjs';
+import { AuthService } from '../auth/auth.service.js';
+import { Public } from '../auth/decorators/public.decorator.js';
 import { GATEWAY_PROFILE_CHANGED, SettingsService } from '../settings/settings.service.js';
 import type { McpRequest, McpResponse } from './proxy.service.js';
 import { ProxyService } from './proxy.service.js';
 
+@Public()
 @Controller('mcp')
 export class ProxyController {
   constructor(
     private readonly proxyService: ProxyService,
     private readonly settingsService: SettingsService,
-    private readonly eventEmitter: EventEmitter2
+    private readonly eventEmitter: EventEmitter2,
+    private readonly authService: AuthService
   ) {}
 
+  /**
+   * Resolve user from Bearer token (MCP OAuth).
+   * When no token is provided, returns unauthenticated sentinel so
+   * system profiles (organizationId=null) still work for unauthenticated MCP clients.
+   */
+  private async resolveUser(req: Request): Promise<{ id: string }> {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      // No token — unauthenticated MCP client, can only access system profiles
+      return { id: '__unauthenticated__' };
+    }
+
+    const token = authHeader.slice(7);
+    const user = await this.authService.validateMcpToken(token);
+    if (!user) {
+      throw new UnauthorizedException('Invalid or expired MCP OAuth token');
+    }
+
+    return user;
+  }
+
   // =========================================
-  // Gateway Endpoints (must come BEFORE :profileName routes)
+  // Gateway Endpoints (must come BEFORE parameterized routes)
   // =========================================
 
   /**
    * SSE endpoint for gateway notifications (dedicated URL)
-   * Sends notifications/tools/list_changed when the active profile changes.
    */
   @Get('gateway/sse')
   streamGatewaySse(@Req() req: Request, @Res() res: Response) {
@@ -48,23 +74,27 @@ export class ProxyController {
   }
 
   /**
-   * POST handler for gateway SSE - handles JSON-RPC requests via SSE transport
+   * POST handler for gateway SSE
    */
   @Post('gateway/sse')
   @HttpCode(HttpStatus.OK)
-  async handleGatewaySseRequest(@Body() request: McpRequest): Promise<McpResponse> {
-    return this.handleGatewayRequest(request);
+  async handleGatewaySseRequest(
+    @Req() req: Request,
+    @Body() request: McpRequest
+  ): Promise<McpResponse> {
+    return this.handleGatewayRequest(req, request);
   }
 
   /**
-   * Get gateway info - proxies to default profile info
+   * Get gateway info
    */
   @Get('gateway/info')
-  async getGatewayInfo() {
+  async getGatewayInfo(@Req() req: Request) {
+    const user = await this.resolveUser(req);
     const profileName = await this.settingsService.getDefaultGatewayProfile();
 
     try {
-      const info = await this.proxyService.getProfileInfo(profileName);
+      const info = await this.proxyService.getProfileInfo(profileName, user.id);
       return {
         ...info,
         gateway: {
@@ -83,36 +113,25 @@ export class ProxyController {
 
   /**
    * GET handler for gateway endpoint
-   *
-   * Streamable HTTP content negotiation:
-   * - Accept: text/event-stream -> Returns SSE stream for notifications
-   * - Otherwise -> Returns JSON usage instructions
-   *
-   * @see https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#streamable-http
    */
   @Get('gateway')
   async getGatewayEndpoint(@Req() req: Request, @Res() res: Response) {
-    // Streamable HTTP: check Accept header for content negotiation
     const acceptHeader = req.headers.accept || '';
     if (acceptHeader.includes('text/event-stream')) {
       return this.streamGatewayEvents(req, res);
     }
 
-    // Return JSON usage info
+    const user = await this.resolveUser(req);
     const profileName = await this.settingsService.getDefaultGatewayProfile();
 
     try {
-      const info = await this.proxyService.getProfileInfo(profileName);
+      const info = await this.proxyService.getProfileInfo(profileName, user.id);
       return res.json({
         message: 'This is the MCP Gateway endpoint. Use POST for JSON-RPC requests.',
         usage: {
           method: 'POST',
           contentType: 'application/json',
-          body: {
-            jsonrpc: '2.0',
-            method: 'tools/list',
-            id: 1,
-          },
+          body: { jsonrpc: '2.0', method: 'tools/list', id: 1 },
         },
         endpoints: {
           sse: '/api/mcp/gateway/sse',
@@ -141,27 +160,16 @@ export class ProxyController {
   }
 
   /**
-   * Stream SSE events for gateway notifications.
-   * Sends notifications/tools/list_changed when the active profile changes.
-   *
-   * Follows MCP Streamable HTTP transport (2025-11-25):
-   * - No endpoint event needed (unified endpoint)
-   * - Simple data: format without event: prefix
-   *
-   * @see https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#streamable-http
+   * Stream SSE events for notifications.
    */
   private streamGatewayEvents(req: Request, res: Response) {
-    // Set SSE headers
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no'); // For nginx
+    res.setHeader('X-Accel-Buffering', 'no');
 
-    // Streamable HTTP - no endpoint event needed
-    // Just send a comment to establish connection
     res.write(': connected\n\n');
 
-    // Subscribe to profile change events
     const subscription = fromEvent(this.eventEmitter, GATEWAY_PROFILE_CHANGED)
       .pipe(
         map(() => ({
@@ -170,26 +178,28 @@ export class ProxyController {
         }))
       )
       .subscribe((notification) => {
-        // Streamable HTTP - simple data format, no event prefix
         res.write(`data: ${JSON.stringify(notification)}\n\n`);
       });
 
-    // Cleanup on client disconnect
     req.on('close', () => {
       subscription.unsubscribe();
     });
   }
 
   /**
-   * MCP JSON-RPC endpoint for the gateway - proxies to default profile
+   * MCP JSON-RPC endpoint for the gateway
    */
   @Post('gateway')
   @HttpCode(HttpStatus.OK)
-  async handleGatewayRequest(@Body() request: McpRequest): Promise<McpResponse> {
+  async handleGatewayRequest(
+    @Req() req: Request,
+    @Body() request: McpRequest
+  ): Promise<McpResponse> {
+    const user = await this.resolveUser(req);
     const profileName = await this.settingsService.getDefaultGatewayProfile();
 
     try {
-      return await this.proxyService.handleRequest(profileName, request);
+      return await this.proxyService.handleRequest(profileName, request, user.id);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw new NotFoundException(
@@ -201,83 +211,75 @@ export class ProxyController {
   }
 
   // =========================================
-  // Profile-specific Endpoints (existing)
+  // Org-scoped Profile Endpoints: /api/mcp/:orgSlug/:profileName
   // =========================================
 
   /**
-   * SSE endpoint for profile notifications (dedicated URL)
-   * Sends notifications/tools/list_changed when the active gateway profile changes.
+   * SSE endpoint for org-scoped profile
    */
-  @Get(':profileName/sse')
-  async streamProfileSse(
+  @Get(':orgSlug/:profileName/sse')
+  async streamOrgProfileSse(
+    @Param('orgSlug') orgSlug: string,
     @Param('profileName') profileName: string,
     @Req() req: Request,
     @Res() res: Response
   ) {
-    // Validate profile exists
-    await this.proxyService.getProfileInfo(profileName);
+    await this.proxyService.getProfileInfoByOrgSlug(profileName, orgSlug);
     return this.streamGatewayEvents(req, res);
   }
 
   /**
-   * POST handler for profile SSE - handles JSON-RPC requests via SSE transport
+   * POST handler for org-scoped profile SSE
    */
-  @Post(':profileName/sse')
+  @Post(':orgSlug/:profileName/sse')
   @HttpCode(HttpStatus.OK)
-  async handleProfileSseRequest(
+  async handleOrgProfileSseRequest(
+    @Req() req: Request,
+    @Param('orgSlug') orgSlug: string,
     @Param('profileName') profileName: string,
     @Body() request: McpRequest
   ): Promise<McpResponse> {
-    return this.handleMcpRequest(profileName, request);
+    return this.handleOrgMcpRequest(req, orgSlug, profileName, request);
   }
 
   /**
-   * Get profile info with aggregated tools and server status
+   * Get org-scoped profile info
    */
-  @Get(':profileName/info')
-  async getProfileInfo(@Param('profileName') profileName: string) {
-    return this.proxyService.getProfileInfo(profileName);
+  @Get(':orgSlug/:profileName/info')
+  async getOrgProfileInfo(
+    @Param('orgSlug') orgSlug: string,
+    @Param('profileName') profileName: string
+  ) {
+    return this.proxyService.getProfileInfoByOrgSlug(profileName, orgSlug);
   }
 
   /**
-   * GET handler for MCP endpoint
-   *
-   * Streamable HTTP content negotiation:
-   * - Accept: text/event-stream -> Returns SSE stream for notifications
-   * - Otherwise -> Returns JSON usage instructions
-   *
-   * @see https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#streamable-http
+   * GET handler for org-scoped MCP endpoint
    */
-  @Get(':profileName')
-  async getMcpEndpoint(
+  @Get(':orgSlug/:profileName')
+  async getOrgMcpEndpoint(
+    @Param('orgSlug') orgSlug: string,
     @Param('profileName') profileName: string,
     @Req() req: Request,
     @Res() res: Response
   ) {
-    // Validate profile exists first
-    const info = await this.proxyService.getProfileInfo(profileName);
+    const info = await this.proxyService.getProfileInfoByOrgSlug(profileName, orgSlug);
 
-    // Streamable HTTP: check Accept header for content negotiation
     const acceptHeader = req.headers.accept || '';
     if (acceptHeader.includes('text/event-stream')) {
       return this.streamGatewayEvents(req, res);
     }
 
-    // Return JSON usage info
     return res.json({
       message: 'This is an MCP (Model Context Protocol) endpoint. Use POST for JSON-RPC requests.',
       usage: {
         method: 'POST',
         contentType: 'application/json',
-        body: {
-          jsonrpc: '2.0',
-          method: 'tools/list',
-          id: 1,
-        },
+        body: { jsonrpc: '2.0', method: 'tools/list', id: 1 },
       },
       endpoints: {
-        sse: `/api/mcp/${profileName}/sse`,
-        http: `/api/mcp/${profileName}`,
+        sse: `/api/mcp/${orgSlug}/${profileName}/sse`,
+        http: `/api/mcp/${orgSlug}/${profileName}`,
       },
       profile: {
         name: profileName,
@@ -285,19 +287,22 @@ export class ProxyController {
         serverCount: info.serverStatus.total,
         connectedServers: info.serverStatus.connected,
       },
-      infoEndpoint: `/api/mcp/${profileName}/info`,
+      infoEndpoint: `/api/mcp/${orgSlug}/${profileName}/info`,
     });
   }
 
   /**
-   * MCP JSON-RPC endpoint for a profile
+   * MCP JSON-RPC endpoint for an org-scoped profile
    */
-  @Post(':profileName')
+  @Post(':orgSlug/:profileName')
   @HttpCode(HttpStatus.OK)
-  async handleMcpRequest(
+  async handleOrgMcpRequest(
+    @Req() req: Request,
+    @Param('orgSlug') orgSlug: string,
     @Param('profileName') profileName: string,
     @Body() request: McpRequest
   ): Promise<McpResponse> {
-    return this.proxyService.handleRequest(profileName, request);
+    const user = await this.resolveUser(req);
+    return this.proxyService.handleRequestByOrgSlug(profileName, orgSlug, request, user.id);
   }
 }

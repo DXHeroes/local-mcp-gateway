@@ -72,24 +72,16 @@ export class ProxyService {
   /**
    * Handle MCP JSON-RPC request for a profile
    */
-  async handleRequest(profileName: string, request: McpRequest): Promise<McpResponse> {
+  async handleRequest(
+    profileName: string,
+    request: McpRequest,
+    userId?: string
+  ): Promise<McpResponse> {
     const requestId = request.id;
     const startTime = Date.now();
 
     // Get profile with servers
-    const profile = await this.prisma.profile.findUnique({
-      where: { name: profileName },
-      include: {
-        mcpServers: {
-          where: { isActive: true },
-          include: {
-            mcpServer: true,
-            tools: true,
-          },
-          orderBy: { order: 'asc' },
-        },
-      },
-    });
+    const profile = await this.findProfileByName(profileName, userId);
 
     if (!profile) {
       throw new NotFoundException(`Profile "${profileName}" not found`);
@@ -569,28 +561,245 @@ export class ProxyService {
   }
 
   /**
+   * Resolve an org slug to an organization ID.
+   */
+  private async resolveOrgBySlug(orgSlug: string): Promise<string> {
+    const org = await this.prisma.organization.findUnique({
+      where: { slug: orgSlug },
+      select: { id: true },
+    });
+    if (!org) {
+      throw new NotFoundException(`Organization "${orgSlug}" not found`);
+    }
+    return org.id;
+  }
+
+  /**
+   * Find a profile by name within an organization (or system profiles).
+   */
+  private async findProfileByNameAndOrg(profileName: string, orgId: string) {
+    const include = {
+      mcpServers: {
+        where: { isActive: true },
+        include: {
+          mcpServer: true,
+          tools: true,
+        },
+        orderBy: { order: 'asc' as const },
+      },
+    };
+
+    // Try org-scoped first
+    let profile = await this.prisma.profile.findUnique({
+      where: { organizationId_name: { organizationId: orgId, name: profileName } },
+      include,
+    });
+
+    // Fallback to system profile (organizationId=null)
+    if (!profile) {
+      profile = await this.prisma.profile.findFirst({
+        where: { name: profileName, organizationId: null },
+        include,
+      });
+    }
+
+    return profile;
+  }
+
+  /**
+   * Find a profile by name, scoped to user if userId is provided.
+   * Anonymous users see all profiles. Authenticated users see own + system profiles.
+   */
+  private async findProfileByName(profileName: string, userId?: string) {
+    const include = {
+      mcpServers: {
+        where: { isActive: true },
+        include: {
+          mcpServer: true,
+          tools: true,
+        },
+        orderBy: { order: 'asc' as const },
+      },
+    };
+
+    // Try finding by unique (org, name) — for system profiles use null org
+    const profile = await this.prisma.profile.findFirst({
+      where: { name: profileName },
+      include,
+    });
+
+    if (!profile) return null;
+
+    // If no userId or unauthenticated, allow access to all profiles
+    if (!userId || userId === '__unauthenticated__') return profile;
+
+    // System records — accessible to all
+    if (!profile.organizationId) return profile;
+
+    // Allow access if user is a member of the profile's org
+    const membership = await this.prisma.member.findFirst({
+      where: { userId, organizationId: profile.organizationId },
+    });
+    if (membership) return profile;
+
+    // Otherwise deny
+    return null;
+  }
+
+  /**
+   * Handle MCP request using org slug to resolve the profile.
+   */
+  async handleRequestByOrgSlug(
+    profileName: string,
+    orgSlug: string,
+    request: McpRequest,
+    userId?: string
+  ): Promise<McpResponse> {
+    const orgId = await this.resolveOrgBySlug(orgSlug);
+    const profile = await this.findProfileByNameAndOrg(profileName, orgId);
+
+    if (!profile) {
+      throw new NotFoundException(`Profile "${profileName}" not found in organization "${orgSlug}"`);
+    }
+
+    const requestId = request.id;
+    const startTime = Date.now();
+
+    const shouldLog = request.method !== 'initialize';
+    let logId: string | null = null;
+    if (shouldLog) {
+      try {
+        const log = await this.debugService.createLog({
+          profileId: profile.id,
+          requestType: request.method,
+          requestPayload: JSON.stringify(request),
+          status: 'pending',
+        });
+        logId = log.id;
+      } catch (logError) {
+        this.logger.warn(`Failed to create debug log: ${logError}`);
+      }
+    }
+
+    try {
+      let response: McpResponse;
+
+      switch (request.method) {
+        case 'initialize':
+          response = await this.handleInitialize(requestId, profile);
+          break;
+        case 'tools/list':
+          response = await this.handleToolsList(requestId, profile);
+          break;
+        case 'tools/call':
+          response = await this.handleToolsCall(
+            requestId,
+            profile,
+            request.params as McpToolCall,
+            logId
+          );
+          break;
+        case 'resources/list':
+          response = await this.handleResourcesList(requestId, profile);
+          break;
+        case 'resources/read':
+          response = await this.handleResourcesRead(
+            requestId,
+            profile,
+            request.params as { uri: string }
+          );
+          break;
+        default:
+          response = {
+            jsonrpc: '2.0',
+            id: requestId,
+            error: { code: -32601, message: `Method not found: ${request.method}` },
+          };
+      }
+
+      if (logId) {
+        try {
+          await this.debugService.updateLog(logId, {
+            responsePayload: JSON.stringify(response),
+            status: response.error ? 'error' : 'success',
+            errorMessage: response.error?.message,
+            durationMs: Date.now() - startTime,
+          });
+        } catch (logError) {
+          this.logger.warn(`Failed to update debug log: ${logError}`);
+        }
+      }
+
+      return response;
+    } catch (error) {
+      this.logger.error(`MCP request error: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : 'Internal error';
+      if (logId) {
+        try {
+          await this.debugService.updateLog(logId, {
+            status: 'error',
+            errorMessage,
+            durationMs: Date.now() - startTime,
+          });
+        } catch (logError) {
+          this.logger.warn(`Failed to update debug log: ${logError}`);
+        }
+      }
+      return {
+        jsonrpc: '2.0',
+        id: requestId,
+        error: { code: -32603, message: errorMessage },
+      };
+    }
+  }
+
+  /**
+   * Get profile info using org slug.
+   */
+  async getProfileInfoByOrgSlug(profileName: string, orgSlug: string) {
+    const orgId = await this.resolveOrgBySlug(orgSlug);
+    const profile = await this.findProfileByNameAndOrg(profileName, orgId);
+
+    if (!profile) {
+      throw new NotFoundException(`Profile "${profileName}" not found in organization "${orgSlug}"`);
+    }
+
+    return this.aggregateProfileInfo(profile);
+  }
+
+  /**
    * Get profile info with aggregated tools and server status
    */
-  async getProfileInfo(profileName: string) {
-    const profile = await this.prisma.profile.findUnique({
-      where: { name: profileName },
-      include: {
-        mcpServers: {
-          where: { isActive: true },
-          include: {
-            mcpServer: true,
-            tools: true,
-          },
-          orderBy: { order: 'asc' },
-        },
-      },
-    });
+  async getProfileInfo(profileName: string, userId?: string) {
+    const profile = await this.findProfileByName(profileName, userId);
 
     if (!profile) {
       throw new NotFoundException(`Profile "${profileName}" not found`);
     }
 
-    // Aggregate tools from all servers
+    return this.aggregateProfileInfo(profile);
+  }
+
+  /**
+   * Aggregate tools and server status from a profile.
+   */
+  private async aggregateProfileInfo(profile: {
+    mcpServers: Array<{
+      mcpServer: {
+        id: string;
+        name: string;
+        type: string;
+        config: unknown;
+        apiKeyConfig: unknown;
+      };
+      tools: Array<{
+        toolName: string;
+        isEnabled: boolean;
+        customName: string | null;
+        customDescription: string | null;
+      }>;
+    }>;
+  }) {
     const tools: Array<{ name: string; description: string }> = [];
     const serverStatus: Record<string, { connected: boolean; toolCount: number }> = {};
 

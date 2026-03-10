@@ -4,17 +4,18 @@
  * NestJS service wrapping Prisma Client with lifecycle management.
  */
 
-import { createPrismaAdapter } from '@dxheroes/local-mcp-database';
 import { PrismaClient } from '@dxheroes/local-mcp-database/generated/prisma';
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
+    const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL ?? '' });
     super({
-      adapter: createPrismaAdapter(),
+      adapter,
       log:
         process.env.NODE_ENV === 'development'
           ? [
@@ -96,15 +97,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       throw new Error('cleanDatabase can only be called in test environment');
     }
 
-    const tablenames = await this.$queryRaw<Array<{ name: string }>>`
-      SELECT name FROM sqlite_master
-      WHERE type='table'
-      AND name NOT LIKE '_prisma%'
-      AND name NOT LIKE 'sqlite%'
+    const tablenames = await this.$queryRaw<Array<{ tablename: string }>>`
+      SELECT tablename FROM pg_tables
+      WHERE schemaname = 'public'
+      AND tablename NOT LIKE '_prisma%'
     `;
 
-    for (const { name } of tablenames) {
-      await this.$executeRawUnsafe(`DELETE FROM "${name}"`);
+    for (const { tablename } of tablenames) {
+      await this.$executeRawUnsafe(`TRUNCATE TABLE "${tablename}" CASCADE`);
     }
   }
 }

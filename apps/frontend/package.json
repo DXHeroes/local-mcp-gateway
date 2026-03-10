@@ -28,6 +28,7 @@
     "@dxheroes/local-mcp-ui": "workspace:*",
     "@tanstack/react-query": "^5.90.16",
     "@toon-format/toon": "^2.1.0",
+    "better-auth": "^1.5.4",
     "lucide-react": "^0.562.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",

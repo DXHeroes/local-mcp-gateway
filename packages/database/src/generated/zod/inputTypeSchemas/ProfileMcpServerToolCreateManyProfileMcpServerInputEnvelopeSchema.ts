@@ -5,6 +5,7 @@ import { ProfileMcpServerToolCreateManyProfileMcpServerInputSchema } from './Pro
 
 export const ProfileMcpServerToolCreateManyProfileMcpServerInputEnvelopeSchema: z.ZodType<Prisma.ProfileMcpServerToolCreateManyProfileMcpServerInputEnvelope> = z.strictObject({
   data: z.union([ z.lazy(() => ProfileMcpServerToolCreateManyProfileMcpServerInputSchema), z.lazy(() => ProfileMcpServerToolCreateManyProfileMcpServerInputSchema).array() ]),
+  skipDuplicates: z.boolean().optional(),
 });
 
 export default ProfileMcpServerToolCreateManyProfileMcpServerInputEnvelopeSchema;

@@ -2,6 +2,7 @@
  * Profiles Controller
  *
  * REST API endpoints for profile management.
+ * All routes scoped to the authenticated user's active organization.
  */
 
 import {
@@ -16,6 +17,9 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
+import type { AuthUser } from '../auth/auth.service.js';
+import { ActiveOrgId } from '../auth/decorators/active-org-id.decorator.js';
+import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import { ProfilesService } from './profiles.service.js';
 
 interface CreateProfileDto {
@@ -52,27 +56,35 @@ export class ProfilesController {
   constructor(private readonly profilesService: ProfilesService) {}
 
   /**
-   * Get all profiles
+   * Get all profiles visible to user in the active org
    */
   @Get()
-  async getAll() {
-    return this.profilesService.findAll();
+  async getAll(@CurrentUser() user: AuthUser, @ActiveOrgId() orgId: string) {
+    return this.profilesService.findAll(user.id, orgId);
   }
 
   /**
    * Get a specific profile by ID
    */
   @Get(':id')
-  async getOne(@Param('id') id: string) {
-    return this.profilesService.findById(id);
+  async getOne(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string,
+    @Param('id') id: string
+  ) {
+    return this.profilesService.findById(id, user.id, orgId);
   }
 
   /**
    * Get a profile by name
    */
   @Get('by-name/:name')
-  async getByName(@Param('name') name: string) {
-    return this.profilesService.findByName(name);
+  async getByName(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string,
+    @Param('name') name: string
+  ) {
+    return this.profilesService.findByName(name, user.id, orgId);
   }
 
   /**
@@ -80,16 +92,25 @@ export class ProfilesController {
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() dto: CreateProfileDto) {
-    return this.profilesService.create(dto);
+  async create(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string,
+    @Body() dto: CreateProfileDto
+  ) {
+    return this.profilesService.create(dto, user.id, orgId);
   }
 
   /**
    * Update a profile
    */
   @Put(':id')
-  async update(@Param('id') id: string, @Body() dto: UpdateProfileDto) {
-    return this.profilesService.update(id, dto);
+  async update(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateProfileDto
+  ) {
+    return this.profilesService.update(id, dto, user.id, orgId);
   }
 
   /**
@@ -97,16 +118,24 @@ export class ProfilesController {
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param('id') id: string) {
-    await this.profilesService.delete(id);
+  async delete(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string,
+    @Param('id') id: string
+  ) {
+    await this.profilesService.delete(id, user.id, orgId);
   }
 
   /**
    * Get servers for a profile
    */
   @Get(':id/servers')
-  async getServers(@Param('id') id: string) {
-    return this.profilesService.getServers(id);
+  async getServers(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string,
+    @Param('id') id: string
+  ) {
+    return this.profilesService.getServers(id, user.id, orgId);
   }
 
   /**
@@ -114,8 +143,13 @@ export class ProfilesController {
    */
   @Post(':id/servers')
   @HttpCode(HttpStatus.CREATED)
-  async addServer(@Param('id') id: string, @Body() dto: AddServerDto) {
-    return this.profilesService.addServer(id, dto);
+  async addServer(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string,
+    @Param('id') id: string,
+    @Body() dto: AddServerDto
+  ) {
+    return this.profilesService.addServer(id, dto, user.id, orgId);
   }
 
   /**
@@ -123,11 +157,13 @@ export class ProfilesController {
    */
   @Put(':id/servers/:serverId')
   async updateServer(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string,
     @Param('id') id: string,
     @Param('serverId') serverId: string,
     @Body() dto: UpdateServerDto
   ) {
-    return this.profilesService.updateServer(id, serverId, dto);
+    return this.profilesService.updateServer(id, serverId, dto, user.id, orgId);
   }
 
   /**
@@ -135,8 +171,13 @@ export class ProfilesController {
    */
   @Delete(':id/servers/:serverId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async removeServer(@Param('id') id: string, @Param('serverId') serverId: string) {
-    await this.profilesService.removeServer(id, serverId);
+  async removeServer(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string,
+    @Param('id') id: string,
+    @Param('serverId') serverId: string
+  ) {
+    await this.profilesService.removeServer(id, serverId, user.id, orgId);
   }
 
   /**
@@ -144,11 +185,19 @@ export class ProfilesController {
    */
   @Put(':id/servers/:serverId/toggle')
   async toggleServer(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string,
     @Param('id') id: string,
     @Param('serverId') serverId: string,
     @Body() dto: { isActive: boolean }
   ) {
-    return this.profilesService.updateServer(id, serverId, { isActive: dto.isActive });
+    return this.profilesService.updateServer(
+      id,
+      serverId,
+      { isActive: dto.isActive },
+      user.id,
+      orgId
+    );
   }
 
   /**
@@ -156,11 +205,13 @@ export class ProfilesController {
    */
   @Get(':id/servers/:serverId/tools')
   async getServerTools(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string,
     @Param('id') id: string,
     @Param('serverId') serverId: string,
     @Query('refresh') refresh?: string
   ) {
-    return this.profilesService.getServerTools(id, serverId, refresh === 'true');
+    return this.profilesService.getServerTools(id, serverId, refresh === 'true', user.id, orgId);
   }
 
   /**
@@ -168,10 +219,12 @@ export class ProfilesController {
    */
   @Put(':id/servers/:serverId/tools')
   async updateServerTools(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string,
     @Param('id') id: string,
     @Param('serverId') serverId: string,
     @Body() dto: { tools: UpdateToolDto[] }
   ) {
-    return this.profilesService.updateServerTools(id, serverId, dto.tools);
+    return this.profilesService.updateServerTools(id, serverId, dto.tools, user.id, orgId);
   }
 }

@@ -230,11 +230,11 @@ export default function ProfileForm({
                 <AlertDescription className="text-amber-800 dark:text-amber-200">
                   Changing the name will update the URL endpoint from{' '}
                   <code className="mx-1 px-1 py-0.5 bg-amber-100 dark:bg-amber-900 rounded text-xs">
-                    /api/mcp/{originalName}
+                    /api/mcp/&lt;org&gt;/{originalName}
                   </code>{' '}
                   to{' '}
                   <code className="mx-1 px-1 py-0.5 bg-amber-100 dark:bg-amber-900 rounded text-xs">
-                    /api/mcp/{name || '...'}
+                    /api/mcp/&lt;org&gt;/{name || '...'}
                   </code>
                   . Existing connections will stop working.
                 </AlertDescription>

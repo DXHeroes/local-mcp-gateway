@@ -1,8 +1,7 @@
 // Local MCP Gateway - Prisma Schema
 //
-// This schema defines the core database models for MCP server management.
-// No authentication or licensing - this is an open-source application
-// where users can immediately configure and use MCP servers.
+// This schema defines the core database models for MCP server management
+// with Better Auth for user authentication, organizations, and multi-tenancy.
 
 generator client {
   provider = "prisma-client-js"
@@ -24,7 +23,7 @@ generator zod {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 // ============================================
@@ -33,34 +32,43 @@ datasource db {
 
 /// User-defined profiles for grouping MCP servers
 model Profile {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  description String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(uuid())
+  name           String
+  description    String?
+  userId         String?  @map("user_id")
+  organizationId String?  @map("organization_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
-  mcpServers ProfileMcpServer[]
-  debugLogs  DebugLog[]
+  user         User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization?      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  mcpServers   ProfileMcpServer[]
+  debugLogs    DebugLog[]
 
+  @@unique([organizationId, name])
   @@map("profiles")
 }
 
 /// MCP server configurations
 model McpServer {
-  id           String   @id @default(uuid())
-  name         String
-  type         String   // 'builtin' | 'external' | 'custom' | 'remote_http' | 'remote_sse'
-  config       String   @default("{}") // JSON config
-  oauthConfig  String?  @map("oauth_config") // JSON OAuth config
-  apiKeyConfig String?  @map("api_key_config") // JSON API key config
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(uuid())
+  name           String
+  type           String   // 'builtin' | 'external' | 'custom' | 'remote_http' | 'remote_sse'
+  config         String   @default("{}") // JSON config
+  oauthConfig    String?  @map("oauth_config") // JSON OAuth config
+  apiKeyConfig   String?  @map("api_key_config") // JSON API key config
+  userId         String?  @map("user_id")
+  organizationId String?  @map("organization_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
-  profiles             ProfileMcpServer[]
-  oauthToken           OAuthToken?
+  user                     User?                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization             Organization?            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  profiles                 ProfileMcpServer[]
+  oauthToken               OAuthToken?
   oauthClientRegistrations OAuthClientRegistration[]
-  toolsCache           McpServerToolsCache[]
-  debugLogs            DebugLog[]
+  toolsCache               McpServerToolsCache[]
+  debugLogs                DebugLog[]
 
   @@index([type])
   @@map("mcp_servers")
@@ -216,12 +224,207 @@ model Migration {
 }
 
 // ============================================
-// NOTE: Open-Source Version
+// Better Auth Models
 // ============================================
-// This application is fully open-source and does NOT require:
-// - User accounts or organizations
-// - License keys or activations
-// - Subscriptions or payments
-//
-// Users can immediately configure and use MCP servers
-// without any authentication or licensing.
+
+/// User accounts (managed by Better Auth)
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false) @map("email_verified")
+  image         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  sessions      Session[]
+  accounts      Account[]
+  profiles      Profile[]
+  mcpServers    McpServer[]
+  members       Member[]
+  invitations   Invitation[]
+  sharedResources SharedResource[]
+
+  @@map("user")
+}
+
+/// User sessions (managed by Better Auth)
+model Session {
+  id                   String    @id
+  token                String    @unique
+  expiresAt            DateTime  @map("expires_at")
+  ipAddress            String?   @map("ip_address")
+  userAgent            String?   @map("user_agent")
+  userId               String    @map("user_id")
+  activeOrganizationId String?   @map("active_organization_id")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+/// OAuth accounts (managed by Better Auth)
+model Account {
+  id                    String    @id
+  userId                String    @map("user_id")
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?
+  idToken               String?   @map("id_token")
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+/// Verification tokens (managed by Better Auth)
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime  @map("expires_at")
+  createdAt  DateTime? @default(now()) @map("created_at")
+  updatedAt  DateTime? @updatedAt @map("updated_at")
+
+  @@map("verification")
+}
+
+// ============================================
+// Organization Models (Better Auth Organization Plugin)
+// ============================================
+
+/// Organizations for multi-tenancy
+model Organization {
+  id        String    @id
+  name      String
+  slug      String    @unique
+  logo      String?
+  metadata  String?
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  members     Member[]
+  invitations Invitation[]
+  profiles    Profile[]
+  mcpServers  McpServer[]
+
+  @@map("organization")
+}
+
+/// Organization members
+model Member {
+  id             String   @id
+  organizationId String   @map("organization_id")
+  userId         String   @map("user_id")
+  role           String
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("member")
+}
+
+/// Organization invitations
+model Invitation {
+  id             String   @id
+  organizationId String   @map("organization_id")
+  email          String
+  role           String?
+  status         String
+  inviterId      String   @map("inviter_id")
+  expiresAt      DateTime @map("expires_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  inviter      User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@map("invitation")
+}
+
+// ============================================
+// Resource Sharing
+// ============================================
+
+/// Shared resources between users/organizations
+model SharedResource {
+  id             String   @id @default(uuid())
+  resourceType   String   @map("resource_type")
+  resourceId     String   @map("resource_id")
+  sharedWithType String   @map("shared_with_type")
+  sharedWithId   String   @map("shared_with_id")
+  permission     String   @default("use")
+  sharedByUserId String   @map("shared_by_user_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  sharedBy User @relation(fields: [sharedByUserId], references: [id], onDelete: Cascade)
+
+  @@unique([resourceType, resourceId, sharedWithType, sharedWithId])
+  @@map("shared_resources")
+}
+
+// ============================================
+// MCP OAuth Models (Better Auth MCP Plugin)
+// ============================================
+
+/// OAuth clients for MCP (Better Auth MCP Plugin)
+model OauthApplication {
+  id           String    @id
+  clientId     String    @unique @map("client_id")
+  clientSecret String?   @map("client_secret")
+  name         String
+  icon         String?
+  metadata     String?
+  redirectURLs String    @map("redirect_u_r_ls")
+  type         String
+  disabled     Boolean   @default(false)
+  userId       String?   @map("user_id")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@map("oauth_application")
+}
+
+/// OAuth authorization codes (Better Auth MCP Plugin)
+model OauthAuthorizationCode {
+  id            String    @id
+  code          String
+  clientId      String    @map("client_id")
+  redirectURI   String    @map("redirect_u_r_i")
+  userId        String    @map("user_id")
+  scope         String?
+  expiresAt     DateTime  @map("expires_at")
+  codeChallenge String?   @map("code_challenge")
+
+  @@map("oauth_authorization_code")
+}
+
+/// OAuth access tokens (Better Auth MCP Plugin)
+model OauthAccessToken {
+  id        String    @id
+  token     String
+  clientId  String    @map("client_id")
+  userId    String?   @map("user_id")
+  scope     String?
+  expiresAt DateTime  @map("expires_at")
+
+  @@map("oauth_access_token")
+}
+
+/// OAuth consent records (Better Auth MCP Plugin)
+model OauthConsent {
+  id            String    @id
+  clientId      String    @map("client_id")
+  userId        String    @map("user_id")
+  scope         String?
+  consentGiven  Boolean   @map("consent_given")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@map("oauth_consent")
+}

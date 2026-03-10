@@ -10,6 +10,8 @@ export const McpServerCountOrderByAggregateInputSchema: z.ZodType<Prisma.McpServ
   config: z.lazy(() => SortOrderSchema).optional(),
   oauthConfig: z.lazy(() => SortOrderSchema).optional(),
   apiKeyConfig: z.lazy(() => SortOrderSchema).optional(),
+  userId: z.lazy(() => SortOrderSchema).optional(),
+  organizationId: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional(),
 });

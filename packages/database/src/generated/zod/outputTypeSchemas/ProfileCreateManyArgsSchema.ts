@@ -4,6 +4,7 @@ import { ProfileCreateManyInputSchema } from '../inputTypeSchemas/ProfileCreateM
 
 export const ProfileCreateManyArgsSchema: z.ZodType<Prisma.ProfileCreateManyArgs> = z.object({
   data: z.union([ ProfileCreateManyInputSchema, ProfileCreateManyInputSchema.array() ]),
+  skipDuplicates: z.boolean().optional(),
 }).strict();
 
 export default ProfileCreateManyArgsSchema;

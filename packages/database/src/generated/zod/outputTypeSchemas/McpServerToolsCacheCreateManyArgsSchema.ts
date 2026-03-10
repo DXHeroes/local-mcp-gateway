@@ -4,6 +4,7 @@ import { McpServerToolsCacheCreateManyInputSchema } from '../inputTypeSchemas/Mc
 
 export const McpServerToolsCacheCreateManyArgsSchema: z.ZodType<Prisma.McpServerToolsCacheCreateManyArgs> = z.object({
   data: z.union([ McpServerToolsCacheCreateManyInputSchema, McpServerToolsCacheCreateManyInputSchema.array() ]),
+  skipDuplicates: z.boolean().optional(),
 }).strict();
 
 export default McpServerToolsCacheCreateManyArgsSchema;

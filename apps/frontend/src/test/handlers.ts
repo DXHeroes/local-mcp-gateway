@@ -23,11 +23,25 @@ export const handlers = [
     return HttpResponse.json({ serverIds: [] });
   }),
 
-  http.get(`${API_URL}/api/mcp/:profileName/info`, () => {
+  http.get(`${API_URL}/api/mcp/gateway/info`, () => {
     return HttpResponse.json({ tools: [] });
   }),
-  http.get('/api/mcp/:profileName/info', () => {
+  http.get('/api/mcp/gateway/info', () => {
     return HttpResponse.json({ tools: [] });
+  }),
+  http.get(`${API_URL}/api/mcp/:orgSlug/:profileName/info`, () => {
+    return HttpResponse.json({ tools: [] });
+  }),
+  http.get('/api/mcp/:orgSlug/:profileName/info', () => {
+    return HttpResponse.json({ tools: [] });
+  }),
+
+  // MCP Presets API
+  http.get(`${API_URL}/api/mcp-servers/presets`, () => {
+    return HttpResponse.json([]);
+  }),
+  http.get('/api/mcp-servers/presets', () => {
+    return HttpResponse.json([]);
   }),
 
   // MCP Servers API - support both relative and absolute URLs

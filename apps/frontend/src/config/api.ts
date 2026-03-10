@@ -114,6 +114,9 @@ export const getGatewayUrl = (): string => {
  * @param profileName - Name of the profile
  * @returns Full absolute URL to the profile endpoint
  */
-export const getProfileUrl = (profileName: string): string => {
+export const getProfileUrl = (profileName: string, orgSlug?: string): string => {
+  if (orgSlug) {
+    return `${getFullMcpEndpointUrl()}/api/mcp/${orgSlug}/${profileName}`;
+  }
   return `${getFullMcpEndpointUrl()}/api/mcp/${profileName}`;
 };

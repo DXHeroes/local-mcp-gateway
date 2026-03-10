@@ -4,6 +4,7 @@ import { GatewaySettingCreateManyInputSchema } from '../inputTypeSchemas/Gateway
 
 export const GatewaySettingCreateManyArgsSchema: z.ZodType<Prisma.GatewaySettingCreateManyArgs> = z.object({
   data: z.union([ GatewaySettingCreateManyInputSchema, GatewaySettingCreateManyInputSchema.array() ]),
+  skipDuplicates: z.boolean().optional(),
 }).strict();
 
 export default GatewaySettingCreateManyArgsSchema;

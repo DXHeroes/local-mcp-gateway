@@ -12,10 +12,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@dxheroes/local-mcp-ui';
+import { Share2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
+import ShareModal from '../components/ShareModal';
 import { ToolInfoCard } from '../components/ToolInfoCard';
 import { API_URL } from '../config/api';
+import { authClient } from '../lib/auth-client';
 
 interface McpServer {
   id: string;
@@ -63,6 +66,8 @@ interface DebugLog {
 export default function McpServerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { data: session } = authClient.useSession();
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const [server, setServer] = useState<McpServer | null>(null);
   const [tools, setTools] = useState<McpTool[]>([]);
   const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
@@ -225,9 +230,17 @@ export default function McpServerDetailPage() {
           <h2 className="text-xl font-semibold text-gray-900">{server.name}</h2>
           <p className="text-sm text-muted-foreground mt-1">Type: {server.type}</p>
         </div>
-        <Button onClick={() => navigate('/mcp-servers')} variant="outline">
-          Back to Servers
-        </Button>
+        <div className="flex items-center gap-2">
+          {session?.user && (
+            <Button type="button" variant="outline" onClick={() => setShareModalOpen(true)}>
+              <Share2 className="h-4 w-4 mr-1" />
+              Share
+            </Button>
+          )}
+          <Button onClick={() => navigate('/mcp-servers')} variant="outline">
+            Back to Servers
+          </Button>
+        </div>
       </div>
 
       {/* Connection Status */}
@@ -359,6 +372,15 @@ export default function McpServerDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {id && (
+        <ShareModal
+          isOpen={shareModalOpen}
+          onClose={() => setShareModalOpen(false)}
+          resourceType="mcp_server"
+          resourceId={id}
+        />
+      )}
     </div>
   );
 }

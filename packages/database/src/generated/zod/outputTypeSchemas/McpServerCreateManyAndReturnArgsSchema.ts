@@ -4,6 +4,7 @@ import { McpServerCreateManyInputSchema } from '../inputTypeSchemas/McpServerCre
 
 export const McpServerCreateManyAndReturnArgsSchema: z.ZodType<Prisma.McpServerCreateManyAndReturnArgs> = z.object({
   data: z.union([ McpServerCreateManyInputSchema, McpServerCreateManyInputSchema.array() ]),
+  skipDuplicates: z.boolean().optional(),
 }).strict();
 
 export default McpServerCreateManyAndReturnArgsSchema;

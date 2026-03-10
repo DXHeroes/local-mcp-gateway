@@ -4,6 +4,7 @@ import { OAuthClientRegistrationCreateManyInputSchema } from '../inputTypeSchema
 
 export const OAuthClientRegistrationCreateManyAndReturnArgsSchema: z.ZodType<Prisma.OAuthClientRegistrationCreateManyAndReturnArgs> = z.object({
   data: z.union([ OAuthClientRegistrationCreateManyInputSchema, OAuthClientRegistrationCreateManyInputSchema.array() ]),
+  skipDuplicates: z.boolean().optional(),
 }).strict();
 
 export default OAuthClientRegistrationCreateManyAndReturnArgsSchema;

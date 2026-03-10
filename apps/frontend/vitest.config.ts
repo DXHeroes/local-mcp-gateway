@@ -9,6 +9,15 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**'],
     testTimeout: 15000,
+    coverage: {
+      provider: 'v8',
+      thresholds: {
+        branches: 80,
+        functions: 80,
+        lines: 80,
+        statements: 80,
+      },
+    },
   },
   plugins: [react()],
 });

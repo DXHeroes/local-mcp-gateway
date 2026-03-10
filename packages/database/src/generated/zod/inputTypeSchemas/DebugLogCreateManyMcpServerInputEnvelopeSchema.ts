@@ -5,6 +5,7 @@ import { DebugLogCreateManyMcpServerInputSchema } from './DebugLogCreateManyMcpS
 
 export const DebugLogCreateManyMcpServerInputEnvelopeSchema: z.ZodType<Prisma.DebugLogCreateManyMcpServerInputEnvelope> = z.strictObject({
   data: z.union([ z.lazy(() => DebugLogCreateManyMcpServerInputSchema), z.lazy(() => DebugLogCreateManyMcpServerInputSchema).array() ]),
+  skipDuplicates: z.boolean().optional(),
 });
 
 export default DebugLogCreateManyMcpServerInputEnvelopeSchema;
