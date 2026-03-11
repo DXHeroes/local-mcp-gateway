@@ -19,7 +19,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: local_mcp_gateway
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:

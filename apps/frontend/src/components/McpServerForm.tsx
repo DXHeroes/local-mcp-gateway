@@ -322,7 +322,7 @@ export default function McpServerForm({
     }
     setShowApiKey(false);
     setError(null);
-  }, [server]);
+  }, [server, isOpen]);
 
   // Focus API key input for builtin servers that require it
   useEffect(() => {
