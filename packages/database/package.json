@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/local-mcp-database",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "type": "module",
   "description": "Prisma ORM layer with PostgreSQL for persisting MCP servers, profiles, OAuth tokens, and API keys",
   "license": "Elastic-2.0",

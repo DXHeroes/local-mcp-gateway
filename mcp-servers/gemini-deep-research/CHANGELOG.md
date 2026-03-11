@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.4](https://github.com/DXHeroes/local-mcp-gateway/compare/mcp-gemini-deep-research-v0.5.3...mcp-gemini-deep-research-v0.5.4) (2026-03-11)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * peerDependencies
+    * @dxheroes/local-mcp-core bumped to 0.7.1
+
 ## [0.5.3](https://github.com/DXHeroes/local-mcp-gateway/compare/mcp-gemini-deep-research-v0.5.2...mcp-gemini-deep-research-v0.5.3) (2026-03-10)
 
 

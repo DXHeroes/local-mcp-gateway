@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.10.1](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.10.0...frontend-v0.10.1) (2026-03-11)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.9
+    * @dxheroes/local-mcp-ui bumped to 0.5.7
+
 ## [0.10.0](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.9.2...frontend-v0.10.0) (2026-03-10)
 
 
