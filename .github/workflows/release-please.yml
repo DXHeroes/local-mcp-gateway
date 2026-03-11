@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   id-token: write
@@ -68,7 +69,6 @@ jobs:
     name: Publish Docker Images
     runs-on: ubuntu-latest
     needs: release-please
-    if: needs.release-please.outputs.any_released == 'true'
     steps:
       - uses: actions/checkout@v4
 

@@ -5,6 +5,7 @@ WORKDIR /app
 
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 # Copy workspace files
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json turbo.json tsconfig.json ./

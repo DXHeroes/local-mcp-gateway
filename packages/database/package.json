@@ -51,6 +51,8 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.4.2",
     "@prisma/client": "^7.2.0",
+    "@prisma/client-runtime-utils": "^7.2.0",
+    "prisma": "^7.2.0",
     "pg": "^8.20.0",
     "zod": "^4.3.5"
   },
@@ -58,7 +60,6 @@
     "@dxheroes/local-mcp-config": "workspace:*",
     "@types/node": "^25.0.6",
     "@types/pg": "^8.18.0",
-    "prisma": "^7.2.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.17",
