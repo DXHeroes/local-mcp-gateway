@@ -371,6 +371,7 @@ export default function ProfilesPage() {
         defaultProfileName={defaultGatewayProfile}
         onProfileChange={handleGatewayProfileChange}
         isLoading={settingsLoading || loading}
+        orgSlug={orgSlug}
       />
 
       <div className="mb-4 flex justify-between items-center">
@@ -388,7 +389,7 @@ export default function ProfilesPage() {
       )}
 
       {!error && profiles.length === 0 ? (
-        <EmptyState onCreateClick={openCreateForm} />
+        <EmptyState onCreateClick={openCreateForm} orgSlug={orgSlug} />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {profiles.map((profile) => (
@@ -509,7 +510,10 @@ export default function ProfilesPage() {
 /**
  * Empty state with quick-start guide
  */
-function EmptyState({ onCreateClick }: { onCreateClick: () => void }) {
+function EmptyState({
+  onCreateClick,
+  orgSlug,
+}: { onCreateClick: () => void; orgSlug?: string }) {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
@@ -517,7 +521,7 @@ function EmptyState({ onCreateClick }: { onCreateClick: () => void }) {
   "mcpServers": {
     "gateway": {
       "type": "http",
-      "url": "${getGatewayUrl()}"
+      "url": "${getGatewayUrl(orgSlug)}"
     }
   }
 }`;

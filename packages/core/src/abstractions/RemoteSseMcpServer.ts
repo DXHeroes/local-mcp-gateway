@@ -595,6 +595,11 @@ export class RemoteSseMcpServer extends McpServer {
   private buildHeaders(): Record<string, string> {
     const headers: Record<string, string> = {};
 
+    // Custom headers first (lowest priority — auth headers override if same key)
+    if (this.config.headers) {
+      Object.assign(headers, this.config.headers);
+    }
+
     // OAuth token takes precedence
     if (this.oauthToken) {
       headers.Authorization = `${this.oauthToken.tokenType} ${this.oauthToken.accessToken}`;

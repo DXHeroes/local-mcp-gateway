@@ -4,7 +4,8 @@
  * Manages OAuth tokens for MCP servers.
  */
 
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { OAuthDiscoveryService } from '@dxheroes/local-mcp-core';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 
 interface StartOAuthFlowDto {
@@ -35,8 +36,10 @@ interface StoreTokenDto {
 
 @Injectable()
 export class OAuthService {
+  private readonly logger = new Logger(OAuthService.name);
   // In-memory storage for PKCE verifiers (in production, use Redis or similar)
   private pkceVerifiers = new Map<string, { verifier: string; expiresAt: number }>();
+  private readonly discoveryService = new OAuthDiscoveryService();
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -181,6 +184,214 @@ export class OAuthService {
     await this.prisma.oAuthToken.delete({
       where: { mcpServerId },
     });
+  }
+
+  /**
+   * Discover OAuth configuration and build an authorization URL for a server.
+   * Uses RFC 9728 / 8414 / 7591 auto-discovery and optional DCR.
+   * Returns an authorization URL the browser should be redirected to.
+   */
+  async discoverAndAuthorize(serverId: string, callbackUrl: string): Promise<string> {
+    const server = await this.prisma.mcpServer.findUnique({ where: { id: serverId } });
+    if (!server) {
+      throw new NotFoundException(`MCP server ${serverId} not found`);
+    }
+
+    // Parse server URL from config
+    const config = typeof server.config === 'string' ? JSON.parse(server.config) : server.config;
+    const serverUrl = config?.url as string | undefined;
+    if (!serverUrl) {
+      throw new BadRequestException('Server has no URL configured');
+    }
+
+    // Parse existing oauthConfig if any (may have manual clientId)
+    const existingOAuthConfig = server.oauthConfig
+      ? typeof server.oauthConfig === 'string'
+        ? JSON.parse(server.oauthConfig)
+        : server.oauthConfig
+      : null;
+
+    // Step 1: Discover OAuth endpoints via RFC 9728 + 8414
+    this.logger.log(`Discovering OAuth for server ${serverId} at ${serverUrl}`);
+    const discovery = await this.discoveryService.discoverFromServerUrl(serverUrl);
+
+    // Step 2: Get or register client
+    let clientId: string;
+
+    if (existingOAuthConfig?.clientId) {
+      // Use manually configured clientId
+      clientId = existingOAuthConfig.clientId;
+    } else {
+      // Check for existing DCR registration
+      const existingReg = await this.prisma.oAuthClientRegistration.findUnique({
+        where: {
+          mcpServerId_authorizationServerUrl: {
+            mcpServerId: serverId,
+            authorizationServerUrl: discovery.authorizationServerUrl,
+          },
+        },
+      });
+
+      if (existingReg) {
+        clientId = existingReg.clientId;
+      } else if (discovery.registrationEndpoint) {
+        // Perform Dynamic Client Registration (RFC 7591)
+        this.logger.log(`Performing DCR at ${discovery.registrationEndpoint}`);
+        const registration = await this.discoveryService.registerClient(
+          discovery.registrationEndpoint,
+          callbackUrl,
+          discovery.scopes
+        );
+        clientId = registration.clientId;
+
+        // Store registration
+        await this.prisma.oAuthClientRegistration.create({
+          data: {
+            mcpServerId: serverId,
+            authorizationServerUrl: discovery.authorizationServerUrl,
+            clientId: registration.clientId,
+            clientSecret: registration.clientSecret,
+            registrationAccessToken: registration.registrationAccessToken,
+          },
+        });
+      } else {
+        throw new BadRequestException(
+          'No clientId configured and server does not support Dynamic Client Registration. ' +
+            'Please configure a clientId manually in the OAuth settings.'
+        );
+      }
+    }
+
+    // Step 3: Store discovery result in oauthConfig on the server
+    await this.prisma.mcpServer.update({
+      where: { id: serverId },
+      data: {
+        oauthConfig: JSON.stringify({
+          authorizationServerUrl: discovery.authorizationServerUrl,
+          authorizationEndpoint: discovery.authorizationEndpoint,
+          tokenEndpoint: discovery.tokenEndpoint,
+          registrationEndpoint: discovery.registrationEndpoint,
+          resource: discovery.resource,
+          scopes: discovery.scopes,
+          clientId,
+          requiresOAuth: true,
+        }),
+      },
+    });
+
+    // Step 4: Generate PKCE
+    const codeVerifier = this.generateCodeVerifier();
+    const codeChallenge = await this.generateCodeChallenge(codeVerifier);
+
+    // Store verifier (expires in 10 minutes)
+    this.pkceVerifiers.set(serverId, {
+      verifier: codeVerifier,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+
+    // Step 5: Build authorization URL
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: clientId,
+      redirect_uri: callbackUrl,
+      code_challenge: codeChallenge,
+      code_challenge_method: 'S256',
+      state: serverId, // Use serverId as state for callback routing
+    });
+
+    if (discovery.scopes.length > 0) {
+      params.set('scope', discovery.scopes.join(' '));
+    }
+
+    if (discovery.resource) {
+      params.set('resource', discovery.resource);
+    }
+
+    return `${discovery.authorizationEndpoint}?${params.toString()}`;
+  }
+
+  /**
+   * Handle OAuth callback: exchange authorization code for tokens.
+   */
+  async handleCallback(
+    serverId: string,
+    code: string,
+    callbackUrl: string
+  ): Promise<{ success: boolean; error?: string }> {
+    const server = await this.prisma.mcpServer.findUnique({ where: { id: serverId } });
+    if (!server) {
+      return { success: false, error: `MCP server ${serverId} not found` };
+    }
+
+    // Retrieve PKCE verifier
+    const pkceEntry = this.pkceVerifiers.get(serverId);
+    if (!pkceEntry) {
+      return { success: false, error: 'PKCE verifier not found or expired' };
+    }
+    if (pkceEntry.expiresAt < Date.now()) {
+      this.pkceVerifiers.delete(serverId);
+      return { success: false, error: 'PKCE verifier expired' };
+    }
+    const codeVerifier = pkceEntry.verifier;
+    this.pkceVerifiers.delete(serverId);
+
+    // Get oauthConfig for token endpoint and clientId
+    const oauthConfig = server.oauthConfig
+      ? typeof server.oauthConfig === 'string'
+        ? JSON.parse(server.oauthConfig)
+        : server.oauthConfig
+      : null;
+
+    if (!oauthConfig?.tokenEndpoint || !oauthConfig?.clientId) {
+      return { success: false, error: 'OAuth configuration incomplete (missing tokenEndpoint or clientId)' };
+    }
+
+    try {
+      // Exchange code for tokens
+      const response = await fetch(oauthConfig.tokenEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: callbackUrl,
+          client_id: oauthConfig.clientId,
+          code_verifier: codeVerifier,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        return { success: false, error: `Token exchange failed: ${errorText}` };
+      }
+
+      const tokenData = (await response.json()) as {
+        access_token: string;
+        refresh_token?: string;
+        token_type?: string;
+        scope?: string;
+        expires_in?: number;
+      };
+
+      const expiresAt = tokenData.expires_in
+        ? new Date(Date.now() + tokenData.expires_in * 1000)
+        : null;
+
+      // Store token
+      await this.storeToken({
+        mcpServerId: serverId,
+        accessToken: tokenData.access_token,
+        refreshToken: tokenData.refresh_token,
+        tokenType: tokenData.token_type || 'Bearer',
+        scope: tokenData.scope,
+        expiresAt,
+      });
+
+      return { success: true };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, error: message };
+    }
   }
 
   /**

@@ -254,11 +254,11 @@ export class McpService {
 
     // For remote_http servers, connect and fetch tools
     if (server.type === 'remote_http') {
-      const config = this.parseConfig(server.config) as { url: string };
+      const config = this.parseConfig(server.config) as { url: string; headers?: Record<string, string> };
       const apiKeyConfig = server.apiKeyConfig ? JSON.parse(server.apiKeyConfig as string) : null;
 
       const remoteServer = new RemoteHttpMcpServer(
-        { url: config.url, transport: 'http' },
+        { url: config.url, transport: 'http', headers: config.headers },
         null,
         apiKeyConfig
       );
@@ -269,11 +269,11 @@ export class McpService {
 
     // For remote_sse servers, connect and fetch tools
     if (server.type === 'remote_sse') {
-      const config = this.parseConfig(server.config) as { url: string };
+      const config = this.parseConfig(server.config) as { url: string; headers?: Record<string, string> };
       const apiKeyConfig = server.apiKeyConfig ? JSON.parse(server.apiKeyConfig as string) : null;
 
       const remoteServer = new RemoteSseMcpServer(
-        { url: config.url, transport: 'sse' },
+        { url: config.url, transport: 'sse', headers: config.headers },
         null,
         apiKeyConfig
       );
@@ -410,14 +410,30 @@ export class McpService {
     }
 
     // For remote_http servers, validate by connecting
+    let oauthRequired = false;
     if (server.type === 'remote_http' && status === 'unknown') {
-      const config = this.parseConfig(server.config) as { url: string };
+      const config = this.parseConfig(server.config) as { url: string; headers?: Record<string, string> };
       const apiKeyConfig = server.apiKeyConfig ? JSON.parse(server.apiKeyConfig as string) : null;
+
+      // Get OAuth token if available, mapping Prisma types to core OAuthToken
+      const oauthToken = server.oauthToken
+        ? {
+            id: server.oauthToken.id,
+            mcpServerId: server.oauthToken.mcpServerId,
+            accessToken: server.oauthToken.accessToken,
+            tokenType: server.oauthToken.tokenType,
+            refreshToken: server.oauthToken.refreshToken ?? undefined,
+            scope: server.oauthToken.scope ?? undefined,
+            expiresAt: server.oauthToken.expiresAt?.getTime(),
+            createdAt: server.oauthToken.createdAt.getTime(),
+            updatedAt: server.oauthToken.updatedAt.getTime(),
+          }
+        : null;
 
       try {
         const remoteServer = new RemoteHttpMcpServer(
-          { url: config.url, transport: 'http' },
-          null,
+          { url: config.url, transport: 'http', headers: config.headers },
+          oauthToken,
           apiKeyConfig
         );
         await remoteServer.initialize();
@@ -427,19 +443,39 @@ export class McpService {
       } catch (error) {
         status = 'error';
         validationError = error instanceof Error ? error.message : 'Unknown error';
-        validationDetails = `Connection failed: ${validationError}`;
+        if (validationError.includes('OAUTH_REQUIRED')) {
+          oauthRequired = true;
+          validationDetails = 'OAuth authentication required. Click "Login with OAuth" to authorize.';
+        } else {
+          validationDetails = `Connection failed: ${validationError}`;
+        }
       }
     }
 
     // For remote_sse servers, validate by connecting
     if (server.type === 'remote_sse' && status === 'unknown') {
-      const config = this.parseConfig(server.config) as { url: string };
+      const config = this.parseConfig(server.config) as { url: string; headers?: Record<string, string> };
       const apiKeyConfig = server.apiKeyConfig ? JSON.parse(server.apiKeyConfig as string) : null;
+
+      // Get OAuth token if available, mapping Prisma types to core OAuthToken
+      const oauthToken = server.oauthToken
+        ? {
+            id: server.oauthToken.id,
+            mcpServerId: server.oauthToken.mcpServerId,
+            accessToken: server.oauthToken.accessToken,
+            tokenType: server.oauthToken.tokenType,
+            refreshToken: server.oauthToken.refreshToken ?? undefined,
+            scope: server.oauthToken.scope ?? undefined,
+            expiresAt: server.oauthToken.expiresAt?.getTime(),
+            createdAt: server.oauthToken.createdAt.getTime(),
+            updatedAt: server.oauthToken.updatedAt.getTime(),
+          }
+        : null;
 
       try {
         const remoteServer = new RemoteSseMcpServer(
-          { url: config.url, transport: 'sse' },
-          null,
+          { url: config.url, transport: 'sse', headers: config.headers },
+          oauthToken,
           apiKeyConfig
         );
         await remoteServer.initialize();
@@ -449,7 +485,12 @@ export class McpService {
       } catch (error) {
         status = 'error';
         validationError = error instanceof Error ? error.message : 'Unknown error';
-        validationDetails = `Connection failed: ${validationError}`;
+        if (validationError.includes('OAUTH_REQUIRED')) {
+          oauthRequired = true;
+          validationDetails = 'OAuth authentication required. Click "Login with OAuth" to authorize.';
+        } else {
+          validationDetails = `Connection failed: ${validationError}`;
+        }
       }
     }
 
@@ -493,6 +534,7 @@ export class McpService {
       hasOAuth,
       requiresApiKey,
       requiresOAuth,
+      oauthRequired,
       isReady,
       status,
       error: validationError,

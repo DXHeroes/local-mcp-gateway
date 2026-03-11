@@ -28,6 +28,7 @@ interface GatewayConfigProps {
   defaultProfileName: string | null;
   onProfileChange: (profileName: string) => Promise<void>;
   isLoading?: boolean;
+  orgSlug?: string;
 }
 
 export default function GatewayConfig({
@@ -35,12 +36,13 @@ export default function GatewayConfig({
   defaultProfileName,
   onProfileChange,
   isLoading = false,
+  orgSlug,
 }: GatewayConfigProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const { toast } = useToast();
 
-  const gatewayUrl = getGatewayUrl();
+  const gatewayUrl = getGatewayUrl(orgSlug);
 
   const handleCopy = async () => {
     try {

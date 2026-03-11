@@ -68,6 +68,7 @@ interface McpServerWithStatus extends McpServer {
   connectionError?: string;
   validationDetails?: string;
   validatedAt?: string;
+  oauthRequired?: boolean;
 }
 
 import { API_URL } from '../config/api';
@@ -120,6 +121,7 @@ export default function McpServersPage() {
 
           let validationDetails: string | undefined;
           let validatedAt: string | undefined;
+          let oauthRequired = false;
 
           try {
             // Fetch tools
@@ -137,6 +139,7 @@ export default function McpServersPage() {
               connectionError = statusData.error || undefined;
               validationDetails = statusData.details || undefined;
               validatedAt = statusData.validatedAt || undefined;
+              oauthRequired = !!statusData.oauthRequired;
             }
           } catch {
             // Ignore errors when fetching status/tools - server might be unavailable
@@ -150,6 +153,7 @@ export default function McpServersPage() {
             connectionError,
             validationDetails,
             validatedAt,
+            oauthRequired,
           };
         })
       );
@@ -378,19 +382,21 @@ export default function McpServersPage() {
                           </AlertDescription>
                         </Alert>
                       )}
-                    {/* OAuth configuration */}
-                    {server.oauthConfig && (
+                    {/* OAuth configuration or OAuth required */}
+                    {(server.oauthConfig || server.oauthRequired) && (
                       <div className="mt-3 flex items-center gap-2">
                         <Badge variant="outline">OAuth</Badge>
-                        <span className="text-xs text-muted-foreground truncate max-w-xs">
-                          {server.oauthConfig.authorizationServerUrl}
-                        </span>
+                        {server.oauthConfig?.authorizationServerUrl && (
+                          <span className="text-xs text-muted-foreground truncate max-w-xs">
+                            {server.oauthConfig.authorizationServerUrl}
+                          </span>
+                        )}
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => handleOAuthAuthorize(server.id)}
                         >
-                          Authorize
+                          {server.oauthRequired ? 'Login with OAuth' : 'Re-authorize'}
                         </Button>
                       </div>
                     )}

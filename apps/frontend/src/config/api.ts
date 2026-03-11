@@ -102,7 +102,10 @@ export const getMainGatewayUrl = (): string => {
  * - POST → JSON-RPC requests (tools/list, tools/call)
  * @returns Full absolute URL to the gateway endpoint
  */
-export const getGatewayUrl = (): string => {
+export const getGatewayUrl = (orgSlug?: string): string => {
+  if (orgSlug) {
+    return `${getFullMcpEndpointUrl()}/api/mcp/${orgSlug}/gateway`;
+  }
   return `${getFullMcpEndpointUrl()}/api/mcp/gateway`;
 };
 

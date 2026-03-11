@@ -41,6 +41,7 @@ export interface McpResponse {
 interface ServerConfig {
   builtinId?: string;
   url?: string;
+  headers?: Record<string, string>;
   // External server config
   command?: string;
   args?: string[];
@@ -488,11 +489,32 @@ export class ProxyService {
       }
     }
 
+    // For remote_http and remote_sse servers, look up OAuth token
+    let oauthToken = null;
+    if (server.type === 'remote_http' || server.type === 'remote_sse') {
+      const tokenRecord = await this.prisma.oAuthToken.findUnique({
+        where: { mcpServerId: server.id },
+      });
+      if (tokenRecord) {
+        oauthToken = {
+          id: tokenRecord.id,
+          mcpServerId: tokenRecord.mcpServerId,
+          accessToken: tokenRecord.accessToken,
+          tokenType: tokenRecord.tokenType,
+          refreshToken: tokenRecord.refreshToken ?? undefined,
+          scope: tokenRecord.scope ?? undefined,
+          expiresAt: tokenRecord.expiresAt?.getTime(),
+          createdAt: tokenRecord.createdAt.getTime(),
+          updatedAt: tokenRecord.updatedAt.getTime(),
+        };
+      }
+    }
+
     // For remote_http servers, create RemoteHttpMcpServer
     if (server.type === 'remote_http' && config?.url) {
       const remoteServer = new RemoteHttpMcpServer(
-        { url: config.url, transport: 'http' },
-        null,
+        { url: config.url, transport: 'http', headers: config.headers as Record<string, string> },
+        oauthToken,
         apiKeyConfig
       );
       await remoteServer.initialize();
@@ -503,8 +525,8 @@ export class ProxyService {
     // For remote_sse servers, create RemoteSseMcpServer
     if (server.type === 'remote_sse' && config?.url) {
       const remoteServer = new RemoteSseMcpServer(
-        { url: config.url, transport: 'sse' },
-        null,
+        { url: config.url, transport: 'sse', headers: config.headers as Record<string, string> },
+        oauthToken,
         apiKeyConfig
       );
       await remoteServer.initialize();

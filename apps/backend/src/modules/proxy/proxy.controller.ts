@@ -211,6 +211,114 @@ export class ProxyController {
   }
 
   // =========================================
+  // Org-scoped Gateway Endpoints: /api/mcp/:orgSlug/gateway
+  // (must come BEFORE :orgSlug/:profileName to avoid "gateway" matching :profileName)
+  // =========================================
+
+  /**
+   * SSE endpoint for org-scoped gateway
+   */
+  @Get(':orgSlug/gateway/sse')
+  async streamOrgGatewaySse(
+    @Param('orgSlug') orgSlug: string,
+    @Req() req: Request,
+    @Res() res: Response
+  ) {
+    const profileName = await this.settingsService.getDefaultGatewayProfile();
+    await this.proxyService.getProfileInfoByOrgSlug(profileName, orgSlug);
+    return this.streamGatewayEvents(req, res);
+  }
+
+  /**
+   * POST handler for org-scoped gateway SSE
+   */
+  @Post(':orgSlug/gateway/sse')
+  @HttpCode(HttpStatus.OK)
+  async handleOrgGatewaySseRequest(
+    @Req() req: Request,
+    @Param('orgSlug') orgSlug: string,
+    @Body() request: McpRequest
+  ): Promise<McpResponse> {
+    const user = await this.resolveUser(req);
+    const profileName = await this.settingsService.getDefaultGatewayProfile();
+    return this.proxyService.handleRequestByOrgSlug(profileName, orgSlug, request, user.id);
+  }
+
+  /**
+   * Get org-scoped gateway info
+   */
+  @Get(':orgSlug/gateway/info')
+  async getOrgGatewayInfo(@Param('orgSlug') orgSlug: string) {
+    const profileName = await this.settingsService.getDefaultGatewayProfile();
+    const info = await this.proxyService.getProfileInfoByOrgSlug(profileName, orgSlug);
+    return {
+      ...info,
+      gateway: {
+        activeProfile: profileName,
+      },
+    };
+  }
+
+  /**
+   * GET handler for org-scoped gateway endpoint
+   */
+  @Get(':orgSlug/gateway')
+  async getOrgGatewayEndpoint(
+    @Param('orgSlug') orgSlug: string,
+    @Req() req: Request,
+    @Res() res: Response
+  ) {
+    const acceptHeader = req.headers.accept || '';
+    if (acceptHeader.includes('text/event-stream')) {
+      const profileName = await this.settingsService.getDefaultGatewayProfile();
+      await this.proxyService.getProfileInfoByOrgSlug(profileName, orgSlug);
+      return this.streamGatewayEvents(req, res);
+    }
+
+    const profileName = await this.settingsService.getDefaultGatewayProfile();
+    const info = await this.proxyService.getProfileInfoByOrgSlug(profileName, orgSlug);
+
+    return res.json({
+      message: 'This is the MCP Gateway endpoint. Use POST for JSON-RPC requests.',
+      usage: {
+        method: 'POST',
+        contentType: 'application/json',
+        body: { jsonrpc: '2.0', method: 'tools/list', id: 1 },
+      },
+      endpoints: {
+        sse: `/api/mcp/${orgSlug}/gateway/sse`,
+        http: `/api/mcp/${orgSlug}/gateway`,
+      },
+      gateway: {
+        activeProfile: profileName,
+        settingsEndpoint: '/api/settings/default-gateway-profile',
+      },
+      profile: {
+        name: profileName,
+        toolCount: info.tools.length,
+        serverCount: info.serverStatus.total,
+        connectedServers: info.serverStatus.connected,
+      },
+      infoEndpoint: `/api/mcp/${orgSlug}/gateway/info`,
+    });
+  }
+
+  /**
+   * MCP JSON-RPC endpoint for org-scoped gateway
+   */
+  @Post(':orgSlug/gateway')
+  @HttpCode(HttpStatus.OK)
+  async handleOrgGatewayRequest(
+    @Req() req: Request,
+    @Param('orgSlug') orgSlug: string,
+    @Body() request: McpRequest
+  ): Promise<McpResponse> {
+    const user = await this.resolveUser(req);
+    const profileName = await this.settingsService.getDefaultGatewayProfile();
+    return this.proxyService.handleRequestByOrgSlug(profileName, orgSlug, request, user.id);
+  }
+
+  // =========================================
   // Org-scoped Profile Endpoints: /api/mcp/:orgSlug/:profileName
   // =========================================
 

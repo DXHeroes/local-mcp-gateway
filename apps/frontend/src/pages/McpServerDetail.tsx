@@ -12,7 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@dxheroes/local-mcp-ui';
-import { Share2 } from 'lucide-react';
+import { LogIn, Share2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import ShareModal from '../components/ShareModal';
@@ -77,6 +77,7 @@ export default function McpServerDetailPage() {
     'unknown'
   );
   const [connectionError, setConnectionError] = useState<string | undefined>();
+  const [oauthRequired, setOauthRequired] = useState(false);
 
   const fetchServerDetails = useCallback(async () => {
     if (!id) return;
@@ -137,6 +138,7 @@ export default function McpServerDetailPage() {
           const statusData = await statusResponse.json();
           setConnectionStatus(statusData.status || 'unknown');
           setConnectionError(statusData.error || undefined);
+          setOauthRequired(!!statusData.oauthRequired);
         } else if (statusResponse.status === 401) {
           // Check if OAuth is required
           const errorData = await statusResponse.json();
@@ -266,8 +268,35 @@ export default function McpServerDetailPage() {
                   ? 'Error'
                   : 'Unknown'}
             </span>
-            {connectionError && (
+            {connectionError && !oauthRequired && (
               <span className="text-sm text-muted-foreground">- {connectionError}</span>
+            )}
+            {oauthRequired && (
+              <Button
+                size="sm"
+                onClick={() => {
+                  const popup = window.open(
+                    `${API_URL}/api/oauth/authorize/${id}`,
+                    '_blank',
+                    'width=600,height=700'
+                  );
+                  const handleMessage = (event: MessageEvent) => {
+                    if (event.data.type === 'oauth-callback') {
+                      window.removeEventListener('message', handleMessage);
+                      popup?.close();
+                      if (event.data.success) {
+                        fetchServerDetails();
+                      } else {
+                        setError(event.data.error || 'OAuth authorization failed');
+                      }
+                    }
+                  };
+                  window.addEventListener('message', handleMessage);
+                }}
+              >
+                <LogIn className="h-4 w-4 mr-1" />
+                Login with OAuth
+              </Button>
             )}
           </div>
         </CardContent>

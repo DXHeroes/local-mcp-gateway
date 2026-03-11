@@ -117,6 +117,7 @@ export interface CustomMcpConfig {
 export interface RemoteHttpMcpConfig {
   url: string;
   transport: 'http';
+  headers?: Record<string, string>;
 }
 
 /**
@@ -125,6 +126,7 @@ export interface RemoteHttpMcpConfig {
 export interface RemoteSseMcpConfig {
   url: string;
   transport: 'sse';
+  headers?: Record<string, string>;
 }
 
 /**

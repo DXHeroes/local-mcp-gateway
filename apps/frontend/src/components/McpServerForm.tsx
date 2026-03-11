@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@dxheroes/local-mcp-ui';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 interface McpServerMetadata {
@@ -76,7 +76,7 @@ interface McpServer {
 type RemoteServerFormData = {
   name: string;
   type: 'remote_http' | 'remote_sse';
-  config: { url: string; transport: 'http' | 'sse' };
+  config: { url: string; transport: 'http' | 'sse'; headers?: Record<string, string> };
   oauthConfig?: {
     authorizationServerUrl: string;
     tokenEndpoint?: string;
@@ -196,6 +196,9 @@ export default function McpServerForm({
   const [apiKeyHeaderValue, setApiKeyHeaderValue] = useState('Bearer {apiKey}');
   const [showApiKey, setShowApiKey] = useState(false);
 
+  // Custom headers (key-value pairs for remote servers)
+  const [customHeaders, setCustomHeaders] = useState<Array<{ key: string; value: string }>>([]);
+
   // Ref for focusing API key input
   const apiKeyInputRef = useRef<HTMLInputElement>(null);
 
@@ -260,8 +263,17 @@ export default function McpServerForm({
             ? server.type
             : 'remote_http'
         );
-        const config = parseConfig(server.config) as { url?: string };
+        const config = parseConfig(server.config) as { url?: string; headers?: Record<string, string> };
         setUrl(config.url || '');
+
+        // Load custom headers from config
+        if (config.headers && Object.keys(config.headers).length > 0) {
+          setCustomHeaders(
+            Object.entries(config.headers).map(([key, value]) => ({ key, value }))
+          );
+        } else {
+          setCustomHeaders([]);
+        }
 
         if (server.oauthConfig) {
           setAuthType('oauth');
@@ -306,6 +318,7 @@ export default function McpServerForm({
       setEnvVars('');
       setWorkingDirectory('');
       setAutoRestart(true);
+      setCustomHeaders([]);
     }
     setShowApiKey(false);
     setError(null);
@@ -445,12 +458,22 @@ export default function McpServerForm({
 
     try {
       setIsSubmitting(true);
+      // Build custom headers record (filter out empty keys)
+      const headersRecord: Record<string, string> = {};
+      for (const h of customHeaders) {
+        const k = h.key.trim();
+        if (k) {
+          headersRecord[k] = h.value;
+        }
+      }
+
       await onSave({
         name: name.trim(),
         type,
         config: {
           url: url.trim(),
           transport: type === 'remote_http' ? 'http' : 'sse',
+          ...(Object.keys(headersRecord).length > 0 ? { headers: headersRecord } : {}),
         },
         oauthConfig:
           authType === 'oauth'
@@ -889,6 +912,75 @@ export default function McpServerForm({
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* Custom Headers - for remote servers (not external, not builtin) */}
+          {!isBuiltin && type !== 'external' && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-medium">Custom Headers</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCustomHeaders([...customHeaders, { key: '', value: '' }])}
+                  disabled={isSubmitting}
+                >
+                  <Plus size={14} className="mr-1" />
+                  Add Header
+                </Button>
+              </div>
+              {customHeaders.length > 0 && (
+                <Card>
+                  <CardContent className="pt-4 space-y-3">
+                    {customHeaders.map((header, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <Input
+                          type="text"
+                          value={header.key}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const updated = [...customHeaders];
+                            updated[index] = { key: e.target.value, value: header.value };
+                            setCustomHeaders(updated);
+                          }}
+                          placeholder="Header name"
+                          disabled={isSubmitting}
+                          className="text-sm flex-1"
+                        />
+                        <Input
+                          type="text"
+                          value={header.value}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const updated = [...customHeaders];
+                            updated[index] = { key: header.key, value: e.target.value };
+                            setCustomHeaders(updated);
+                          }}
+                          placeholder="Header value"
+                          disabled={isSubmitting}
+                          className="text-sm flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setCustomHeaders(customHeaders.filter((_, i) => i !== index));
+                          }}
+                          disabled={isSubmitting}
+                          className="text-muted-foreground hover:text-destructive px-2"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    ))}
+                    <p className="text-xs text-muted-foreground">
+                      Custom headers are sent with every request. Auth headers override custom headers
+                      with the same name.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           )}
 
           {/* API Key Configuration - for remote servers (not external) */}
