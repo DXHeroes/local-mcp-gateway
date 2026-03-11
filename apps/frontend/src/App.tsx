@@ -6,7 +6,7 @@
  */
 
 import { Toaster } from '@dxheroes/local-mcp-ui';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import Layout from './components/Layout.tsx';
@@ -128,12 +128,62 @@ function App() {
     );
   }
 
-  // Authenticated
+  // Authenticated — ensure active organization is set
   return (
     <ErrorBoundary>
-      <AuthenticatedApp />
+      <OrgGate />
     </ErrorBoundary>
   );
+}
+
+/**
+ * OrgGate — ensures an active organization is set before rendering the app.
+ * Auto-selects the first available org if none is active on the session.
+ */
+function OrgGate() {
+  const { data: orgs, isPending: orgsLoading } = authClient.useListOrganizations();
+  const { data: activeOrg, isPending: activeOrgLoading } = authClient.useActiveOrganization();
+  const [setting, setSetting] = useState(false);
+
+  useEffect(() => {
+    if (!orgsLoading && !activeOrgLoading && !activeOrg && orgs && orgs.length > 0 && !setting) {
+      setSetting(true);
+      authClient.organization
+        .setActive({ organizationId: orgs[0]!.id })
+        .finally(() => setSetting(false));
+    }
+  }, [orgs, activeOrg, orgsLoading, activeOrgLoading, setting]);
+
+  if (orgsLoading || activeOrgLoading || setting) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-400 text-sm">Loading organization...</div>
+      </div>
+    );
+  }
+
+  if (!orgs?.length) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-500 text-sm">No organizations found.</p>
+          <p className="text-gray-400 text-xs mt-1">
+            This shouldn&apos;t happen. Try signing out and back in.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!activeOrg) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-400 text-sm">Loading organization...</div>
+      </div>
+    );
+  }
+
+  return <AuthenticatedApp />;
 }
 
 export default App;
