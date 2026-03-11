@@ -1,0 +1,54 @@
+{
+  "name": "@dxheroes/mcp-fakturoid",
+  "version": "0.1.0",
+  "description": "MCP server for Fakturoid API v3 — invoicing, contacts, expenses, and accounting for Czech businesses",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "mcpPackage": true,
+  "scripts": {
+    "build": "tsc --build",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "mcp",
+    "local-mcp-gateway",
+    "fakturoid",
+    "invoicing",
+    "czech",
+    "accounting",
+    "expenses"
+  ],
+  "author": "DX Heroes",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DXHeroes/local-mcp-gateway.git",
+    "directory": "mcp-servers/fakturoid"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@dxheroes/local-mcp-core": "workspace:*"
+  },
+  "dependencies": {
+    "zod": "4.3.5"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.8"
+  }
+}
