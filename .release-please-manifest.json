@@ -1,13 +1,13 @@
 {
-  "apps/backend": "0.9.0",
-  "apps/frontend": "0.10.0",
-  "packages/config": "0.4.8",
-  "packages/core": "0.7.0",
-  "packages/database": "0.5.0",
-  "packages/ui": "0.5.6",
-  "mcp-servers/gemini-deep-research": "0.5.3",
-  "mcp-servers/merk": "0.3.3",
-  "mcp-servers/toggl": "0.3.3",
-  "mcp-servers/fakturoid": "0.1.0",
-  "mcp-servers/abra-flexi": "0.1.0"
+  "apps/backend": "0.9.1",
+  "apps/frontend": "0.10.1",
+  "packages/config": "0.4.9",
+  "packages/core": "0.7.1",
+  "packages/database": "0.5.1",
+  "packages/ui": "0.5.7",
+  "mcp-servers/gemini-deep-research": "0.5.4",
+  "mcp-servers/merk": "0.3.4",
+  "mcp-servers/toggl": "0.3.4",
+  "mcp-servers/fakturoid": "0.3.0",
+  "mcp-servers/abra-flexi": "0.3.0"
 }
