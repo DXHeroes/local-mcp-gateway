@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.11.0](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.10.1...frontend-v0.11.0) (2026-03-11)
+
+
+### Features
+
+* implement OrgGate for organization management and enhance Layout with organization selector ([69c96f3](https://github.com/DXHeroes/local-mcp-gateway/commit/69c96f37e13e704254fdc6d146b61dbbcab7723c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.10
+    * @dxheroes/local-mcp-ui bumped to 0.5.8
+
 ## [0.10.1](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.10.0...frontend-v0.10.1) (2026-03-11)
 
 
