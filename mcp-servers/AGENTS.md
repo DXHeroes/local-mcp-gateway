@@ -184,6 +184,19 @@ pnpm build
 
 Package will be auto-discovered on next backend start.
 
+### 7. New Package Registration Checklist
+
+When adding a new MCP package, update these files:
+
+| File | Action |
+|------|--------|
+| `pnpm-workspace.yaml` | **No action** — uses `mcp-servers/*` glob |
+| `.release-please-manifest.json` | Add entry with initial version (e.g., `"mcp-servers/my-pkg": "0.1.0"`) |
+| `.github/release-please-config.json` | Add package with component name (e.g., `"mcp-servers/my-pkg": { "component": "mcp-my-pkg" }`) |
+| `.github/workflows/release-please.yml` | Add to the `for pkg in ...` npm publish loop |
+| `apps/backend/Dockerfile` | **No action** — copies entire `mcp-servers/` dir |
+| `mcp-servers/AGENTS.md` | Add to "Existing Packages" list below |
+
 ## Package Structure
 
 ```
@@ -260,6 +273,10 @@ interface McpPackage {
 ## Existing Packages
 
 - **[gemini-deep-research/](gemini-deep-research/)** - Gemini AI deep research tool
+- **[merk/](merk/)** - Merk MCP server
+- **[toggl/](toggl/)** - Toggl time tracking MCP server
+- **[fakturoid/](fakturoid/)** - Fakturoid invoicing MCP server
+- **[abra-flexi/](abra-flexi/)** - Abra Flexi ERP MCP server
 
 ## Related Files
 

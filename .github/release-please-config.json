@@ -33,6 +33,12 @@
     },
     "mcp-servers/toggl": {
       "component": "mcp-toggl"
+    },
+    "mcp-servers/fakturoid": {
+      "component": "mcp-fakturoid"
+    },
+    "mcp-servers/abra-flexi": {
+      "component": "mcp-abra-flexi"
     }
   },
   "release-type": "node",
