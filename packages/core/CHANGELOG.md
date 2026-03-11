@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.7.2](https://github.com/DXHeroes/local-mcp-gateway/compare/core-v0.7.1...core-v0.7.2) (2026-03-11)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.10
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.10
+
 ## [0.7.1](https://github.com/DXHeroes/local-mcp-gateway/compare/core-v0.7.0...core-v0.7.1) (2026-03-11)
 
 
