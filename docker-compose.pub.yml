@@ -1,0 +1,64 @@
+# Local MCP Gateway - Docker Compose for Docker Hub
+#
+# Quick Start:
+#   curl -fsSL https://raw.githubusercontent.com/DXHeroes/local-mcp-gateway/main/docker-compose.hub.yml -o local-mcp-gateway.yml && docker compose -f local-mcp-gateway.yml up -d
+#
+# Access:
+#   - UI: http://localhost:9630
+#   - MCP Endpoint: http://localhost:9631/api/mcp/default
+#
+# Data is stored in the pgdata Docker volume.
+
+services:
+  backend:
+    image: dxheroes/local-mcp-gateway-backend:latest
+    container_name: local-mcp-backend
+    ports:
+      - "9631:3001"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/local_mcp_gateway
+      - LOG_LEVEL=log
+      - CORS_ORIGINS=http://localhost:9630,http://localhost:3000,http://localhost:5173
+      - BETTER_AUTH_URL=http://localhost:9631
+      - FRONTEND_URL=http://localhost:9630
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3001/api/health",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    image: dxheroes/local-mcp-gateway-frontend:latest
+    container_name: local-mcp-frontend
+    ports:
+      - "9630:80"
+    environment:
+      - NGINX_ENTRYPOINT_QUIET_LOGS=1
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:80/health",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 3
