@@ -382,49 +382,41 @@ model OauthApplication {
   name         String
   icon         String?
   metadata     String?
-  redirectURLs String    @map("redirect_u_r_ls")
+  redirectUrls String    @map("redirect_u_r_ls")
   type         String
   disabled     Boolean   @default(false)
   userId       String?   @map("user_id")
   createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   @@map("oauth_application")
 }
 
-/// OAuth authorization codes (Better Auth MCP Plugin)
-model OauthAuthorizationCode {
-  id            String    @id
-  code          String
-  clientId      String    @map("client_id")
-  redirectURI   String    @map("redirect_u_r_i")
-  userId        String    @map("user_id")
-  scope         String?
-  expiresAt     DateTime  @map("expires_at")
-  codeChallenge String?   @map("code_challenge")
-
-  @@map("oauth_authorization_code")
-}
-
 /// OAuth access tokens (Better Auth MCP Plugin)
 model OauthAccessToken {
-  id        String    @id
-  token     String
-  clientId  String    @map("client_id")
-  userId    String?   @map("user_id")
-  scope     String?
-  expiresAt DateTime  @map("expires_at")
+  id                    String   @id
+  accessToken           String   @unique @map("access_token")
+  refreshToken          String   @unique @map("refresh_token")
+  accessTokenExpiresAt  DateTime @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime @map("refresh_token_expires_at")
+  clientId              String   @map("client_id")
+  userId                String?  @map("user_id")
+  scopes                String
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
 
   @@map("oauth_access_token")
 }
 
 /// OAuth consent records (Better Auth MCP Plugin)
 model OauthConsent {
-  id            String    @id
-  clientId      String    @map("client_id")
-  userId        String    @map("user_id")
-  scope         String?
-  consentGiven  Boolean   @map("consent_given")
-  createdAt     DateTime  @default(now()) @map("created_at")
+  id           String   @id
+  clientId     String   @map("client_id")
+  userId       String   @map("user_id")
+  scopes       String?
+  consentGiven Boolean  @map("consent_given")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@map("oauth_consent")
 }

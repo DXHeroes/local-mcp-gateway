@@ -101,13 +101,13 @@ export class AuthService implements OnModuleInit {
   async validateMcpToken(bearerToken: string): Promise<AuthUser | null> {
     try {
       const tokenRecord = await this.prisma.oauthAccessToken.findFirst({
-        where: { token: bearerToken },
+        where: { accessToken: bearerToken },
       });
 
       if (!tokenRecord || !tokenRecord.userId) return null;
 
       // Check expiration
-      if (tokenRecord.expiresAt && new Date(tokenRecord.expiresAt) < new Date()) {
+      if (new Date(tokenRecord.accessTokenExpiresAt) < new Date()) {
         return null;
       }
 

@@ -17,6 +17,5 @@ export * from './MemberSchema';
 export * from './InvitationSchema';
 export * from './SharedResourceSchema';
 export * from './OauthApplicationSchema';
-export * from './OauthAuthorizationCodeSchema';
 export * from './OauthAccessTokenSchema';
 export * from './OauthConsentSchema';
