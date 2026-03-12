@@ -36,7 +36,9 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
-
+    networks:
+      - default
+      - coolify
   frontend:
     image: dxheroes/local-mcp-gateway-frontend:latest
     container_name: local-mcp-frontend
@@ -61,3 +63,10 @@ services:
       interval: 10s
       timeout: 10s
       retries: 3
+    networks:
+      - default
+      - coolify
+
+networks:
+  coolify:
+    external: true
