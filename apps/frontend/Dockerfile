@@ -28,8 +28,11 @@ FROM nginx:alpine
 COPY --from=builder /app/apps/frontend/dist /usr/share/nginx/html
 
 # Copy nginx configs
+# NGINX_CONF: "standalone" (default, no backend proxy - for Coolify/standalone)
+#              "docker" (proxies /api to backend:3001 - for docker-compose)
+ARG NGINX_CONF="standalone"
 COPY nginx/nginx.conf /etc/nginx/nginx.conf
-COPY nginx/docker.conf /etc/nginx/conf.d/default.conf
+COPY nginx/${NGINX_CONF}.conf /etc/nginx/conf.d/default.conf
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

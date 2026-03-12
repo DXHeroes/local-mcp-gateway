@@ -72,6 +72,8 @@ services:
       args:
         # For local dev, frontend calls backend on localhost:3001
         VITE_API_URL: http://localhost:3001
+        # Use docker nginx config (proxies /api to backend:3001)
+        NGINX_CONF: docker
     container_name: local-mcp-frontend-dev
     ports:
       - "3000:80"
