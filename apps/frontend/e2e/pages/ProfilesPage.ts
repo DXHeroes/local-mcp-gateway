@@ -26,8 +26,7 @@ export class ProfilesPage {
   }
 
   async goto() {
-    await this.page.goto('/profiles');
-    await this.page.waitForLoadState('networkidle');
+    await this.page.goto('/profiles', { waitUntil: 'domcontentloaded' });
     // Wait for page content to be ready
     await this.page.waitForSelector('h2, button, [class*="p-6"]', { timeout: 10000 });
   }

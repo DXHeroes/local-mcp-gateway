@@ -30,8 +30,7 @@ export class McpServersPage {
   }
 
   async goto() {
-    await this.page.goto('/mcp-servers');
-    await this.page.waitForLoadState('networkidle');
+    await this.page.goto('/mcp-servers', { waitUntil: 'domcontentloaded' });
     // Wait for page content to be ready
     await this.page.waitForSelector('h2, button, [class*="p-6"]', { timeout: 10000 });
   }

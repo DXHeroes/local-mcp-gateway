@@ -2,7 +2,7 @@
  * Tests for AuthGuard
  */
 
-import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthGuard } from '../../modules/auth/auth.guard.js';
@@ -52,7 +52,7 @@ describe('AuthGuard', () => {
 
   it('should attach user and session when valid session exists', async () => {
     const mockUser = { id: 'user-1', name: 'Test', email: 'test@example.com', image: null };
-    const mockSession = { id: 'sess-1', userId: 'user-1', activeOrganizationId: null };
+    const mockSession = { id: 'sess-1', userId: 'user-1', activeOrganizationId: 'org-1' };
     authService.getSession.mockResolvedValue({ user: mockUser, session: mockSession });
 
     const ctx = createMockExecutionContext({ cookie: 'session=abc' });
@@ -62,5 +62,15 @@ describe('AuthGuard', () => {
     const request = ctx.switchToHttp().getRequest();
     expect(request.user).toEqual(mockUser);
     expect(request.sessionData).toEqual(mockSession);
+  });
+
+  it('should throw ForbiddenException when session has no active organization', async () => {
+    const mockUser = { id: 'user-1', name: 'Test', email: 'test@example.com', image: null };
+    const mockSession = { id: 'sess-1', userId: 'user-1', activeOrganizationId: null };
+    authService.getSession.mockResolvedValue({ user: mockUser, session: mockSession });
+
+    const ctx = createMockExecutionContext({ cookie: 'session=abc' });
+
+    await expect(guard.canActivate(ctx)).rejects.toThrow(ForbiddenException);
   });
 });

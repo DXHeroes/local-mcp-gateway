@@ -233,8 +233,14 @@ export class OAuthService {
       });
 
       if (existingReg) {
-        clientId = existingReg.clientId;
-      } else if (discovery.registrationEndpoint) {
+        // Delete stale registration — redirect_uri may have changed
+        await this.prisma.oAuthClientRegistration.delete({
+          where: { id: existingReg.id },
+        });
+        this.logger.log(`Deleted stale DCR registration for ${serverId}, will re-register`);
+      }
+
+      if (discovery.registrationEndpoint) {
         // Perform Dynamic Client Registration (RFC 7591)
         this.logger.log(`Performing DCR at ${discovery.registrationEndpoint}`);
         const registration = await this.discoveryService.registerClient(

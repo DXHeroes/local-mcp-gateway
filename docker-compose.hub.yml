@@ -36,6 +36,8 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/local_mcp_gateway
       - LOG_LEVEL=log
       - CORS_ORIGINS=http://localhost:9630,http://localhost:3000,http://localhost:5173
+      - BETTER_AUTH_URL=http://localhost:9631
+      - FRONTEND_URL=http://localhost:9630
     depends_on:
       postgres:
         condition: service_healthy

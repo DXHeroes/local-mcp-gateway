@@ -20,17 +20,20 @@ import {
   Req,
   Res,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import type { Request, Response } from 'express';
 import { fromEvent, map } from 'rxjs';
 import { AuthService } from '../auth/auth.service.js';
 import { Public } from '../auth/decorators/public.decorator.js';
+import { McpOAuthGuard } from '../auth/mcp-oauth.guard.js';
 import { GATEWAY_PROFILE_CHANGED, SettingsService } from '../settings/settings.service.js';
 import type { McpRequest, McpResponse } from './proxy.service.js';
 import { ProxyService } from './proxy.service.js';
 
 @Public()
+@UseGuards(McpOAuthGuard)
 @Controller('mcp')
 export class ProxyController {
   constructor(
@@ -41,14 +44,19 @@ export class ProxyController {
   ) {}
 
   /**
-   * Resolve user from Bearer token (MCP OAuth).
-   * When no token is provided, returns unauthenticated sentinel so
-   * system profiles (organizationId=null) still work for unauthenticated MCP clients.
+   * Resolve user from request.
+   * If McpOAuthGuard already validated and attached a user, use it.
+   * Otherwise (auth disabled), try Bearer token manually, fall back to unauthenticated.
    */
   private async resolveUser(req: Request): Promise<{ id: string }> {
+    // Guard already validated and attached user
+    if (req.user) {
+      return req.user;
+    }
+
+    // Auth disabled — manual token check for backward compat
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
-      // No token — unauthenticated MCP client, can only access system profiles
       return { id: '__unauthenticated__' };
     }
 

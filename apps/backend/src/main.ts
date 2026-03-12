@@ -10,11 +10,13 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { toNodeHandler } from 'better-auth/node';
 import compression from 'compression';
+import type { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import { AppModule } from './app.module.js';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter.js';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor.js';
 import { AuthService } from './modules/auth/auth.service.js';
+import { createMcpProtectedResourceMetadata } from './modules/auth/mcp-oauth.utils.js';
 
 async function bootstrap() {
   // Determine log levels from environment
@@ -72,11 +74,15 @@ async function bootstrap() {
   const authService = app.get(AuthService);
   const expressApp = app.getHttpAdapter().getInstance();
 
-  const lazyAuthHandler = (req: any, res: any, next: any) => {
+  const lazyAuthHandler = (req: Request, res: Response, next: NextFunction) => {
     const auth = authService.getAuth();
     if (!auth) return next();
     toNodeHandler(auth)(req, res);
   };
+
+  expressApp.get('/.well-known/oauth-protected-resource', (_req: Request, res: Response) => {
+    res.json(createMcpProtectedResourceMetadata(configService));
+  });
 
   expressApp.all('/api/auth/*splat', lazyAuthHandler);
   expressApp.all('/.well-known/*splat', lazyAuthHandler);

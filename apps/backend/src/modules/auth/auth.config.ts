@@ -7,10 +7,12 @@
  */
 
 import type { PrismaClient } from '@dxheroes/local-mcp-database/generated/prisma';
+import { ConfigService } from '@nestjs/config';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { mcp } from 'better-auth/plugins';
 import { organization } from 'better-auth/plugins/organization';
+import { resolveMcpLoginPageUrl } from './mcp-oauth.utils.js';
 
 /**
  * Auth wrapper — simplified interface to avoid exporting Better Auth's deep generic types.
@@ -37,6 +39,7 @@ function toSlug(name: string): string {
 
 export function createAuth(prisma: PrismaClient): AuthInstance {
   const hasGoogle = !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET;
+  const configService = new ConfigService();
 
   const auth = betterAuth({
     basePath: '/api/auth',
@@ -106,7 +109,7 @@ export function createAuth(prisma: PrismaClient): AuthInstance {
     plugins: [
       organization(),
       mcp({
-        loginPage: '/sign-in',
+        loginPage: resolveMcpLoginPageUrl(configService),
       }),
     ],
   });

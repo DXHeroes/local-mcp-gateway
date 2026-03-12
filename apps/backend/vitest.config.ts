@@ -1,10 +1,11 @@
 import { createVitestConfig } from '@dxheroes/local-mcp-config/vitest';
-import { defineConfig, mergeConfig } from 'vitest/config';
+import { configDefaults, defineConfig, mergeConfig } from 'vitest/config';
 
 export default mergeConfig(
   createVitestConfig(),
   defineConfig({
     test: {
+      exclude: [...configDefaults.exclude, 'dist/**', '**/dist/**'],
       root: '.',
       coverage: {
         provider: 'v8',

@@ -13,6 +13,8 @@
 
 import { expect, test } from '@playwright/test';
 
+test.use({ storageState: { cookies: [], origins: [] } });
+
 test.describe('Authentication - Login Page', () => {
   test('should show login page with email+password form when not signed in', async ({ page }) => {
     // Mock auth session endpoint to simulate no session
@@ -33,8 +35,7 @@ test.describe('Authentication - Login Page', () => {
       });
     });
 
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     // Login page should display the app title
     await expect(page.getByRole('heading', { name: 'Local MCP Gateway' })).toBeVisible({
@@ -71,8 +72,7 @@ test.describe('Authentication - Login Page', () => {
       });
     });
 
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     // Google sign-in button should be visible
     const signInButton = page.getByRole('button', { name: /sign in with google/i });
@@ -97,8 +97,7 @@ test.describe('Authentication - Login Page', () => {
       });
     });
 
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     // Wait for login page to render
     await expect(page.getByRole('heading', { name: 'Local MCP Gateway' })).toBeVisible({
@@ -126,8 +125,7 @@ test.describe('Authentication - Login Page', () => {
       });
     });
 
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     // Should start in sign in mode
     await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible({ timeout: 10000 });
@@ -170,8 +168,7 @@ test.describe('Authentication - Authenticated State', () => {
       });
     });
 
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     // Nav bar should be visible
     const nav = page.locator('nav');
@@ -227,8 +224,7 @@ test.describe('Authentication - Authenticated State', () => {
       });
     });
 
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     // Avatar image should be visible
     const avatar = page.locator('img[src="https://example.com/avatar.png"]');
@@ -258,8 +254,7 @@ test.describe('Authentication - Authenticated State', () => {
       });
     });
 
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     // Sign out button should be visible (it has title="Sign out")
     const signOutButton = page.getByTitle('Sign out');
@@ -281,7 +276,7 @@ test.describe('Authentication - Loading State', () => {
       });
     });
 
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     // Should show loading text while auth state is being determined
     await expect(page.getByText('Loading...')).toBeVisible({ timeout: 3000 });

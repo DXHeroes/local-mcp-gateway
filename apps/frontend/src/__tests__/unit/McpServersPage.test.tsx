@@ -4,7 +4,7 @@
 
 /// <reference types="@testing-library/jest-dom" />
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 // React import needed for JSX (even with new JSX transform)
 // biome-ignore lint/correctness/noUnusedImports: JSX requires React in scope
@@ -22,6 +22,7 @@ describe('McpServersPage', () => {
     server.resetHandlers();
     // Mock window.open
     vi.spyOn(window, 'open').mockImplementation(() => null);
+    vi.spyOn(window, 'alert').mockImplementation(() => {});
   });
 
   it('should show loading state initially', () => {
@@ -239,7 +240,7 @@ describe('McpServersPage', () => {
     expect(screen.getByText('OAuth')).toBeInTheDocument();
     // Authorization server URL is shown directly
     expect(screen.getByText('https://oauth.example.com')).toBeInTheDocument();
-    expect(screen.getByText('Authorize')).toBeInTheDocument();
+    expect(screen.getByText('Re-authorize')).toBeInTheDocument();
   });
 
   it('should display API key configuration when present', async () => {
@@ -344,12 +345,12 @@ describe('McpServersPage', () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText('Authorize')).toBeInTheDocument();
+        expect(screen.getByText('Re-authorize')).toBeInTheDocument();
       },
       { timeout: 10000 }
     );
 
-    const authorizeButton = screen.getByText('Authorize');
+    const authorizeButton = screen.getByText('Re-authorize');
     authorizeButton.click();
 
     // API_URL is empty string in component, so URL is relative
@@ -358,5 +359,71 @@ describe('McpServersPage', () => {
       '_blank',
       'width=600,height=700'
     );
+  });
+
+  it('should react to OAuth popup completion messages', async () => {
+    const mockServers = [
+      {
+        id: '1',
+        name: 'oauth-server',
+        type: 'remote_http',
+        config: {},
+        oauthConfig: {
+          authorizationServerUrl: 'https://oauth.example.com',
+          scopes: ['read'],
+          requiresOAuth: true,
+        },
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      },
+    ];
+
+    server.use(
+      http.get(`${API_URL}/api/mcp-servers`, () => {
+        return HttpResponse.json(mockServers);
+      }),
+      http.get('/api/mcp-servers', () => {
+        return HttpResponse.json(mockServers);
+      }),
+      http.get(`${API_URL}/api/mcp-servers/1/tools`, () => {
+        return HttpResponse.json({ tools: [] });
+      }),
+      http.get('/api/mcp-servers/1/tools', () => {
+        return HttpResponse.json({ tools: [] });
+      }),
+      http.get(`${API_URL}/api/mcp-servers/1/status`, () => {
+        return HttpResponse.json({ status: 'connected', error: null });
+      }),
+      http.get('/api/mcp-servers/1/status', () => {
+        return HttpResponse.json({ status: 'connected', error: null });
+      })
+    );
+
+    render(
+      <MemoryRouter>
+        <McpServersPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Re-authorize')).toBeInTheDocument();
+    });
+
+    screen.getByText('Re-authorize').click();
+
+    await act(async () => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          data: {
+            type: 'oauth-callback',
+            success: true,
+          },
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith('OAuth authorization successful!');
+    });
   });
 });

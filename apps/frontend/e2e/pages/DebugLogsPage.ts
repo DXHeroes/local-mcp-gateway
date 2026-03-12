@@ -18,8 +18,7 @@ export class DebugLogsPage {
   }
 
   async goto() {
-    await this.page.goto('/debug-logs');
-    await this.page.waitForLoadState('networkidle');
+    await this.page.goto('/debug-logs', { waitUntil: 'domcontentloaded' });
     // Wait for page content to be ready
     await this.page.waitForSelector('h2, [class*="p-6"]', { timeout: 10000 });
   }

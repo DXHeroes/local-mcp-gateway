@@ -18,8 +18,7 @@ export class ProfileEditPage {
   }
 
   async goto(profileId: string) {
-    await this.page.goto(`/profiles/${profileId}/edit`);
-    await this.page.waitForLoadState('networkidle');
+    await this.page.goto(`/profiles/${profileId}/edit`, { waitUntil: 'domcontentloaded' });
     // Wait for page content to be ready
     await this.page.waitForSelector('h1, h2, [data-testid="server-card"]', { timeout: 10000 });
   }

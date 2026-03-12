@@ -23,6 +23,10 @@ interface ErrorResponse {
   requestId?: string;
 }
 
+type McpHttpException = HttpException & {
+  wwwAuthenticate?: string;
+};
+
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name);
@@ -70,6 +74,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const requestId = request.headers['x-request-id'];
     if (typeof requestId === 'string') {
       errorResponse.requestId = requestId;
+    }
+
+    // Set WWW-Authenticate header for MCP OAuth errors (RFC 9728)
+    const mcpException = exception instanceof HttpException ? (exception as McpHttpException) : null;
+    if (mcpException?.wwwAuthenticate) {
+      response.setHeader('WWW-Authenticate', mcpException.wwwAuthenticate);
+      response.setHeader('Access-Control-Expose-Headers', 'WWW-Authenticate');
     }
 
     response.status(status).json(errorResponse);

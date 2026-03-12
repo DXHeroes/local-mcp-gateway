@@ -12,4 +12,5 @@ export default registerAs('app', () => ({
     'http://localhost:3000',
   ],
   logLevel: process.env.LOG_LEVEL || 'info',
+  mcpAuthRequired: process.env.MCP_AUTH_REQUIRED !== 'false',
 }));

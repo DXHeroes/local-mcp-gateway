@@ -74,4 +74,18 @@ export const handlers = [
   http.get('/api/debug/logs', () => {
     return HttpResponse.json([]);
   }),
+
+  // Settings API
+  http.get(`${API_URL}/api/settings/default-gateway-profile`, () => {
+    return HttpResponse.json({ profileName: null });
+  }),
+  http.get('/api/settings/default-gateway-profile', () => {
+    return HttpResponse.json({ profileName: null });
+  }),
+  http.put(`${API_URL}/api/settings/default-gateway-profile`, async () => {
+    return HttpResponse.json({ success: true });
+  }),
+  http.put('/api/settings/default-gateway-profile', async () => {
+    return HttpResponse.json({ success: true });
+  }),
 ];

@@ -7,6 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { getFullMcpEndpointUrl } from '../config/api';
+import { hasMcpAuthQuery, isMcpLoginPath } from '../lib/mcp-auth';
 import { authClient } from '../lib/auth-client';
 
 export default function LoginPage() {
@@ -29,6 +30,13 @@ export default function LoginPage() {
         // Ignore — Google button stays hidden
       });
   }, []);
+
+  const callbackURL =
+    typeof window !== 'undefined' &&
+    isMcpLoginPath(window.location.pathname) &&
+    hasMcpAuthQuery(window.location.search)
+      ? `${window.location.pathname}${window.location.search}`
+      : '/';
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,7 +73,7 @@ export default function LoginPage() {
   const handleGoogleSignIn = () => {
     authClient.signIn.social({
       provider: 'google',
-      callbackURL: '/',
+      callbackURL,
     });
   };
 

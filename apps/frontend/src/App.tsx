@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import Layout from './components/Layout.tsx';
+import { getMcpAuthorizeUrl, hasMcpAuthQuery, isMcpLoginPath } from './lib/mcp-auth';
 import { authClient } from './lib/auth-client';
 import DebugLogsPage from './pages/DebugLogs.tsx';
 import DocsPage from './pages/Docs.tsx';
@@ -109,6 +110,9 @@ function AuthenticatedApp() {
 
 function App() {
   const { data: session, isPending } = authClient.useSession();
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
+  const search = typeof window !== 'undefined' ? window.location.search : '';
+  const shouldResumeMcpAuth = isMcpLoginPath(pathname) && hasMcpAuthQuery(search);
 
   // Still loading session
   if (isPending) {
@@ -123,8 +127,23 @@ function App() {
   if (!session) {
     return (
       <ErrorBoundary>
-        <LoginPage />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/sign-in" element={<LoginPage />} />
+            <Route path="*" element={<LoginPage />} />
+          </Routes>
+        </BrowserRouter>
       </ErrorBoundary>
+    );
+  }
+
+  if (shouldResumeMcpAuth) {
+    window.location.replace(getMcpAuthorizeUrl(search));
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-400 text-sm">Continuing sign-in...</div>
+      </div>
     );
   }
 
@@ -146,10 +165,11 @@ function OrgGate() {
   const [setting, setSetting] = useState(false);
 
   useEffect(() => {
-    if (!orgsLoading && !activeOrgLoading && !activeOrg && orgs && orgs.length > 0 && !setting) {
+    const firstOrg = orgs?.[0];
+    if (!orgsLoading && !activeOrgLoading && !activeOrg && firstOrg && !setting) {
       setSetting(true);
       authClient.organization
-        .setActive({ organizationId: orgs[0]!.id })
+        .setActive({ organizationId: firstOrg.id })
         .finally(() => setSetting(false));
     }
   }, [orgs, activeOrg, orgsLoading, activeOrgLoading, setting]);
