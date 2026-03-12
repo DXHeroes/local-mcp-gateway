@@ -17,11 +17,10 @@ services:
       - "9631:3001"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/local_mcp_gateway
-      - LOG_LEVEL=log
-      - CORS_ORIGINS=http://localhost:9630,http://localhost:3000,http://localhost:5173
-      - BETTER_AUTH_URL=http://localhost:9631
-      - FRONTEND_URL=http://localhost:9630
+      - LOG_LEVEL=warn
+      - CORS_ORIGINS=http://localhost:9630,http://localhost:3000,http://localhost:5173,https://mcp.apps.dx.tools,https://gw.apps.dx.tools
+      - BETTER_AUTH_URL=https://mcp.apps.dx.tools
+      - FRONTEND_URL=https://gw.apps.dx.tools
     restart: unless-stopped
     healthcheck:
       test:
