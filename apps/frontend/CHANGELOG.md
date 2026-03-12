@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.12.0](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.11.0...frontend-v0.12.0) (2026-03-12)
+
+
+### Features
+
+* **auth:** implement MCP OAuth guard and enhance authentication flow ([14f6355](https://github.com/DXHeroes/local-mcp-gateway/commit/14f6355b7e3e1d2a2a757643c7bc1946aa1e09cd))
+* enhance OAuth integration and add custom headers support for MCP servers ([0904743](https://github.com/DXHeroes/local-mcp-gateway/commit/09047436072810f5876a2c92ba47f6f90f8f6103))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.11
+    * @dxheroes/local-mcp-ui bumped to 0.5.9
+
 ## [0.11.0](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.10.1...frontend-v0.11.0) (2026-03-11)
 
 

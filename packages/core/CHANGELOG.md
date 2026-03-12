@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.8.0](https://github.com/DXHeroes/local-mcp-gateway/compare/core-v0.7.2...core-v0.8.0) (2026-03-12)
+
+
+### Features
+
+* enhance OAuth integration and add custom headers support for MCP servers ([0904743](https://github.com/DXHeroes/local-mcp-gateway/commit/09047436072810f5876a2c92ba47f6f90f8f6103))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.11
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.11
+
 ## [0.7.2](https://github.com/DXHeroes/local-mcp-gateway/compare/core-v0.7.1...core-v0.7.2) (2026-03-11)
 
 

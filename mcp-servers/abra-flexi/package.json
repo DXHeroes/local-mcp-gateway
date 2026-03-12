@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/mcp-abra-flexi",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "MCP server for Abra Flexi REST API — invoices, contacts, products, and accounting for Czech businesses",
   "type": "module",
   "main": "./dist/index.js",

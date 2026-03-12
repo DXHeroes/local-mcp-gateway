@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.10.0](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.9.2...backend-v0.10.0) (2026-03-12)
+
+
+### Features
+
+* **auth:** implement MCP OAuth guard and enhance authentication flow ([14f6355](https://github.com/DXHeroes/local-mcp-gateway/commit/14f6355b7e3e1d2a2a757643c7bc1946aa1e09cd))
+* enhance OAuth integration and add custom headers support for MCP servers ([0904743](https://github.com/DXHeroes/local-mcp-gateway/commit/09047436072810f5876a2c92ba47f6f90f8f6103))
+
+
+### Code Refactoring
+
+* **auth:** streamline MCP OAuth guard and enhance configuration ([38972a3](https://github.com/DXHeroes/local-mcp-gateway/commit/38972a3c94c377d8f5d6c9c714d6ccab91765a99))
+* **database:** update OAuth models and migrations for improved schema ([a92b074](https://github.com/DXHeroes/local-mcp-gateway/commit/a92b07400050b30decdda1dc82f4647d49c38c91))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-core bumped to 0.8.0
+    * @dxheroes/local-mcp-database bumped to 0.5.3
+    * @dxheroes/mcp-gemini-deep-research bumped to 0.5.6
+    * @dxheroes/mcp-merk bumped to 0.3.6
+    * @dxheroes/mcp-toggl bumped to 0.3.6
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.11
+
 ## [0.9.2](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.9.1...backend-v0.9.2) (2026-03-11)
 
 
