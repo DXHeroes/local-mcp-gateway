@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.3](https://github.com/DXHeroes/local-mcp-gateway/compare/database-v0.5.2...database-v0.5.3) (2026-03-12)
+
+
+### Code Refactoring
+
+* **database:** update OAuth models and migrations for improved schema ([a92b074](https://github.com/DXHeroes/local-mcp-gateway/commit/a92b07400050b30decdda1dc82f4647d49c38c91))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.11
+
 ## [0.5.2](https://github.com/DXHeroes/local-mcp-gateway/compare/database-v0.5.1...database-v0.5.2) (2026-03-11)
 
 
