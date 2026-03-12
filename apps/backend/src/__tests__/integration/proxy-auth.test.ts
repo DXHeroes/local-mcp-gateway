@@ -2,10 +2,9 @@
  * Integration Tests: Proxy controller auth
  *
  * Verifies:
- * - McpOAuthGuard enforces Bearer token when MCP_AUTH_REQUIRED=true
+ * - McpOAuthGuard always enforces Bearer token
  * - WWW-Authenticate header with resource_metadata_uri on 401
  * - Valid tokens resolve user and pass through
- * - MCP_AUTH_REQUIRED=false preserves backward compat (unauthenticated fallback)
  * - Org-scoped profile lookup through the proxy service
  * - Gateway endpoint uses default profile with user scoping
  */
@@ -37,7 +36,6 @@ function createMockAuthService() {
 
 function createMockConfigService(overrides: Record<string, unknown> = {}) {
   const defaults: Record<string, unknown> = {
-    'app.mcpAuthRequired': true,
     'app.port': 3001,
     BETTER_AUTH_URL: 'http://localhost:3001',
   };
@@ -112,106 +110,83 @@ function createMockExecutionContext(req: import('express').Request) {
 // ────────────────────────────────────────────────
 
 describe('McpOAuthGuard', () => {
-  describe('MCP_AUTH_REQUIRED=true', () => {
-    let guard: InstanceType<typeof McpOAuthGuard>;
-    let authService: ReturnType<typeof createMockAuthService>;
+  let guard: InstanceType<typeof McpOAuthGuard>;
+  let authService: ReturnType<typeof createMockAuthService>;
 
-    beforeEach(() => {
-      authService = createMockAuthService();
-      const configService = createMockConfigService({ 'app.mcpAuthRequired': true });
-      guard = new McpOAuthGuard(
-        authService as unknown as AuthService,
-        configService as any
-      );
-    });
-
-    it('rejects request without Bearer token with 401', async () => {
-      const req = createMockRequest();
-      const ctx = createMockExecutionContext(req);
-
-      await expect(guard.canActivate(ctx)).rejects.toThrow(UnauthorizedException);
-    });
-
-    it('returns WWW-Authenticate header on missing token', async () => {
-      const req = createMockRequest();
-      const ctx = createMockExecutionContext(req);
-
-      try {
-        await guard.canActivate(ctx);
-      } catch (error: any) {
-        expect(error.wwwAuthenticate).toContain('resource_metadata=');
-        expect(error.wwwAuthenticate).toContain('resource_metadata_uri=');
-        expect(error.wwwAuthenticate).toContain('/.well-known/oauth-protected-resource');
-      }
-    });
-
-    it('rejects invalid Bearer token', async () => {
-      authService.validateMcpToken.mockResolvedValue(null);
-      const req = createMockRequest({ authorization: 'Bearer bad-token' });
-      const ctx = createMockExecutionContext(req);
-
-      await expect(guard.canActivate(ctx)).rejects.toThrow(UnauthorizedException);
-      expect(authService.validateMcpToken).toHaveBeenCalledWith('bad-token');
-    });
-
-    it('allows valid Bearer token and attaches user', async () => {
-      const user: AuthUser = { id: 'user-1', name: 'Test', email: 'test@example.com' };
-      authService.validateMcpToken.mockResolvedValue(user);
-      const req = createMockRequest({ authorization: 'Bearer valid-token' });
-      const ctx = createMockExecutionContext(req);
-
-      const result = await guard.canActivate(ctx);
-
-      expect(result).toBe(true);
-      expect(req.user).toEqual(user);
-    });
-
-    it('accepts access_token query param (SSE fallback)', async () => {
-      const user: AuthUser = { id: 'user-1', name: 'Test', email: 'test@example.com' };
-      authService.validateMcpToken.mockResolvedValue(user);
-      const req = createMockRequest({}, { access_token: 'sse-token' });
-      const ctx = createMockExecutionContext(req);
-
-      const result = await guard.canActivate(ctx);
-
-      expect(result).toBe(true);
-      expect(authService.validateMcpToken).toHaveBeenCalledWith('sse-token');
-    });
+  beforeEach(() => {
+    authService = createMockAuthService();
+    const configService = createMockConfigService();
+    guard = new McpOAuthGuard(
+      authService as unknown as AuthService,
+      configService as any
+    );
   });
 
-  describe('MCP_AUTH_REQUIRED=false', () => {
-    it('passes through without token', async () => {
-      const authService = createMockAuthService();
-      const configService = createMockConfigService({ 'app.mcpAuthRequired': false });
-      const guard = new McpOAuthGuard(
-        authService as unknown as AuthService,
-        configService as any
-      );
+  it('rejects request without Bearer token with 401', async () => {
+    const req = createMockRequest();
+    const ctx = createMockExecutionContext(req);
 
-      const req = createMockRequest();
-      const ctx = createMockExecutionContext(req);
+    await expect(guard.canActivate(ctx)).rejects.toThrow(UnauthorizedException);
+  });
 
-      const result = await guard.canActivate(ctx);
+  it('returns WWW-Authenticate header on missing token', async () => {
+    const req = createMockRequest();
+    const ctx = createMockExecutionContext(req);
 
-      expect(result).toBe(true);
-      expect(authService.validateMcpToken).not.toHaveBeenCalled();
-    });
+    try {
+      await guard.canActivate(ctx);
+    } catch (error: any) {
+      expect(error.wwwAuthenticate).toContain('resource_metadata=');
+      expect(error.wwwAuthenticate).toContain('resource_metadata_uri=');
+      expect(error.wwwAuthenticate).toContain('/.well-known/oauth-protected-resource');
+    }
+  });
+
+  it('rejects invalid Bearer token', async () => {
+    authService.validateMcpToken.mockResolvedValue(null);
+    const req = createMockRequest({ authorization: 'Bearer bad-token' });
+    const ctx = createMockExecutionContext(req);
+
+    await expect(guard.canActivate(ctx)).rejects.toThrow(UnauthorizedException);
+    expect(authService.validateMcpToken).toHaveBeenCalledWith('bad-token');
+  });
+
+  it('allows valid Bearer token and attaches user', async () => {
+    const user: AuthUser = { id: 'user-1', name: 'Test', email: 'test@example.com' };
+    authService.validateMcpToken.mockResolvedValue(user);
+    const req = createMockRequest({ authorization: 'Bearer valid-token' });
+    const ctx = createMockExecutionContext(req);
+
+    const result = await guard.canActivate(ctx);
+
+    expect(result).toBe(true);
+    expect(req.user).toEqual(user);
+  });
+
+  it('accepts access_token query param (SSE fallback)', async () => {
+    const user: AuthUser = { id: 'user-1', name: 'Test', email: 'test@example.com' };
+    authService.validateMcpToken.mockResolvedValue(user);
+    const req = createMockRequest({}, { access_token: 'sse-token' });
+    const ctx = createMockExecutionContext(req);
+
+    const result = await guard.canActivate(ctx);
+
+    expect(result).toBe(true);
+    expect(authService.validateMcpToken).toHaveBeenCalledWith('sse-token');
   });
 });
 
 // ────────────────────────────────────────────────
-// Proxy controller auth (auth disabled — backward compat)
+// Proxy controller auth tests
 // ────────────────────────────────────────────────
 
-describe('Proxy controller auth (auth disabled)', () => {
+describe('Proxy controller auth', () => {
   let controller: InstanceType<typeof ProxyController>;
-  let authService: ReturnType<typeof createMockAuthService>;
   let proxyService: ReturnType<typeof createMockProxyService>;
   let settingsService: ReturnType<typeof createMockSettingsService>;
   let eventEmitter: ReturnType<typeof createMockEventEmitter>;
 
   beforeEach(() => {
-    authService = createMockAuthService();
     proxyService = createMockProxyService();
     settingsService = createMockSettingsService();
     eventEmitter = createMockEventEmitter();
@@ -219,132 +194,8 @@ describe('Proxy controller auth (auth disabled)', () => {
     controller = new ProxyController(
       proxyService as unknown as ProxyService,
       settingsService as unknown as SettingsService,
-      eventEmitter as unknown as EventEmitter2,
-      authService as unknown as AuthService
+      eventEmitter as unknown as EventEmitter2
     );
-  });
-
-  describe('unauthenticated access (no Bearer token)', () => {
-    it('org-scoped POST request passes __unauthenticated__ to proxy service', async () => {
-      const req = createMockRequest();
-      const mcpRequest: McpRequest = {
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'tools/list',
-      };
-
-      await controller.handleOrgMcpRequest(req, 'my-org', 'my-profile', mcpRequest);
-
-      expect(proxyService.handleRequestByOrgSlug).toHaveBeenCalledWith(
-        'my-profile',
-        'my-org',
-        mcpRequest,
-        '__unauthenticated__'
-      );
-    });
-
-    it('gateway POST request passes __unauthenticated__', async () => {
-      const req = createMockRequest();
-      const mcpRequest: McpRequest = {
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'initialize',
-      };
-
-      await controller.handleGatewayRequest(req, mcpRequest);
-
-      expect(proxyService.handleRequest).toHaveBeenCalledWith(
-        'default',
-        mcpRequest,
-        '__unauthenticated__'
-      );
-    });
-
-    it('non-Bearer Authorization header falls back to __unauthenticated__', async () => {
-      const req = createMockRequest({
-        authorization: 'Basic dXNlcjpwYXNz',
-      });
-      const mcpRequest: McpRequest = {
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'tools/list',
-      };
-
-      await controller.handleOrgMcpRequest(req, 'my-org', 'my-profile', mcpRequest);
-
-      expect(authService.validateMcpToken).not.toHaveBeenCalled();
-      expect(proxyService.handleRequestByOrgSlug).toHaveBeenCalledWith(
-        'my-profile',
-        'my-org',
-        mcpRequest,
-        '__unauthenticated__'
-      );
-    });
-  });
-
-  describe('authenticated access with Bearer tokens (guard disabled)', () => {
-    const validUser: AuthUser = {
-      id: 'user-1',
-      name: 'Token User',
-      email: 'token@example.com',
-    };
-
-    it('valid Bearer token resolves to authenticated user for org-scoped request', async () => {
-      authService.validateMcpToken.mockResolvedValue(validUser);
-      const req = createMockRequest({
-        authorization: 'Bearer valid-mcp-token',
-      });
-      const mcpRequest: McpRequest = {
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'tools/list',
-      };
-
-      await controller.handleOrgMcpRequest(req, 'my-org', 'my-profile', mcpRequest);
-
-      expect(authService.validateMcpToken).toHaveBeenCalledWith('valid-mcp-token');
-      expect(proxyService.handleRequestByOrgSlug).toHaveBeenCalledWith(
-        'my-profile',
-        'my-org',
-        mcpRequest,
-        'user-1'
-      );
-    });
-
-    it('invalid Bearer token throws UnauthorizedException', async () => {
-      authService.validateMcpToken.mockResolvedValue(null);
-      const req = createMockRequest({
-        authorization: 'Bearer invalid-token',
-      });
-      const mcpRequest: McpRequest = {
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'tools/list',
-      };
-
-      await expect(
-        controller.handleOrgMcpRequest(req, 'my-org', 'my-profile', mcpRequest)
-      ).rejects.toThrow(UnauthorizedException);
-    });
-
-    it('no Authorization header falls back to __unauthenticated__', async () => {
-      const req = createMockRequest();
-      const mcpRequest: McpRequest = {
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'tools/list',
-      };
-
-      await controller.handleOrgMcpRequest(req, 'my-org', 'my-profile', mcpRequest);
-
-      expect(authService.validateMcpToken).not.toHaveBeenCalled();
-      expect(proxyService.handleRequestByOrgSlug).toHaveBeenCalledWith(
-        'my-profile',
-        'my-org',
-        mcpRequest,
-        '__unauthenticated__'
-      );
-    });
   });
 
   describe('guard-authenticated user passthrough', () => {
@@ -357,8 +208,6 @@ describe('Proxy controller auth (auth disabled)', () => {
 
       await controller.handleOrgMcpRequest(req, 'my-org', 'my-profile', mcpRequest);
 
-      // Should NOT call validateMcpToken since req.user is already set
-      expect(authService.validateMcpToken).not.toHaveBeenCalled();
       expect(proxyService.handleRequestByOrgSlug).toHaveBeenCalledWith(
         'my-profile',
         'my-org',
@@ -373,8 +222,8 @@ describe('Proxy controller auth (auth disabled)', () => {
     const userB: AuthUser = { id: 'user-b', name: 'User B', email: 'b@test.com' };
 
     it('org slug and user are passed through to proxy service', async () => {
-      authService.validateMcpToken.mockResolvedValue(userA);
       const req = createMockRequest({ authorization: 'Bearer token-a' });
+      (req as any).user = userA;
       const mcpRequest: McpRequest = { jsonrpc: '2.0', id: 1, method: 'tools/list' };
 
       await controller.handleOrgMcpRequest(req, 'org-a', 'user-a-profile', mcpRequest);
@@ -388,14 +237,14 @@ describe('Proxy controller auth (auth disabled)', () => {
     });
 
     it('different users get different userId passed to proxy', async () => {
-      authService.validateMcpToken.mockResolvedValue(userA);
       const reqA = createMockRequest({ authorization: 'Bearer token-a' });
+      (reqA as any).user = userA;
       const mcpReq: McpRequest = { jsonrpc: '2.0', id: 1, method: 'tools/list' };
 
       await controller.handleOrgMcpRequest(reqA, 'shared-org', 'shared-profile', mcpReq);
 
-      authService.validateMcpToken.mockResolvedValue(userB);
       const reqB = createMockRequest({ authorization: 'Bearer token-b' });
+      (reqB as any).user = userB;
 
       await controller.handleOrgMcpRequest(reqB, 'shared-org', 'shared-profile', mcpReq);
 
@@ -416,10 +265,10 @@ describe('Proxy controller auth (auth disabled)', () => {
     });
 
     it('gateway endpoint uses default profile with user scoping', async () => {
-      authService.validateMcpToken.mockResolvedValue(userA);
       settingsService.getDefaultGatewayProfile.mockResolvedValue('my-default');
 
       const req = createMockRequest({ authorization: 'Bearer token-a' });
+      (req as any).user = userA;
       const mcpRequest: McpRequest = { jsonrpc: '2.0', id: 1, method: 'tools/list' };
 
       await controller.handleGatewayRequest(req, mcpRequest);
@@ -428,13 +277,13 @@ describe('Proxy controller auth (auth disabled)', () => {
     });
 
     it('gateway wraps NotFoundException with descriptive message', async () => {
-      authService.validateMcpToken.mockResolvedValue(userA);
       settingsService.getDefaultGatewayProfile.mockResolvedValue('missing-profile');
       proxyService.handleRequest.mockRejectedValue(
         new NotFoundException('Profile "missing-profile" not found')
       );
 
       const req = createMockRequest({ authorization: 'Bearer token-a' });
+      (req as any).user = userA;
       const mcpRequest: McpRequest = { jsonrpc: '2.0', id: 1, method: 'tools/list' };
 
       await expect(controller.handleGatewayRequest(req, mcpRequest)).rejects.toThrow(

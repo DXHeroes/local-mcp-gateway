@@ -16,7 +16,11 @@ import { AppModule } from './app.module.js';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter.js';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor.js';
 import { AuthService } from './modules/auth/auth.service.js';
-import { createMcpProtectedResourceMetadata } from './modules/auth/mcp-oauth.utils.js';
+import {
+  createMcpProtectedResourceMetadata,
+  resolvePublicAuthBaseUrl,
+  resolvePublicBackendOrigin,
+} from './modules/auth/mcp-oauth.utils.js';
 
 async function bootstrap() {
   // Determine log levels from environment
@@ -82,6 +86,27 @@ async function bootstrap() {
 
   expressApp.get('/.well-known/oauth-protected-resource', (_req: Request, res: Response) => {
     res.json(createMcpProtectedResourceMetadata(configService));
+  });
+
+  // RFC 8414 – OAuth 2.0 Authorization Server Metadata
+  // MCP clients fetch this to discover the correct DCR endpoint (/api/auth/mcp/register)
+  // instead of falling back to the root /register which returns 404.
+  expressApp.get('/.well-known/oauth-authorization-server', (_req: Request, res: Response) => {
+    const backendOrigin = resolvePublicBackendOrigin(configService);
+    const authBaseUrl = resolvePublicAuthBaseUrl(configService);
+
+    res.json({
+      issuer: backendOrigin,
+      authorization_endpoint: `${authBaseUrl}/mcp/authorize`,
+      token_endpoint: `${authBaseUrl}/mcp/token`,
+      registration_endpoint: `${authBaseUrl}/mcp/register`,
+      jwks_uri: `${authBaseUrl}/mcp/jwks`,
+      response_types_supported: ['code'],
+      grant_types_supported: ['authorization_code', 'refresh_token'],
+      token_endpoint_auth_methods_supported: ['none'],
+      code_challenge_methods_supported: ['S256'],
+      scopes_supported: ['openid', 'profile', 'email', 'offline_access'],
+    });
   });
 
   expressApp.all('/api/auth/*splat', lazyAuthHandler);

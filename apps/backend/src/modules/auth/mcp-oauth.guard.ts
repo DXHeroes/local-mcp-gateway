@@ -2,8 +2,7 @@
  * MCP OAuth Guard
  *
  * Enforces OAuth 2.1 Bearer token authentication on MCP proxy endpoints.
- * When MCP_AUTH_REQUIRED=false, passes through for backward compatibility.
- * When enabled, validates Bearer tokens and returns RFC 9728-compliant
+ * Validates Bearer tokens and returns RFC 9728-compliant
  * WWW-Authenticate headers to guide MCP clients through OAuth discovery.
  */
 
@@ -30,12 +29,6 @@ export class McpOAuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const mcpAuthRequired = this.configService.get<boolean>('app.mcpAuthRequired');
-
-    if (!mcpAuthRequired) {
-      return true;
-    }
-
     const request = context.switchToHttp().getRequest<Request>();
     const token = this.extractToken(request);
 

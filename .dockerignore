@@ -11,9 +11,9 @@ coverage
 !README.md
 .vscode
 .idea
-__tests__
-*.test.ts
-*.spec.ts
+**/__tests__
+**/*.test.ts
+**/*.spec.ts
 e2e
 playwright-report
 test-results

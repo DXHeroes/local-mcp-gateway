@@ -19,13 +19,11 @@ import {
   Post,
   Req,
   Res,
-  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import type { Request, Response } from 'express';
 import { fromEvent, map } from 'rxjs';
-import { AuthService } from '../auth/auth.service.js';
 import { Public } from '../auth/decorators/public.decorator.js';
 import { McpOAuthGuard } from '../auth/mcp-oauth.guard.js';
 import { GATEWAY_PROFILE_CHANGED, SettingsService } from '../settings/settings.service.js';
@@ -39,34 +37,15 @@ export class ProxyController {
   constructor(
     private readonly proxyService: ProxyService,
     private readonly settingsService: SettingsService,
-    private readonly eventEmitter: EventEmitter2,
-    private readonly authService: AuthService
+    private readonly eventEmitter: EventEmitter2
   ) {}
 
   /**
    * Resolve user from request.
-   * If McpOAuthGuard already validated and attached a user, use it.
-   * Otherwise (auth disabled), try Bearer token manually, fall back to unauthenticated.
+   * McpOAuthGuard always validates and attaches user before this is called.
    */
-  private async resolveUser(req: Request): Promise<{ id: string }> {
-    // Guard already validated and attached user
-    if (req.user) {
-      return req.user;
-    }
-
-    // Auth disabled — manual token check for backward compat
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      return { id: '__unauthenticated__' };
-    }
-
-    const token = authHeader.slice(7);
-    const user = await this.authService.validateMcpToken(token);
-    if (!user) {
-      throw new UnauthorizedException('Invalid or expired MCP OAuth token');
-    }
-
-    return user;
+  private resolveUser(req: Request): { id: string } {
+    return req.user!;
   }
 
   // =========================================
@@ -98,7 +77,7 @@ export class ProxyController {
    */
   @Get('gateway/info')
   async getGatewayInfo(@Req() req: Request) {
-    const user = await this.resolveUser(req);
+    const user = this.resolveUser(req);
     const profileName = await this.settingsService.getDefaultGatewayProfile();
 
     try {
@@ -129,7 +108,7 @@ export class ProxyController {
       return this.streamGatewayEvents(req, res);
     }
 
-    const user = await this.resolveUser(req);
+    const user = this.resolveUser(req);
     const profileName = await this.settingsService.getDefaultGatewayProfile();
 
     try {
@@ -203,7 +182,7 @@ export class ProxyController {
     @Req() req: Request,
     @Body() request: McpRequest
   ): Promise<McpResponse> {
-    const user = await this.resolveUser(req);
+    const user = this.resolveUser(req);
     const profileName = await this.settingsService.getDefaultGatewayProfile();
 
     try {
@@ -247,7 +226,7 @@ export class ProxyController {
     @Param('orgSlug') orgSlug: string,
     @Body() request: McpRequest
   ): Promise<McpResponse> {
-    const user = await this.resolveUser(req);
+    const user = this.resolveUser(req);
     const profileName = await this.settingsService.getDefaultGatewayProfile();
     return this.proxyService.handleRequestByOrgSlug(profileName, orgSlug, request, user.id);
   }
@@ -321,7 +300,7 @@ export class ProxyController {
     @Param('orgSlug') orgSlug: string,
     @Body() request: McpRequest
   ): Promise<McpResponse> {
-    const user = await this.resolveUser(req);
+    const user = this.resolveUser(req);
     const profileName = await this.settingsService.getDefaultGatewayProfile();
     return this.proxyService.handleRequestByOrgSlug(profileName, orgSlug, request, user.id);
   }
@@ -418,7 +397,7 @@ export class ProxyController {
     @Param('profileName') profileName: string,
     @Body() request: McpRequest
   ): Promise<McpResponse> {
-    const user = await this.resolveUser(req);
+    const user = this.resolveUser(req);
     return this.proxyService.handleRequestByOrgSlug(profileName, orgSlug, request, user.id);
   }
 }

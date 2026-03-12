@@ -1,4 +1,5 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import type { ConfigService } from '@nestjs/config';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AllExceptionsFilter } from '../../common/filters/all-exceptions.filter.js';
 import { AuthService, type AuthUser } from '../../modules/auth/auth.service.js';
@@ -29,8 +30,7 @@ function createAuthServiceMock(): MockAuthService {
   };
 }
 
-async function startTestApp(options: {
-  mcpAuthRequired: boolean;
+async function startTestApp(options?: {
   backendUrl?: string;
 }): Promise<{
   close: () => Promise<void>;
@@ -39,14 +39,13 @@ async function startTestApp(options: {
 }> {
   const authService = createAuthServiceMock();
   const configService = createConfigService({
-    'app.mcpAuthRequired': options.mcpAuthRequired,
     'app.port': 3001,
-    BETTER_AUTH_URL: options.backendUrl ?? 'http://localhost:3001',
+    BETTER_AUTH_URL: options?.backendUrl ?? 'http://localhost:3001',
   });
   const guard = new McpOAuthGuard(authService as unknown as AuthService, configService as never);
   const filter = new AllExceptionsFilter();
-  const backendOrigin = resolvePublicBackendOrigin(configService);
-  const authBaseUrl = resolvePublicAuthBaseUrl(configService);
+  const backendOrigin = resolvePublicBackendOrigin(configService as unknown as ConfigService);
+  const authBaseUrl = resolvePublicAuthBaseUrl(configService as unknown as ConfigService);
 
   const createRequest = (req: IncomingMessage) => {
     const url = new URL(req.url ?? '/', `http://${req.headers.host ?? '127.0.0.1'}`);
@@ -130,7 +129,7 @@ async function startTestApp(options: {
 
       if (req.method === 'GET' && url.pathname === '/.well-known/oauth-protected-resource') {
         res.setHeader('content-type', 'application/json');
-        res.end(JSON.stringify(createMcpProtectedResourceMetadata(configService)));
+        res.end(JSON.stringify(createMcpProtectedResourceMetadata(configService as unknown as ConfigService)));
         return;
       }
 
@@ -194,111 +193,89 @@ describe('MCP proxy auth HTTP contract', () => {
   let authService: MockAuthService;
   let baseUrl: string;
 
+  beforeEach(async () => {
+    const result = await startTestApp({
+      backendUrl: 'http://localhost:9631',
+    });
+    close = result.close;
+    authService = result.authService;
+    baseUrl = result.baseUrl;
+  });
+
   afterEach(async () => {
     if (close) {
       await close();
     }
   });
 
-  describe('when MCP auth is required', () => {
-    beforeEach(async () => {
-      const result = await startTestApp({
-        mcpAuthRequired: true,
-        backendUrl: 'http://localhost:9631',
-      });
-      close = result.close;
-      authService = result.authService;
-      baseUrl = result.baseUrl;
-    });
+  it('returns 401 with MCP discovery headers when token is missing', async () => {
+    const response = await fetch(`${baseUrl}/api/mcp/test`);
+    const body = (await response.json()) as Record<string, unknown>;
 
-    it('returns 401 with MCP discovery headers when token is missing', async () => {
-      const response = await fetch(`${baseUrl}/api/mcp/test`);
-      const body = await response.json();
+    expect(response.status).toBe(401);
+    expect(response.headers.get('access-control-expose-headers')).toBe('WWW-Authenticate');
+    expect(response.headers.get('www-authenticate')).toContain('resource_metadata=');
+    expect(response.headers.get('www-authenticate')).toContain('resource_metadata_uri=');
+    expect(body.message).toBe('Bearer token required');
+  });
 
-      expect(response.status).toBe(401);
-      expect(response.headers.get('access-control-expose-headers')).toBe('WWW-Authenticate');
-      expect(response.headers.get('www-authenticate')).toContain('resource_metadata=');
-      expect(response.headers.get('www-authenticate')).toContain('resource_metadata_uri=');
-      expect(body.message).toBe('Bearer token required');
-    });
+  it('serves protected resource metadata with Better Auth-backed URLs', async () => {
+    const response = await fetch(`${baseUrl}/.well-known/oauth-protected-resource`);
+    const body = (await response.json()) as Record<string, unknown>;
 
-    it('serves protected resource metadata with Better Auth-backed URLs', async () => {
-      const response = await fetch(`${baseUrl}/.well-known/oauth-protected-resource`);
-      const body = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(body).toEqual({
-        resource: 'http://localhost:9631/api/mcp',
-        authorization_servers: ['http://localhost:9631'],
-        bearer_methods_supported: ['header'],
-        scopes_supported: ['openid', 'profile', 'email', 'offline_access'],
-        jwks_uri: 'http://localhost:9631/api/auth/mcp/jwks',
-        resource_signing_alg_values_supported: ['RS256', 'none'],
-      });
-    });
-
-    it('serves authorization server metadata with MCP registration endpoint', async () => {
-      const response = await fetch(`${baseUrl}/.well-known/oauth-authorization-server`);
-      const body = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(body.registration_endpoint).toBe('http://localhost:9631/api/auth/mcp/register');
-      expect(body.authorization_endpoint).toBe('http://localhost:9631/api/auth/mcp/authorize');
-      expect(body.token_endpoint).toBe('http://localhost:9631/api/auth/mcp/token');
-    });
-
-    it('exposes the advertised registration endpoint', async () => {
-      const response = await fetch(`${baseUrl}/api/auth/mcp/register`, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          redirect_uris: ['https://cursor.sh/callback'],
-        }),
-      });
-      const body = await response.json();
-
-      expect(response.status).toBe(201);
-      expect(body.client_id).toBe('cursor-client');
-    });
-
-    it('accepts access_token query params for SSE fallback', async () => {
-      authService.validateMcpToken.mockResolvedValue({
-        id: 'user-sse',
-        name: 'SSE User',
-        email: 'sse@example.com',
-      });
-
-      const response = await fetch(`${baseUrl}/api/mcp/sse?access_token=sse-token`);
-      const body = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(body).toEqual({
-        ok: true,
-        token: 'sse-token',
-        userId: 'user-sse',
-      });
-      expect(authService.validateMcpToken).toHaveBeenCalledWith('sse-token');
+    expect(response.status).toBe(200);
+    expect(body).toEqual({
+      resource: 'http://localhost:9631/api/mcp',
+      authorization_servers: ['http://localhost:9631'],
+      bearer_methods_supported: ['header'],
+      scopes_supported: ['openid', 'profile', 'email', 'offline_access'],
+      jwks_uri: 'http://localhost:9631/api/auth/mcp/jwks',
+      resource_signing_alg_values_supported: ['RS256', 'none'],
     });
   });
 
-  it('preserves backward compatibility when MCP auth is disabled', async () => {
-    const result = await startTestApp({
-      mcpAuthRequired: false,
-    });
-    close = result.close;
-    authService = result.authService;
-    baseUrl = result.baseUrl;
+  it('serves authorization server metadata with MCP registration endpoint', async () => {
+    const response = await fetch(`${baseUrl}/.well-known/oauth-authorization-server`);
+    const body = (await response.json()) as Record<string, unknown>;
 
-    const response = await fetch(`${baseUrl}/api/mcp/test`);
-    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.registration_endpoint).toBe('http://localhost:9631/api/auth/mcp/register');
+    expect(body.authorization_endpoint).toBe('http://localhost:9631/api/auth/mcp/authorize');
+    expect(body.token_endpoint).toBe('http://localhost:9631/api/auth/mcp/token');
+  });
+
+  it('exposes the advertised registration endpoint', async () => {
+    const response = await fetch(`${baseUrl}/api/auth/mcp/register`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        redirect_uris: ['https://cursor.sh/callback'],
+      }),
+    });
+    const body = (await response.json()) as Record<string, unknown>;
+
+    expect(response.status).toBe(201);
+    expect(body.client_id).toBe('cursor-client');
+  });
+
+  it('accepts access_token query params for SSE fallback', async () => {
+    authService.validateMcpToken.mockResolvedValue({
+      id: 'user-sse',
+      name: 'SSE User',
+      email: 'sse@example.com',
+    });
+
+    const response = await fetch(`${baseUrl}/api/mcp/sse?access_token=sse-token`);
+    const body = (await response.json()) as Record<string, unknown>;
 
     expect(response.status).toBe(200);
     expect(body).toEqual({
       ok: true,
-      userId: null,
+      token: 'sse-token',
+      userId: 'user-sse',
     });
-    expect(authService.validateMcpToken).not.toHaveBeenCalled();
+    expect(authService.validateMcpToken).toHaveBeenCalledWith('sse-token');
   });
 });
