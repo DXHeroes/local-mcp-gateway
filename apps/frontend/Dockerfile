@@ -15,7 +15,7 @@ COPY apps/frontend ./apps/frontend
 RUN pnpm install --frozen-lockfile
 
 # Build argument for VITE_API_URL (defaults to Docker Hub port)
-ARG VITE_API_URL=http://localhost:9631
+ARG VITE_API_URL=""
 ENV VITE_API_URL=${VITE_API_URL}
 
 # Build frontend and all its dependencies
