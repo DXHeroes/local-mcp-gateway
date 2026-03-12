@@ -11,7 +11,9 @@
 
 services:
   backend:
-    image: dxheroes/local-mcp-gateway-backend:latest
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
     container_name: local-mcp-backend
     ports:
       - "9631:3001"
@@ -40,7 +42,9 @@ services:
       - default
       - coolify
   frontend:
-    image: dxheroes/local-mcp-gateway-frontend:latest
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
     container_name: local-mcp-frontend
     ports:
       - "9630:80"
