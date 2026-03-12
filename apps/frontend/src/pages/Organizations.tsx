@@ -11,6 +11,7 @@ import { authClient } from '../lib/auth-client';
 export default function OrganizationsPage() {
   const { data: orgs, isPending: orgsLoading } = authClient.useListOrganizations();
   const { data: activeOrg } = authClient.useActiveOrganization();
+  const organizations = Array.isArray(orgs) ? orgs : [];
   const [showCreate, setShowCreate] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
   const [newOrgName, setNewOrgName] = useState('');
@@ -99,8 +100,8 @@ export default function OrganizationsPage() {
       )}
 
       <div className="space-y-3">
-        {orgs && orgs.length > 0 ? (
-          orgs.map((org) => (
+        {organizations.length > 0 ? (
+          organizations.map((org) => (
             <div key={org.id} className="bg-white border rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">

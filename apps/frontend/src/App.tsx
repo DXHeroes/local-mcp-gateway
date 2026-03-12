@@ -162,17 +162,18 @@ function App() {
 function OrgGate() {
   const { data: orgs, isPending: orgsLoading } = authClient.useListOrganizations();
   const { data: activeOrg, isPending: activeOrgLoading } = authClient.useActiveOrganization();
+  const organizations = Array.isArray(orgs) ? orgs : [];
   const [setting, setSetting] = useState(false);
 
   useEffect(() => {
-    const firstOrg = orgs?.[0];
+    const firstOrg = organizations[0];
     if (!orgsLoading && !activeOrgLoading && !activeOrg && firstOrg && !setting) {
       setSetting(true);
       authClient.organization
         .setActive({ organizationId: firstOrg.id })
         .finally(() => setSetting(false));
     }
-  }, [orgs, activeOrg, orgsLoading, activeOrgLoading, setting]);
+  }, [organizations, activeOrg, orgsLoading, activeOrgLoading, setting]);
 
   if (orgsLoading || activeOrgLoading || setting) {
     return (
@@ -182,7 +183,7 @@ function OrgGate() {
     );
   }
 
-  if (!orgs?.length) {
+  if (organizations.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

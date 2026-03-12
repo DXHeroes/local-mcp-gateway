@@ -24,6 +24,7 @@ export default function Layout({ children }: LayoutProps) {
   const { data: session } = authClient.useSession();
   const { data: orgs } = authClient.useListOrganizations();
   const { data: activeOrg } = authClient.useActiveOrganization();
+  const organizations = Array.isArray(orgs) ? orgs : [];
 
   const handleOrgChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     authClient.organization.setActive({ organizationId: e.target.value });
@@ -66,7 +67,7 @@ export default function Layout({ children }: LayoutProps) {
 
             {session && (
               <div className="flex items-center gap-3">
-                {orgs && orgs.length > 0 && (
+                {organizations.length > 0 && (
                   <div className="flex items-center gap-1.5">
                     <Building2 className="w-4 h-4 text-gray-400" />
                     <select
@@ -74,7 +75,7 @@ export default function Layout({ children }: LayoutProps) {
                       onChange={handleOrgChange}
                       className="text-sm border border-gray-200 rounded-md px-2 py-1 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
                     >
-                      {orgs.map((org) => (
+                      {organizations.map((org) => (
                         <option key={org.id} value={org.id}>
                           {org.name}
                         </option>

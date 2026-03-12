@@ -33,6 +33,8 @@ COPY --from=builder /app/apps/frontend/dist /usr/share/nginx/html
 COPY nginx/nginx.conf /etc/nginx/nginx.conf
 COPY nginx/standalone.conf /tmp/nginx-standalone.conf
 COPY nginx/docker.conf /tmp/nginx-docker.conf
+COPY apps/frontend/docker-entrypoint.sh /docker-entrypoint.d/40-app-config.sh
+RUN chmod +x /docker-entrypoint.d/40-app-config.sh
 
 # Select config based on build arg
 ARG NGINX_CONF="standalone"

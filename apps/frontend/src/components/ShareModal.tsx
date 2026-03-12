@@ -58,7 +58,7 @@ export default function ShareModal({ isOpen, onClose, resourceType, resourceId }
   const [sharedWithId, setSharedWithId] = useState('');
   const [permission, setPermission] = useState('use');
 
-  const organizations = orgList ?? [];
+  const organizations = Array.isArray(orgList) ? orgList : [];
 
   const fetchShares = useCallback(async () => {
     setLoading(true);
