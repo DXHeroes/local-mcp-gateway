@@ -37,7 +37,7 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
       `${apiBaseURL}/api/auth/organization/create`,
       {
         data: {
-          name: `Playwright Org ${organizationSuffix}`,
+          name: 'E2E Test Org',
           slug: organizationSlug,
         },
       }

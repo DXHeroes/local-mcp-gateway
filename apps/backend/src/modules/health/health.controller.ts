@@ -31,7 +31,7 @@ export class HealthController {
   @Get('auth-config')
   getAuthConfig() {
     return {
-      emailAndPassword: true,
+      emailAndPassword: process.env.AUTH_EMAIL_PASSWORD !== 'false',
       google: !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET,
     };
   }

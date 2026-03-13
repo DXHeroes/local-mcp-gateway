@@ -1,8 +1,9 @@
 /**
  * Better Auth Configuration
  *
- * Configures Better Auth with Prisma adapter, email+password (always),
- * optional Google OAuth, Organization plugin, and MCP OAuth plugin.
+ * Configures Better Auth with Prisma adapter, email+password (toggleable via
+ * AUTH_EMAIL_PASSWORD env var), optional Google OAuth, Organization plugin,
+ * and MCP OAuth plugin.
  * Auto-creates a default organization on user signup.
  */
 
@@ -39,6 +40,7 @@ function toSlug(name: string): string {
 
 export function createAuth(prisma: PrismaClient): AuthInstance {
   const hasGoogle = !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET;
+  const emailPasswordEnabled = process.env.AUTH_EMAIL_PASSWORD !== 'false';
   const configService = new ConfigService();
 
   const auth = betterAuth({
@@ -50,7 +52,7 @@ export function createAuth(prisma: PrismaClient): AuthInstance {
       'http://localhost:3000',
     ]),
     database: prismaAdapter(prisma, { provider: 'postgresql' }),
-    emailAndPassword: { enabled: true },
+    emailAndPassword: { enabled: emailPasswordEnabled },
     ...(hasGoogle && {
       socialProviders: {
         google: {

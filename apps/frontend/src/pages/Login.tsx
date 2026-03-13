@@ -1,7 +1,7 @@
 /**
  * Login Page
  *
- * Shows email+password sign-in/sign-up form (always available)
+ * Shows email+password sign-in/sign-up form (when enabled via AUTH_EMAIL_PASSWORD)
  * and Google sign-in button when Google OAuth is configured.
  */
 
@@ -18,15 +18,19 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleEnabled, setGoogleEnabled] = useState(false);
+  const [emailPasswordEnabled, setEmailPasswordEnabled] = useState(true);
+  const [configLoaded, setConfigLoaded] = useState(false);
 
   useEffect(() => {
     apiFetch('/api/health/auth-config')
       .then((res) => res.json())
       .then((config) => {
         setGoogleEnabled(config.google === true);
+        setEmailPasswordEnabled(config.emailAndPassword !== false);
+        setConfigLoaded(true);
       })
       .catch(() => {
-        // Ignore — Google button stays hidden
+        setConfigLoaded(true);
       });
   }, []);
 
@@ -94,103 +98,115 @@ export default function LoginPage() {
           </div>
         )}
 
-        <form onSubmit={mode === 'signin' ? handleEmailSignIn : handleEmailSignUp}>
-          {mode === 'signup' && (
-            <div className="mb-4">
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                Name
-              </label>
-              <input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Your name"
-              />
+        {configLoaded && !emailPasswordEnabled && !googleEnabled && (
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700 text-sm text-center">
+            No login methods are configured. Please contact an administrator.
+          </div>
+        )}
+
+        {emailPasswordEnabled && (
+          <>
+            <form onSubmit={mode === 'signin' ? handleEmailSignIn : handleEmailSignUp}>
+              {mode === 'signup' && (
+                <div className="mb-4">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Name
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Your name"
+                  />
+                </div>
+              )}
+
+              <div className="mb-4">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="you@example.com"
+                />
+              </div>
+
+              <div className="mb-6">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Min. 8 characters"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Please wait...' : mode === 'signin' ? 'Sign In' : 'Create Account'}
+              </button>
+            </form>
+
+            <div className="mt-4 text-center">
+              {mode === 'signin' ? (
+                <p className="text-sm text-gray-500">
+                  Don&apos;t have an account?{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('signup');
+                      setError('');
+                    }}
+                    className="text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    Sign up
+                  </button>
+                </p>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  Already have an account?{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('signin');
+                      setError('');
+                    }}
+                    className="text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    Sign in
+                  </button>
+                </p>
+              )}
             </div>
-          )}
-
-          <div className="mb-4">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="you@example.com"
-            />
-          </div>
-
-          <div className="mb-6">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Min. 8 characters"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Please wait...' : mode === 'signin' ? 'Sign In' : 'Create Account'}
-          </button>
-        </form>
-
-        <div className="mt-4 text-center">
-          {mode === 'signin' ? (
-            <p className="text-sm text-gray-500">
-              Don&apos;t have an account?{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  setMode('signup');
-                  setError('');
-                }}
-                className="text-blue-600 hover:text-blue-800 font-medium"
-              >
-                Sign up
-              </button>
-            </p>
-          ) : (
-            <p className="text-sm text-gray-500">
-              Already have an account?{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  setMode('signin');
-                  setError('');
-                }}
-                className="text-blue-600 hover:text-blue-800 font-medium"
-              >
-                Sign in
-              </button>
-            </p>
-          )}
-        </div>
+          </>
+        )}
 
         {googleEnabled && (
           <>
-            <div className="my-6 flex items-center">
-              <div className="flex-1 border-t border-gray-200" />
-              <span className="px-4 text-sm text-gray-400">or</span>
-              <div className="flex-1 border-t border-gray-200" />
-            </div>
+            {emailPasswordEnabled && (
+              <div className="my-6 flex items-center">
+                <div className="flex-1 border-t border-gray-200" />
+                <span className="px-4 text-sm text-gray-400">or</span>
+                <div className="flex-1 border-t border-gray-200" />
+              </div>
+            )}
 
             <button
               type="button"
