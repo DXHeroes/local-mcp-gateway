@@ -12,6 +12,7 @@ import {
 
 type MockAuthService = {
   validateMcpToken: ReturnType<typeof vi.fn>;
+  getSession: ReturnType<typeof vi.fn>;
 };
 
 type MockConfigService = {
@@ -27,6 +28,7 @@ function createConfigService(values: Record<string, unknown>): MockConfigService
 function createAuthServiceMock(): MockAuthService {
   return {
     validateMcpToken: vi.fn().mockResolvedValue(null),
+    getSession: vi.fn().mockResolvedValue(null),
   };
 }
 
@@ -277,5 +279,33 @@ describe('MCP proxy auth HTTP contract', () => {
       userId: 'user-sse',
     });
     expect(authService.validateMcpToken).toHaveBeenCalledWith('sse-token');
+  });
+
+  it('accepts session cookie when no Bearer token is present', async () => {
+    authService.getSession.mockResolvedValue({
+      user: { id: 'cookie-user', name: 'Cookie User', email: 'cookie@example.com' },
+      session: { id: 'sess-1', userId: 'cookie-user' },
+    });
+
+    const response = await fetch(`${baseUrl}/api/mcp/test`, {
+      headers: { cookie: 'better-auth.session_token=valid-session' },
+    });
+    const body = (await response.json()) as Record<string, unknown>;
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({ ok: true, userId: 'cookie-user' });
+    expect(authService.getSession).toHaveBeenCalled();
+  });
+
+  it('returns 401 when session cookie is invalid and no Bearer token', async () => {
+    authService.getSession.mockResolvedValue(null);
+
+    const response = await fetch(`${baseUrl}/api/mcp/test`, {
+      headers: { cookie: 'better-auth.session_token=expired' },
+    });
+    const body = (await response.json()) as Record<string, unknown>;
+
+    expect(response.status).toBe(401);
+    expect(body.message).toBe('Bearer token required');
   });
 });

@@ -174,6 +174,38 @@ describe('McpOAuthGuard', () => {
     expect(result).toBe(true);
     expect(authService.validateMcpToken).toHaveBeenCalledWith('sse-token');
   });
+
+  it('accepts session cookie when no Bearer token is present', async () => {
+    const user: AuthUser = { id: 'session-user', name: 'Session', email: 'session@example.com' };
+    authService.getSession.mockResolvedValue({ user, session: { id: 's1', userId: user.id } });
+    const req = createMockRequest({ cookie: 'better-auth.session_token=abc123' });
+    const ctx = createMockExecutionContext(req);
+
+    const result = await guard.canActivate(ctx);
+
+    expect(result).toBe(true);
+    expect(req.user).toEqual(user);
+    expect(authService.validateMcpToken).not.toHaveBeenCalled();
+  });
+
+  it('rejects when neither Bearer token nor session cookie is valid', async () => {
+    authService.getSession.mockResolvedValue(null);
+    const req = createMockRequest({ cookie: 'better-auth.session_token=expired' });
+    const ctx = createMockExecutionContext(req);
+
+    await expect(guard.canActivate(ctx)).rejects.toThrow(UnauthorizedException);
+  });
+
+  it('does not fall through to session cookie when Bearer token is invalid', async () => {
+    const user: AuthUser = { id: 'session-user', name: 'Session', email: 'session@example.com' };
+    authService.validateMcpToken.mockResolvedValue(null);
+    authService.getSession.mockResolvedValue({ user, session: { id: 's1', userId: user.id } });
+    const req = createMockRequest({ authorization: 'Bearer bad-token' });
+    const ctx = createMockExecutionContext(req);
+
+    await expect(guard.canActivate(ctx)).rejects.toThrow(UnauthorizedException);
+    expect(authService.getSession).not.toHaveBeenCalled();
+  });
 });
 
 // ────────────────────────────────────────────────

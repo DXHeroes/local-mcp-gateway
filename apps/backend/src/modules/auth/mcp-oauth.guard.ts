@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Request } from 'express';
-import { AuthService } from './auth.service.js';
+import { type AuthUser, AuthService } from './auth.service.js';
 import { createMcpWwwAuthenticateHeader } from './mcp-oauth.utils.js';
 
 type McpUnauthorizedException = UnauthorizedException & {
@@ -32,17 +32,44 @@ export class McpOAuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<Request>();
     const token = this.extractToken(request);
 
-    if (!token) {
-      throw this.createUnauthorizedError('Bearer token required');
-    }
-
-    const user = await this.authService.validateMcpToken(token);
-    if (!user) {
+    // 1. Try Bearer token (MCP clients like Claude Desktop, Cursor, etc.)
+    if (token) {
+      const user = await this.authService.validateMcpToken(token);
+      if (user) {
+        request.user = user;
+        return true;
+      }
       throw this.createUnauthorizedError('Invalid or expired MCP OAuth token');
     }
 
-    request.user = user;
-    return true;
+    // 2. Try session cookie (browser UI calling /info endpoints)
+    const session = await this.validateSessionCookie(request);
+    if (session) {
+      request.user = session;
+      return true;
+    }
+
+    // 3. Neither worked — require Bearer token (for MCP client discovery)
+    throw this.createUnauthorizedError('Bearer token required');
+  }
+
+  /**
+   * Attempt to validate session cookie from the request.
+   * Returns the user if a valid session exists, null otherwise.
+   */
+  private async validateSessionCookie(request: Request): Promise<AuthUser | null> {
+    try {
+      const headers = new Headers();
+      for (const [key, value] of Object.entries(request.headers)) {
+        if (value) {
+          headers.set(key, Array.isArray(value) ? value.join(', ') : value);
+        }
+      }
+      const result = await this.authService.getSession(headers);
+      return result?.user ?? null;
+    } catch {
+      return null;
+    }
   }
 
   /**
