@@ -47,6 +47,12 @@ importers:
       '@dxheroes/local-mcp-database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@dxheroes/mcp-abra-flexi':
+        specifier: workspace:*
+        version: link:../../mcp-servers/abra-flexi
+      '@dxheroes/mcp-fakturoid':
+        specifier: workspace:*
+        version: link:../../mcp-servers/fakturoid
       '@dxheroes/mcp-gemini-deep-research':
         specifier: workspace:*
         version: link:../../mcp-servers/gemini-deep-research

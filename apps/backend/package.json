@@ -20,6 +20,8 @@
   "dependencies": {
     "@dxheroes/local-mcp-core": "workspace:*",
     "@dxheroes/local-mcp-database": "workspace:*",
+    "@dxheroes/mcp-abra-flexi": "workspace:*",
+    "@dxheroes/mcp-fakturoid": "workspace:*",
     "@dxheroes/mcp-gemini-deep-research": "workspace:*",
     "@dxheroes/mcp-merk": "workspace:*",
     "@dxheroes/mcp-toggl": "workspace:*",
