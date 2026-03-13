@@ -146,28 +146,72 @@ test.describe('Authentication - Login Page', () => {
 });
 
 test.describe('Authentication - Authenticated State', () => {
-  test('should show nav bar with user info when authenticated', async ({ page }) => {
-    // Mock auth session to return an authenticated user
+  /**
+   * Helper to mock all auth endpoints needed for authenticated state.
+   * The app requires: session, organization list, and active organization.
+   */
+  async function mockAuthenticatedState(
+    page: import('@playwright/test').Page,
+    userOverrides?: { image?: string | null },
+  ) {
+    const user = {
+      id: 'test-user-id',
+      name: 'Test User',
+      email: 'test@example.com',
+      image: userOverrides?.image ?? null,
+    };
+
+    const session = {
+      id: 'test-session-id',
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 86400000).toISOString(),
+      activeOrganizationId: 'test-org-id',
+    };
+
+    const org = {
+      id: 'test-org-id',
+      name: 'Test Org',
+      slug: 'test-org',
+      createdAt: new Date().toISOString(),
+      members: [{ userId: user.id, role: 'owner' }],
+    };
+
     await page.route('**/api/auth/get-session', (route) => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
-          session: {
-            id: 'test-session-id',
-            userId: 'test-user-id',
-            expiresAt: new Date(Date.now() + 86400000).toISOString(),
-          },
-          user: {
-            id: 'test-user-id',
-            name: 'Test User',
-            email: 'test@example.com',
-            image: null,
-          },
-        }),
+        body: JSON.stringify({ session, user }),
       });
     });
 
+    await page.route('**/api/auth/organization/list', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([org]),
+      });
+    });
+
+    await page.route('**/api/auth/organization/get-full**', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ...org, members: [{ user, role: 'owner' }] }),
+      });
+    });
+
+    // Mock health/auth-config
+    await page.route('**/api/health/auth-config', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ emailAndPassword: true, google: false }),
+      });
+    });
+  }
+
+  test('should show nav bar with user info when authenticated', async ({ page }) => {
+    await mockAuthenticatedState(page);
     await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     // Nav bar should be visible
@@ -191,26 +235,7 @@ test.describe('Authentication - Authenticated State', () => {
   });
 
   test('should show user avatar when user has an image', async ({ page }) => {
-    // Mock auth session with user image
-    await page.route('**/api/auth/get-session', (route) => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          session: {
-            id: 'test-session-id',
-            userId: 'test-user-id',
-            expiresAt: new Date(Date.now() + 86400000).toISOString(),
-          },
-          user: {
-            id: 'test-user-id',
-            name: 'Test User',
-            email: 'test@example.com',
-            image: 'https://example.com/avatar.png',
-          },
-        }),
-      });
-    });
+    await mockAuthenticatedState(page, { image: 'https://example.com/avatar.png' });
 
     // Also mock the avatar image so it loads
     await page.route('https://example.com/avatar.png', (route) => {
@@ -233,27 +258,7 @@ test.describe('Authentication - Authenticated State', () => {
   });
 
   test('should show sign out button when authenticated', async ({ page }) => {
-    // Mock auth session
-    await page.route('**/api/auth/get-session', (route) => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          session: {
-            id: 'test-session-id',
-            userId: 'test-user-id',
-            expiresAt: new Date(Date.now() + 86400000).toISOString(),
-          },
-          user: {
-            id: 'test-user-id',
-            name: 'Test User',
-            email: 'test@example.com',
-            image: null,
-          },
-        }),
-      });
-    });
-
+    await mockAuthenticatedState(page);
     await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     // Sign out button should be visible (it has title="Sign out")

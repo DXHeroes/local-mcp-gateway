@@ -1,270 +1,342 @@
 /**
  * E2E tests for Profile management
  *
- * Tests complete user flows:
- * - Create profile flow
- * - Edit profile flow
- * - Delete profile flow
- * - MCP endpoint URL display and copy
+ * Tests:
+ * - Profile list display
+ * - Create profile via dialog
+ * - Edit profile
+ * - Delete profile
+ * - MCP endpoint URL display
+ * - Profile form validation
  */
 
 import { expect, test } from '@playwright/test';
-import { retryRequest } from './helpers';
-import { ProfilesPage } from './pages/ProfilesPage';
+import { API_BASE, retryRequest, safeDelete } from './helpers';
+
+const API_URL = API_BASE;
 
 test.describe('Profiles', () => {
-  test.beforeEach(async ({ page }) => {
-    // Clean up any existing test profiles before each test (with rate limit handling)
+  test.describe.configure({ mode: 'serial' });
+
+  test.afterEach(async ({ request }) => {
     try {
-      const profilesResponse = await page.request.get('http://localhost:3001/api/profiles');
-      if (profilesResponse.ok()) {
-        const profiles = await profilesResponse.json();
+      const response = await request.get(`${API_URL}/api/profiles`);
+      if (response.ok()) {
+        const profiles = await response.json();
         for (const profile of profiles) {
-          if (profile.name.startsWith('test-profile-')) {
-            const deleteResponse = await page.request
-              .delete(`http://localhost:3001/api/profiles/${profile.id}`)
-              .catch(() => null);
-            if (deleteResponse?.status() === 429) {
-              await page.waitForTimeout(500);
-            }
-            await page.waitForTimeout(100); // Small delay between deletes
+          if (profile.name.startsWith('e2e-profile-')) {
+            await safeDelete(request, `${API_URL}/api/profiles/${profile.id}`);
           }
         }
       }
     } catch {
       // Ignore cleanup errors
     }
-
-    // Wait a bit after cleanup to let rate limit reset
-    await page.waitForTimeout(500);
-
-    const profilesPage = new ProfilesPage(page);
-    await profilesPage.goto();
-    // Add small delay to avoid race conditions
-    await page.waitForTimeout(300);
   });
 
-  test('should display empty state when no profiles exist', async ({ page }) => {
-    const profilesPage = new ProfilesPage(page);
-
-    // Wait for page to load
+  test('should display "New Profile" button', async ({ page }) => {
+    await page.goto('/profiles');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000); // Give time for API call
 
-    // Check if empty state is shown or profiles exist
-    const emptyStateVisible = await profilesPage.emptyState.isVisible().catch(() => false);
-    const profilesExist = (await profilesPage.profileCards.count()) > 0;
-    const hasError = await page
-      .getByText(/Error:/i)
-      .isVisible()
-      .catch(() => false);
-
-    // Either empty state, profiles, or error should be visible (error means backend issue, but UI works)
-    expect(emptyStateVisible || profilesExist || hasError).toBeTruthy();
+    await expect(page.getByRole('button', { name: /new profile/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
-  test('should display Create Profile button', async ({ page }) => {
-    const _profilesPage = new ProfilesPage(page);
+  test('should create a profile via dialog', async ({ page }) => {
+    const profileName = `e2e-profile-${Date.now()}`;
 
-    // Wait for page to load - check for either loading state, error, or content
-    await page.waitForFunction(
-      () => {
-        const body = document.body.textContent || '';
-        return (
-          body.includes('Create Profile') ||
-          body.includes('Loading profiles') ||
-          body.includes('No profiles found') ||
-          body.includes('Error')
-        );
-      },
-      { timeout: 15000 }
-    );
+    await page.goto('/profiles');
+    await page.waitForLoadState('networkidle');
 
-    // Check if button exists (might be in error state, but button should still be there)
-    const button = page.getByRole('button', { name: 'Create Profile' });
-    await expect(button).toBeVisible({ timeout: 5000 });
+    // Click New Profile button
+    await page.getByRole('button', { name: /new profile/i }).click();
+
+    // Dialog should open
+    await expect(page.getByRole('heading', { name: 'Create Profile' })).toBeVisible({
+      timeout: 5000,
+    });
+
+    // Fill form
+    await page.getByLabel(/name/i).first().fill(profileName);
+    await page.locator('#profile-description').fill('E2E test profile');
+
+    // Submit
+    await page.getByRole('button', { name: 'Create' }).click();
+
+    // Wait for dialog to close and profile to appear
+    await expect(page.getByRole('heading', { name: profileName })).toBeVisible({ timeout: 15000 });
+
+    // Verify MCP endpoint is displayed
+    const endpoint = page.locator('code').filter({ hasText: profileName }).first();
+    await expect(endpoint).toBeVisible({ timeout: 5000 });
   });
 
-  test('should create profile and display MCP endpoint', async ({ page }) => {
-    const profilesPage = new ProfilesPage(page);
-    const profileName = `test-profile-${Date.now()}`;
-    const profileDescription = 'Test profile description';
+  test('should create profile via API and verify display', async ({ page, request }) => {
+    const profileName = `e2e-profile-${Date.now()}`;
 
-    // Create profile via API (with retry for rate limiting)
-    const response = await retryRequest(
-      page.request,
-      'post',
-      'http://localhost:3001/api/profiles',
-      {
-        data: {
-          name: profileName,
-          description: profileDescription,
-        },
-      }
-    );
-
+    // Create via API
+    const response = await retryRequest(request, 'post', `${API_URL}/api/profiles`, {
+      data: { name: profileName, description: 'API created profile' },
+    });
     expect(response.status()).toBe(201);
-    const profile = await response.json();
-    expect(profile.name).toBe(profileName);
 
-    // Wait a bit for backend to process
-    await page.waitForTimeout(1000);
-
-    // Reload page to see the new profile
-    await profilesPage.goto();
+    // Navigate to profiles page
+    await page.goto('/profiles');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
 
-    // Wait for profile to appear - use heading role with timeout
-    await expect(page.getByRole('heading', { name: profileName })).toBeVisible({ timeout: 20000 });
-    await profilesPage.waitForProfiles();
+    // Profile should be visible
+    await expect(page.getByRole('heading', { name: profileName })).toBeVisible({ timeout: 15000 });
 
-    // Check if MCP endpoint is displayed - find code element containing profile name
-    const mcpEndpoint = page.locator('code').filter({ hasText: profileName }).first();
-    await expect(mcpEndpoint).toBeVisible({ timeout: 10000 });
-    const endpointText = await mcpEndpoint.textContent();
-    expect(endpointText).toContain(`/api/mcp/${profileName}`);
-
-    // Cleanup - ignore errors if backend is not available
-    try {
-      await page.request.delete(`http://localhost:3001/api/profiles/${profile.id}`);
-    } catch {
-      // Ignore cleanup errors - test already verified functionality
-    }
+    // MCP endpoint should contain the profile name
+    const endpoint = page.locator('code').filter({ hasText: profileName }).first();
+    await expect(endpoint).toBeVisible({ timeout: 5000 });
   });
 
-  test('should display profile name and description', async ({ page }) => {
-    const profilesPage = new ProfilesPage(page);
-    const profileName = `test-profile-${Date.now()}`;
-    const profileDescription = 'Test profile description';
+  test('should display multiple profiles', async ({ page, request }) => {
+    const names = [`e2e-profile-a-${Date.now()}`, `e2e-profile-b-${Date.now()}`];
 
-    // Create profile via API (with retry for rate limiting)
-    const response = await retryRequest(
-      page.request,
-      'post',
-      'http://localhost:3001/api/profiles',
-      {
-        data: {
-          name: profileName,
-          description: profileDescription,
-        },
-      }
-    );
-
-    expect(response.status()).toBe(201);
-    const profile = await response.json();
-
-    // Wait a bit for backend to process
-    await page.waitForTimeout(1000);
-
-    // Reload page
-    await profilesPage.goto();
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
-
-    // Wait for profile to appear - use heading role with timeout
-    await expect(page.getByRole('heading', { name: profileName })).toBeVisible({ timeout: 20000 });
-    await profilesPage.waitForProfiles();
-
-    // Check profile description - find it within the profile card
-    const profileCard = page.locator(`h3:has-text("${profileName}")`).locator('..');
-    await expect(profileCard.getByText(profileDescription)).toBeVisible();
-
-    // Cleanup - ignore errors if backend is not available
-    try {
-      await page.request.delete(`http://localhost:3001/api/profiles/${profile.id}`);
-    } catch {
-      // Ignore cleanup errors - test already verified functionality
-    }
-  });
-
-  test('should display MCP endpoint URL for each profile', async ({ page }) => {
-    const profilesPage = new ProfilesPage(page);
-    const profileName = `test-profile-${Date.now()}`;
-
-    // Create profile via API (with retry for rate limiting)
-    const response = await retryRequest(
-      page.request,
-      'post',
-      'http://localhost:3001/api/profiles',
-      {
-        data: {
-          name: profileName,
-        },
-      }
-    );
-
-    expect(response.status()).toBe(201);
-    const profile = await response.json();
-
-    // Wait a bit for backend to process
-    await page.waitForTimeout(1000);
-
-    // Reload page
-    await profilesPage.goto();
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
-
-    // Wait for profile to appear - use heading role with timeout
-    await expect(page.getByRole('heading', { name: profileName })).toBeVisible({ timeout: 20000 });
-    await profilesPage.waitForProfiles();
-
-    // Check MCP endpoint format - find code element containing profile name
-    const mcpEndpoint = page.locator('code').filter({ hasText: profileName }).first();
-    await expect(mcpEndpoint).toBeVisible({ timeout: 15000 });
-    const endpointText = await mcpEndpoint.textContent();
-    expect(endpointText).toMatch(/http:\/\/localhost:3001\/api\/mcp\/.+/);
-
-    // Cleanup - ignore errors if backend is not available
-    try {
-      await page.request.delete(`http://localhost:3001/api/profiles/${profile.id}`);
-    } catch {
-      // Ignore cleanup errors - test already verified functionality
-    }
-  });
-
-  test('should handle multiple profiles', async ({ page }) => {
-    const profilesPage = new ProfilesPage(page);
-    const profileNames = [`test-profile-1-${Date.now()}`, `test-profile-2-${Date.now()}`];
-
-    // Create multiple profiles
-    const profiles = [];
-    for (const name of profileNames) {
-      const response = await retryRequest(
-        page.request,
-        'post',
-        'http://localhost:3001/api/profiles',
-        {
-          data: { name },
-        }
-      );
+    // Create profiles
+    for (const name of names) {
+      const response = await retryRequest(request, 'post', `${API_URL}/api/profiles`, {
+        data: { name },
+      });
       expect(response.status()).toBe(201);
-      profiles.push(await response.json());
-      // Small delay between creates
-      await page.waitForTimeout(300);
     }
 
-    // Wait a bit for backend to process all
-    await page.waitForTimeout(1000);
-
-    // Reload page and wait for it to load
-    await profilesPage.goto();
+    // Navigate
+    await page.goto('/profiles');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
 
-    // Wait for all profiles to appear - use heading role with timeout
-    for (const name of profileNames) {
-      await expect(page.getByRole('heading', { name })).toBeVisible({ timeout: 20000 });
+    // Both should be visible
+    for (const name of names) {
+      await expect(page.getByRole('heading', { name })).toBeVisible({ timeout: 15000 });
     }
-    await profilesPage.waitForProfiles();
+  });
 
-    // Cleanup - ignore errors if backend is not available
-    for (const profile of profiles) {
-      try {
-        await page.request.delete(`http://localhost:3001/api/profiles/${profile.id}`);
-      } catch {
-        // Ignore cleanup errors - test already verified functionality
-      }
-    }
+  test('should delete a profile', async ({ page, request }) => {
+    const profileName = `e2e-profile-${Date.now()}`;
+
+    // Create via API
+    const response = await retryRequest(request, 'post', `${API_URL}/api/profiles`, {
+      data: { name: profileName },
+    });
+    expect(response.status()).toBe(201);
+    const profile = await response.json();
+
+    // Navigate
+    await page.goto('/profiles');
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('heading', { name: profileName })).toBeVisible({ timeout: 15000 });
+
+    // Click the menu button on the profile card (three dots)
+    const profileCard = page.locator(`h3:has-text("${profileName}")`).locator('..').locator('..');
+    await profileCard.getByRole('button').filter({ has: page.locator('svg') }).first().click();
+
+    // Click Delete from dropdown
+    await page.getByRole('menuitem', { name: /delete/i }).click();
+
+    // Confirm deletion in dialog
+    await expect(page.getByRole('heading', { name: /delete profile/i })).toBeVisible({
+      timeout: 5000,
+    });
+    await page.getByRole('button', { name: 'Delete' }).click();
+
+    // Profile should be gone
+    await expect(page.getByRole('heading', { name: profileName })).not.toBeVisible({
+      timeout: 10000,
+    });
+  });
+
+  test('should validate profile name - empty', async ({ page }) => {
+    await page.goto('/profiles');
+    await page.waitForLoadState('networkidle');
+
+    // Open create dialog
+    await page.getByRole('button', { name: /new profile/i }).click();
+    await expect(page.getByRole('heading', { name: 'Create Profile' })).toBeVisible();
+
+    // Try to submit with empty name
+    await page.getByRole('button', { name: 'Create' }).click();
+
+    // Error should appear
+    await expect(page.getByText(/name is required/i)).toBeVisible({ timeout: 5000 });
+  });
+
+  test('should validate profile name - special characters', async ({ page }) => {
+    await page.goto('/profiles');
+    await page.waitForLoadState('networkidle');
+
+    // Open create dialog
+    await page.getByRole('button', { name: /new profile/i }).click();
+    await expect(page.getByRole('heading', { name: 'Create Profile' })).toBeVisible();
+
+    // Fill with invalid name
+    await page.getByLabel(/name/i).first().fill('invalid name!@#');
+    await page.getByRole('button', { name: 'Create' }).click();
+
+    // Error should appear
+    await expect(page.getByText('Name must contain only alphanumeric')).toBeVisible({ timeout: 5000 });
+  });
+
+  test('should edit a profile', async ({ page, request }) => {
+    const profileName = `e2e-profile-${Date.now()}`;
+    const updatedName = `e2e-profile-updated-${Date.now()}`;
+
+    // Create via API
+    const response = await retryRequest(request, 'post', `${API_URL}/api/profiles`, {
+      data: { name: profileName, description: 'Original description' },
+    });
+    expect(response.status()).toBe(201);
+
+    // Navigate
+    await page.goto('/profiles');
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('heading', { name: profileName })).toBeVisible({ timeout: 15000 });
+
+    // Click the menu button on the profile card
+    const profileCard = page.locator(`h3:has-text("${profileName}")`).locator('..').locator('..');
+    await profileCard.getByRole('button').filter({ has: page.locator('svg') }).first().click();
+
+    // Click Edit from dropdown
+    await page.getByRole('menuitem', { name: /edit/i }).click();
+
+    // Dialog should open with "Edit Profile"
+    await expect(page.getByRole('heading', { name: 'Edit Profile' })).toBeVisible({
+      timeout: 5000,
+    });
+
+    // Update name
+    const nameInput = page.getByLabel(/name/i).first();
+    await nameInput.clear();
+    await nameInput.fill(updatedName);
+
+    // Submit
+    await page.getByRole('button', { name: 'Update' }).click();
+
+    // Updated profile should be visible
+    await expect(page.getByRole('heading', { name: updatedName })).toBeVisible({ timeout: 15000 });
+  });
+
+  test('should navigate to profile edit page on card click', async ({ page, request }) => {
+    const profileName = `e2e-profile-${Date.now()}`;
+
+    // Create via API
+    const response = await retryRequest(request, 'post', `${API_URL}/api/profiles`, {
+      data: { name: profileName },
+    });
+    expect(response.status()).toBe(201);
+    const profile = await response.json();
+
+    // Navigate
+    await page.goto('/profiles');
+    await page.waitForLoadState('networkidle');
+
+    // Click the profile card (not the endpoint area)
+    await page.getByRole('heading', { name: profileName }).click();
+
+    // Should navigate to profile edit page
+    await page.waitForURL(`**/profiles/${profile.id}/edit`, { timeout: 10000 });
+  });
+
+  test('should display Gateway config section', async ({ page }) => {
+    await page.goto('/profiles');
+    await page.waitForLoadState('networkidle');
+
+    // Gateway label should be visible
+    await expect(page.getByText('Gateway', { exact: true })).toBeVisible({ timeout: 10000 });
+
+    // Gateway endpoint code element
+    await expect(page.locator('code').filter({ hasText: /\/api\/mcp/ }).first()).toBeVisible();
+
+    // Copy button for gateway endpoint
+    await expect(page.getByLabel('Copy gateway endpoint')).toBeVisible();
+
+    // Profile selector
+    await expect(page.getByText('Profile:')).toBeVisible();
+  });
+
+  test('should display server and tools count on profile card', async ({ page, request }) => {
+    const profileName = `e2e-profile-${Date.now()}`;
+
+    const response = await retryRequest(request, 'post', `${API_URL}/api/profiles`, {
+      data: { name: profileName },
+    });
+    expect(response.status()).toBe(201);
+
+    await page.goto('/profiles');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.getByRole('heading', { name: profileName })).toBeVisible({ timeout: 15000 });
+
+    // Status text like "0/0 servers · 0 tools" should be visible on the card
+    await expect(page.getByText(/\d+\/\d+ servers · \d+ tools/).first()).toBeVisible({
+      timeout: 10000,
+    });
+  });
+
+  test('should navigate to edit page via View menu item', async ({ page, request }) => {
+    const profileName = `e2e-profile-${Date.now()}`;
+
+    const response = await retryRequest(request, 'post', `${API_URL}/api/profiles`, {
+      data: { name: profileName },
+    });
+    expect(response.status()).toBe(201);
+    const profile = await response.json();
+
+    await page.goto('/profiles');
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('heading', { name: profileName })).toBeVisible({ timeout: 15000 });
+
+    // Open dropdown menu
+    const profileCard = page.locator(`h3:has-text("${profileName}")`).locator('..').locator('..');
+    await profileCard.getByRole('button').filter({ has: page.locator('svg') }).first().click();
+
+    // Click View from dropdown
+    await page.getByRole('menuitem', { name: /view/i }).click();
+
+    // Should navigate to edit page
+    await page.waitForURL(`**/profiles/${profile.id}/edit`, { timeout: 10000 });
+  });
+
+  test('should display MCP endpoint URL on profile card', async ({ page, request }) => {
+    const profileName = `e2e-profile-${Date.now()}`;
+
+    const response = await retryRequest(request, 'post', `${API_URL}/api/profiles`, {
+      data: { name: profileName },
+    });
+    expect(response.status()).toBe(201);
+
+    await page.goto('/profiles');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.getByRole('heading', { name: profileName })).toBeVisible({ timeout: 15000 });
+
+    // Endpoint URL with profile name should be displayed in code element
+    const endpoint = page.locator('code').filter({ hasText: profileName }).first();
+    await expect(endpoint).toBeVisible({ timeout: 5000 });
+  });
+
+  test('should close create dialog on cancel', async ({ page }) => {
+    await page.goto('/profiles');
+    await page.waitForLoadState('networkidle');
+
+    // Open create dialog
+    await page.getByRole('button', { name: /new profile/i }).click();
+    await expect(page.getByRole('heading', { name: 'Create Profile' })).toBeVisible({
+      timeout: 5000,
+    });
+
+    // Fill in some data
+    await page.getByLabel(/name/i).first().fill('should-not-be-saved');
+
+    // Cancel
+    await page.getByRole('button', { name: 'Cancel' }).click();
+
+    // Dialog should close
+    await expect(page.getByRole('heading', { name: 'Create Profile' })).not.toBeVisible();
+
+    // Profile should NOT appear in list
+    await expect(page.getByRole('heading', { name: 'should-not-be-saved' })).not.toBeVisible();
   });
 });

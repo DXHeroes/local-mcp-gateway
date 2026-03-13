@@ -1,365 +1,303 @@
 /**
  * E2E tests for MCP Server management
  *
- * Tests complete user flows:
- * - Add remote MCP server (HTTP/SSE)
- * - OAuth flow (Linear setup)
- * - API key setup
- * - Delete MCP server
+ * Tests:
+ * - Server list display
+ * - Create HTTP server
+ * - Create SSE server
+ * - Server with API key
+ * - Server with OAuth
+ * - Delete server
+ * - Server detail page navigation
  */
 
 import { expect, test } from '@playwright/test';
-import { retryRequest, safeDelete } from './helpers';
-import { McpServersPage } from './pages/McpServersPage';
+import { API_BASE, retryRequest, safeDelete } from './helpers';
+
+const API_URL = API_BASE;
 
 test.describe('MCP Servers', () => {
-  test.beforeEach(async ({ page }) => {
-    // Clean up any existing test servers before each test (with rate limit handling)
+  test.describe.configure({ mode: 'serial' });
+
+  test.afterEach(async ({ request }) => {
     try {
-      const serversResponse = await page.request.get('http://localhost:3001/api/mcp-servers');
-      if (serversResponse.ok()) {
-        const servers = await serversResponse.json();
+      const response = await request.get(`${API_URL}/api/mcp-servers`);
+      if (response.ok()) {
+        const servers = await response.json();
         for (const server of servers) {
-          if (server.name.startsWith('test-server-') || server.name.startsWith('Test Server')) {
-            const deleteResponse = await page.request
-              .delete(`http://localhost:3001/api/mcp-servers/${server.id}`)
-              .catch(() => null);
-            if (deleteResponse?.status() === 429) {
-              await page.waitForTimeout(500);
-            }
-            await page.waitForTimeout(100); // Small delay between deletes
+          if (server.name.startsWith('e2e-server-')) {
+            await safeDelete(request, `${API_URL}/api/mcp-servers/${server.id}`);
           }
         }
       }
     } catch {
-      // Ignore cleanup errors
+      // Ignore
     }
-
-    // Wait a bit after cleanup to let rate limit reset
-    await page.waitForTimeout(500);
-
-    const serversPage = new McpServersPage(page);
-    await serversPage.goto();
-    // Add small delay to avoid race conditions
-    await page.waitForTimeout(300);
   });
 
-  test('should display empty state when no servers exist', async ({ page }) => {
-    const serversPage = new McpServersPage(page);
+  test('should display "Add MCP Server" button', async ({ page }) => {
+    await page.goto('/mcp-servers');
+    await page.waitForLoadState('networkidle');
 
-    // Check if empty state is shown or servers exist
-    const emptyStateVisible = await serversPage.emptyState.isVisible().catch(() => false);
-    const serversExist = (await serversPage.serverCards.count()) > 0;
-
-    // Either empty state or servers should be visible
-    expect(emptyStateVisible || serversExist).toBeTruthy();
-  });
-
-  test('should display Add MCP Server button', async ({ page }) => {
-    const serversPage = new McpServersPage(page);
-
-    await expect(serversPage.addButton).toBeVisible();
-  });
-
-  test('should create remote HTTP MCP server', async ({ page }) => {
-    const serversPage = new McpServersPage(page);
-    const serverName = `test-server-http-${Date.now()}`;
-
-    // Create server via API (with retry for rate limiting)
-    const response = await retryRequest(
-      page.request,
-      'post',
-      'http://localhost:3001/api/mcp-servers',
-      {
-        data: {
-          name: serverName,
-          type: 'remote_http',
-          config: {
-            url: 'https://example.com/mcp',
-          },
-        },
-      }
-    );
-
-    expect(response.status()).toBe(201);
-    const server = await response.json();
-    expect(server.name).toBe(serverName);
-    expect(server.type).toBe('remote_http');
-
-    // Wait a bit for backend to process
-    await page.waitForTimeout(500);
-
-    // Reload page
-    await serversPage.goto();
-
-    // Wait for server to appear - use heading role
-    await expect(page.getByRole('heading', { name: serverName, level: 3 })).toBeVisible({
-      timeout: 15000,
+    await expect(page.getByRole('button', { name: 'Add MCP Server' })).toBeVisible({
+      timeout: 10000,
     });
-    await serversPage.waitForServers();
-
-    // Check if server is displayed
-    await expect(page.getByRole('heading', { name: serverName, level: 3 })).toBeVisible();
-    await expect(page.getByText(/Type: remote_http/i).first()).toBeVisible();
-
-    // Cleanup - ignore errors if backend is not available
-    await safeDelete(page.request, `http://localhost:3001/api/mcp-servers/${server.id}`);
   });
 
-  test('should create remote SSE MCP server', async ({ page }) => {
-    const serversPage = new McpServersPage(page);
-    const serverName = `test-server-sse-${Date.now()}`;
+  test('should create and display a remote HTTP server', async ({ page, request }) => {
+    const serverName = `e2e-server-http-${Date.now()}`;
 
-    // Create server via API (with retry for rate limiting)
-    const response = await retryRequest(
-      page.request,
-      'post',
-      'http://localhost:3001/api/mcp-servers',
-      {
-        data: {
-          name: serverName,
-          type: 'remote_sse',
-          config: {
-            url: 'https://example.com/mcp/sse',
-          },
-        },
-      }
-    );
-
-    expect(response.status()).toBe(201);
-    const server = await response.json();
-    expect(server.type).toBe('remote_sse');
-
-    // Wait a bit for backend to process
-    await page.waitForTimeout(500);
-
-    // Reload page
-    await serversPage.goto();
-
-    // Wait for server to appear - use heading role
-    await expect(page.getByRole('heading', { name: serverName, level: 3 })).toBeVisible({
-      timeout: 15000,
+    // Create via API
+    const response = await retryRequest(request, 'post', `${API_URL}/api/mcp-servers`, {
+      data: {
+        name: serverName,
+        type: 'remote_http',
+        config: { url: 'https://example.com/mcp' },
+      },
     });
-    await serversPage.waitForServers();
+    expect(response.status()).toBe(201);
 
-    // Check if server is displayed
-    await expect(page.getByRole('heading', { name: serverName, level: 3 })).toBeVisible();
-    await expect(page.getByText(/Type: remote_sse/i).first()).toBeVisible();
+    // Navigate
+    await page.goto('/mcp-servers');
+    await page.waitForLoadState('networkidle');
 
-    // Cleanup - ignore errors if backend is not available
-    await safeDelete(page.request, `http://localhost:3001/api/mcp-servers/${server.id}`);
+    // Server should be visible with name and type badge
+    await expect(page.getByRole('heading', { name: serverName })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('remote_http').first()).toBeVisible();
   });
 
-  test('should display OAuth configuration when present', async ({ page }) => {
-    const serversPage = new McpServersPage(page);
-    const serverName = `test-server-oauth-${Date.now()}`;
+  test('should create and display a remote SSE server', async ({ page, request }) => {
+    const serverName = `e2e-server-sse-${Date.now()}`;
 
-    // Create server with OAuth config via API (with retry for rate limiting)
-    const response = await retryRequest(
-      page.request,
-      'post',
-      'http://localhost:3001/api/mcp-servers',
-      {
-        data: {
-          name: serverName,
-          type: 'remote_http',
-          config: {
-            url: 'https://example.com/mcp',
-          },
-          oauthConfig: {
-            authorizationServerUrl: 'https://oauth.example.com/authorize',
-            scopes: ['read', 'write'],
-            requiresOAuth: true,
-          },
-        },
-      }
-    );
-
-    expect(response.status()).toBe(201);
-    const server = await response.json();
-
-    // Wait a bit for backend to process
-    await page.waitForTimeout(500);
-
-    // Reload page
-    await serversPage.goto();
-
-    // Wait for server to appear
-    await expect(page.getByRole('heading', { name: serverName, level: 3 })).toBeVisible({
-      timeout: 15000,
+    // Create via API
+    const response = await retryRequest(request, 'post', `${API_URL}/api/mcp-servers`, {
+      data: {
+        name: serverName,
+        type: 'remote_sse',
+        config: { url: 'https://example.com/mcp/sse' },
+      },
     });
-    await serversPage.waitForServers();
+    expect(response.status()).toBe(201);
 
-    // Check OAuth configuration is displayed
-    await expect(page.getByText(/OAuth Configuration/i)).toBeVisible();
-    await expect(page.getByText(/Authorization Server:/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Authorize' })).toBeVisible();
+    // Navigate
+    await page.goto('/mcp-servers');
+    await page.waitForLoadState('networkidle');
 
-    // Cleanup - ignore errors if backend is not available
-    await safeDelete(page.request, `http://localhost:3001/api/mcp-servers/${server.id}`);
+    await expect(page.getByRole('heading', { name: serverName })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('remote_sse').first()).toBeVisible();
   });
 
-  test('should display API key configuration when present', async ({ page }) => {
-    const serversPage = new McpServersPage(page);
-    const serverName = `test-server-apikey-${Date.now()}`;
+  test('should display API key badge when API key is configured', async ({ page, request }) => {
+    const serverName = `e2e-server-apikey-${Date.now()}`;
 
-    // Create server with API key config via API (with retry for rate limiting)
-    const response = await retryRequest(
-      page.request,
-      'post',
-      'http://localhost:3001/api/mcp-servers',
-      {
-        data: {
-          name: serverName,
-          type: 'remote_http',
-          config: {
-            url: 'https://example.com/mcp',
-          },
-          apiKeyConfig: {
-            apiKey: 'test-api-key-123',
-            headerName: 'X-API-Key',
-            headerValue: 'test-api-key-123',
-          },
+    // Create with API key
+    const response = await retryRequest(request, 'post', `${API_URL}/api/mcp-servers`, {
+      data: {
+        name: serverName,
+        type: 'remote_http',
+        config: { url: 'https://example.com/mcp' },
+        apiKeyConfig: {
+          apiKey: 'test-api-key-123',
+          headerName: 'X-API-Key',
+          headerValue: 'test-api-key-123',
         },
-      }
-    );
-
-    expect(response.status()).toBe(201);
-    const server = await response.json();
-
-    // Wait a bit for backend to process
-    await page.waitForTimeout(500);
-
-    // Reload page
-    await serversPage.goto();
-
-    // Wait for server to appear
-    await expect(page.getByRole('heading', { name: serverName, level: 3 })).toBeVisible({
-      timeout: 15000,
+      },
     });
-    await serversPage.waitForServers();
+    expect(response.status()).toBe(201);
 
-    // Check API key configuration is displayed
-    await expect(page.getByText(/API Key Configured/i)).toBeVisible();
+    await page.goto('/mcp-servers');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.getByRole('heading', { name: serverName })).toBeVisible({ timeout: 15000 });
+    // API Key badge and header info should be visible
+    await expect(page.getByText('API Key').first()).toBeVisible();
     await expect(page.getByText(/Header: X-API-Key/i)).toBeVisible();
-
-    // Cleanup - ignore errors if backend is not available
-    await safeDelete(page.request, `http://localhost:3001/api/mcp-servers/${server.id}`);
   });
 
-  test('should initiate OAuth flow when Authorize button is clicked', async ({ page, context }) => {
-    const serversPage = new McpServersPage(page);
-    const serverName = `test-server-oauth-flow-${Date.now()}`;
+  test('should display OAuth badge when OAuth is configured', async ({ page, request }) => {
+    const serverName = `e2e-server-oauth-${Date.now()}`;
 
-    // Create server with OAuth config via API (with retry for rate limiting)
-    const response = await retryRequest(
-      page.request,
-      'post',
-      'http://localhost:3001/api/mcp-servers',
-      {
-        data: {
-          name: serverName,
-          type: 'remote_http',
-          config: {
-            url: 'https://example.com/mcp',
-          },
-          oauthConfig: {
-            authorizationServerUrl: 'https://oauth.example.com/authorize',
-            scopes: ['read'],
-            requiresOAuth: true,
-          },
+    // Create with OAuth config
+    const response = await retryRequest(request, 'post', `${API_URL}/api/mcp-servers`, {
+      data: {
+        name: serverName,
+        type: 'remote_http',
+        config: { url: 'https://example.com/mcp' },
+        oauthConfig: {
+          authorizationServerUrl: 'https://oauth.example.com/authorize',
+          scopes: ['read', 'write'],
         },
-      }
-    );
-
-    expect(response.status()).toBe(201);
-    const server = await response.json();
-
-    // Reload page
-    await serversPage.goto();
-    await serversPage.waitForServers();
-
-    // Set up listener for new page (OAuth popup)
-    const [popup] = await Promise.all([
-      context.waitForEvent('page', { timeout: 5000 }).catch(() => null),
-      serversPage.clickOAuthAuthorize(serverName),
-    ]);
-
-    // Check that OAuth authorization page was opened
-    if (popup) {
-      // Wait for navigation
-      await popup.waitForLoadState('networkidle').catch(() => {});
-
-      // The popup should navigate to OAuth authorization URL
-      const url = popup.url();
-      expect(url).toContain('/api/oauth/authorize/');
-
-      // Close popup
-      await popup.close();
-    } else {
-      // If popup didn't open, check that button click worked
-      // In some cases, OAuth might redirect in same window
-      await page.waitForTimeout(1000);
-    }
-
-    // Cleanup - ignore errors if backend is not available
-    await safeDelete(page.request, `http://localhost:3001/api/mcp-servers/${server.id}`);
-  });
-
-  test('should delete MCP server', async ({ page }) => {
-    const serversPage = new McpServersPage(page);
-    const serverName = `test-server-delete-${Date.now()}`;
-
-    // Create server via API (with retry for rate limiting)
-    const response = await retryRequest(
-      page.request,
-      'post',
-      'http://localhost:3001/api/mcp-servers',
-      {
-        data: {
-          name: serverName,
-          type: 'remote_http',
-          config: {
-            url: 'https://example.com/mcp',
-          },
-        },
-      }
-    );
-
-    expect(response.status()).toBe(201);
-    const server = await response.json();
-
-    // Wait a bit for backend to process
-    await page.waitForTimeout(500);
-
-    // Reload page
-    await serversPage.goto();
-
-    // Wait for server to appear
-    await expect(page.getByRole('heading', { name: serverName, level: 3 })).toBeVisible({
-      timeout: 15000,
+      },
     });
-    await serversPage.waitForServers();
+    expect(response.status()).toBe(201);
 
-    // Verify server exists
-    await expect(page.getByRole('heading', { name: serverName, level: 3 })).toBeVisible();
+    await page.goto('/mcp-servers');
+    await page.waitForLoadState('networkidle');
 
-    // Delete server via API
-    const deleteResponse = await page.request.delete(
-      `http://localhost:3001/api/mcp-servers/${server.id}`
-    );
+    await expect(page.getByRole('heading', { name: serverName })).toBeVisible({ timeout: 15000 });
+    // OAuth badge should be visible
+    await expect(page.getByText('OAuth').first()).toBeVisible();
+  });
+
+  test('should delete a server via API and verify it disappears', async ({ page, request }) => {
+    const serverName = `e2e-server-delete-${Date.now()}`;
+
+    // Create
+    const createResponse = await retryRequest(request, 'post', `${API_URL}/api/mcp-servers`, {
+      data: {
+        name: serverName,
+        type: 'remote_http',
+        config: { url: 'https://example.com/mcp' },
+      },
+    });
+    expect(createResponse.status()).toBe(201);
+    const server = await createResponse.json();
+
+    // Verify it shows
+    await page.goto('/mcp-servers');
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('heading', { name: serverName })).toBeVisible({ timeout: 15000 });
+
+    // Delete via API
+    const deleteResponse = await request.delete(`${API_URL}/api/mcp-servers/${server.id}`);
     expect(deleteResponse.status()).toBe(204);
 
-    // Wait a bit for backend to process
-    await page.waitForTimeout(500);
+    // Reload and verify it's gone
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('heading', { name: serverName })).not.toBeVisible({
+      timeout: 10000,
+    });
+  });
 
-    // Reload page
-    await serversPage.goto();
-    await page.waitForTimeout(1000); // Give time for UI to update
+  test('should navigate to server detail page', async ({ page, request }) => {
+    const serverName = `e2e-server-detail-${Date.now()}`;
 
-    // Verify server is deleted
-    await expect(page.getByRole('heading', { name: serverName, level: 3 })).not.toBeVisible({
+    // Create
+    const response = await retryRequest(request, 'post', `${API_URL}/api/mcp-servers`, {
+      data: {
+        name: serverName,
+        type: 'remote_http',
+        config: { url: 'https://example.com/mcp' },
+      },
+    });
+    expect(response.status()).toBe(201);
+    const server = await response.json();
+
+    await page.goto('/mcp-servers');
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('heading', { name: serverName })).toBeVisible({ timeout: 15000 });
+
+    // Click the View button
+    await page.getByRole('button', { name: `View details for ${serverName}` }).click();
+
+    // Should navigate to detail page
+    await page.waitForURL(`**/mcp-servers/${server.id}`, { timeout: 10000 });
+  });
+
+  test('should create server via UI dialog', async ({ page }) => {
+    const serverName = `e2e-server-ui-${Date.now()}`;
+
+    await page.goto('/mcp-servers');
+    await page.waitForLoadState('networkidle');
+
+    // Open the form dialog
+    await page.getByRole('button', { name: 'Add MCP Server' }).click();
+    await expect(page.getByRole('heading', { name: 'Add MCP Server' })).toBeVisible({
       timeout: 5000,
     });
+
+    // Fill form
+    await page.locator('#server-name').fill(serverName);
+
+    // Select type
+    await page.locator('#server-type').click();
+    await page.getByRole('option', { name: 'Remote HTTP' }).click();
+
+    // Fill URL
+    await page.locator('#server-url').fill('https://example.com/mcp-ui-test');
+
+    // Submit
+    await page.getByRole('button', { name: 'Create' }).click();
+
+    // Server should appear in list
+    await expect(page.getByRole('heading', { name: serverName })).toBeVisible({ timeout: 15000 });
+  });
+
+  test('should edit server via UI dialog', async ({ page, request }) => {
+    const serverName = `e2e-server-edit-${Date.now()}`;
+
+    // Create via API
+    const response = await retryRequest(request, 'post', `${API_URL}/api/mcp-servers`, {
+      data: {
+        name: serverName,
+        type: 'remote_http',
+        config: { url: 'https://example.com/mcp' },
+      },
+    });
+    expect(response.status()).toBe(201);
+
+    await page.goto('/mcp-servers');
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('heading', { name: serverName })).toBeVisible({ timeout: 15000 });
+
+    // Click Edit button
+    await page.getByRole('button', { name: `Edit ${serverName}` }).click();
+
+    // Edit dialog should open
+    await expect(page.getByRole('heading', { name: 'Edit MCP Server' })).toBeVisible({
+      timeout: 5000,
+    });
+
+    // Update name
+    const nameInput = page.locator('#server-name');
+    await nameInput.clear();
+    await nameInput.fill(`${serverName}-updated`);
+
+    // Submit
+    await page.getByRole('button', { name: 'Update' }).click();
+
+    // Updated name should appear
+    await expect(page.getByRole('heading', { name: `${serverName}-updated` })).toBeVisible({
+      timeout: 15000,
+    });
+  });
+
+  test('should close form dialog on cancel', async ({ page }) => {
+    await page.goto('/mcp-servers');
+    await page.waitForLoadState('networkidle');
+
+    // Open form
+    await page.getByRole('button', { name: 'Add MCP Server' }).click();
+    await expect(page.getByRole('heading', { name: 'Add MCP Server' })).toBeVisible({
+      timeout: 5000,
+    });
+
+    // Cancel
+    await page.getByRole('button', { name: 'Cancel' }).click();
+
+    // Dialog should be closed
+    await expect(page.getByRole('heading', { name: 'Add MCP Server' })).not.toBeVisible();
+  });
+
+  test('should show tools count badge', async ({ page, request }) => {
+    const serverName = `e2e-server-tools-${Date.now()}`;
+
+    // Create
+    const response = await retryRequest(request, 'post', `${API_URL}/api/mcp-servers`, {
+      data: {
+        name: serverName,
+        type: 'remote_http',
+        config: { url: 'https://example.com/mcp' },
+      },
+    });
+    expect(response.status()).toBe(201);
+
+    await page.goto('/mcp-servers');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.getByRole('heading', { name: serverName })).toBeVisible({ timeout: 15000 });
+    // Tools count badge should be visible (likely "0 tools" for a non-reachable server)
+    await expect(page.getByText(/\d+ tools?/).first()).toBeVisible({ timeout: 10000 });
   });
 });
