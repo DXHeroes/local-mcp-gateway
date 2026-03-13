@@ -42,7 +42,7 @@ interface ProfileFormProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-import { API_URL } from '../config/api';
+import { apiFetch } from '../lib/api-fetch';
 
 export default function ProfileForm({
   profile,
@@ -64,7 +64,7 @@ export default function ProfileForm({
   const fetchAllServers = useCallback(async () => {
     try {
       setServersLoading(true);
-      const response = await fetch(`${API_URL}/api/mcp-servers`);
+      const response = await apiFetch('/api/mcp-servers');
       if (!response.ok) {
         throw new Error('Failed to fetch MCP servers');
       }
@@ -81,7 +81,7 @@ export default function ProfileForm({
   // Fetch servers assigned to profile (when editing)
   const fetchProfileServers = useCallback(async (profileId: string) => {
     try {
-      const response = await fetch(`${API_URL}/api/profiles/${profileId}/servers`);
+      const response = await apiFetch(`/api/profiles/${profileId}/servers`);
       if (!response.ok) {
         throw new Error('Failed to fetch profile servers');
       }

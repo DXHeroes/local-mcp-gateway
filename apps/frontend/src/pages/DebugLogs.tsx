@@ -27,7 +27,7 @@ interface McpServer {
   name: string;
 }
 
-import { API_URL } from '../config/api';
+import { apiFetch } from '../lib/api-fetch';
 
 export default function DebugLogsPage() {
   const [logs, setLogs] = useState<DebugLog[]>([]);
@@ -47,7 +47,7 @@ export default function DebugLogsPage() {
 
   const fetchProfiles = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/api/profiles`);
+      const response = await apiFetch('/api/profiles');
       if (response.ok) {
         const data = await response.json();
         setProfiles(data);
@@ -59,7 +59,7 @@ export default function DebugLogsPage() {
 
   const fetchServers = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/api/mcp-servers`);
+      const response = await apiFetch('/api/mcp-servers');
       if (response.ok) {
         const data = await response.json();
         setServers(data);
@@ -79,7 +79,7 @@ export default function DebugLogsPage() {
       if (selectedStatus) params.append('status', selectedStatus);
       params.append('limit', '100');
 
-      const response = await fetch(`${API_URL}/api/debug/logs?${params.toString()}`);
+      const response = await apiFetch(`/api/debug/logs?${params.toString()}`);
       if (!response.ok) {
         throw new Error('Failed to fetch debug logs');
       }
@@ -104,7 +104,7 @@ export default function DebugLogsPage() {
       if (selectedProfileId) params.append('profileId', selectedProfileId);
       if (selectedMcpServerId) params.append('mcpServerId', selectedMcpServerId);
 
-      await fetch(`${API_URL}/api/debug/logs?${params.toString()}`, {
+      await apiFetch(`/api/debug/logs?${params.toString()}`, {
         method: 'DELETE',
       });
       await fetchLogs();

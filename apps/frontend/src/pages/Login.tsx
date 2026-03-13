@@ -6,9 +6,9 @@
  */
 
 import { useEffect, useState } from 'react';
-import { getFullMcpEndpointUrl } from '../config/api';
-import { hasMcpAuthQuery, isMcpLoginPath } from '../lib/mcp-auth';
+import { apiFetch } from '../lib/api-fetch';
 import { authClient } from '../lib/auth-client';
+import { hasMcpAuthQuery, isMcpLoginPath } from '../lib/mcp-auth';
 
 export default function LoginPage() {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
@@ -20,8 +20,7 @@ export default function LoginPage() {
   const [googleEnabled, setGoogleEnabled] = useState(false);
 
   useEffect(() => {
-    const apiUrl = getFullMcpEndpointUrl() || 'http://localhost:3001';
-    fetch(`${apiUrl}/api/health/auth-config`)
+    apiFetch('/api/health/auth-config')
       .then((res) => res.json())
       .then((config) => {
         setGoogleEnabled(config.google === true);

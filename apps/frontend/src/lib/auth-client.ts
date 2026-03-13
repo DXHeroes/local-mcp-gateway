@@ -12,4 +12,7 @@ export const authClient = createAuthClient({
   baseURL: getFullMcpEndpointUrl() || 'http://localhost:3001',
   basePath: '/api/auth',
   plugins: [organizationClient()],
+  fetchOptions: {
+    credentials: 'include',
+  },
 });

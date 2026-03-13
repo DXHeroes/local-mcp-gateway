@@ -24,7 +24,7 @@ import {
 } from '@dxheroes/local-mcp-ui';
 import { Loader2, Trash2, Users } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { API_URL } from '../config/api';
+import { apiFetch } from '../lib/api-fetch';
 import { authClient } from '../lib/auth-client';
 
 interface Share {
@@ -63,9 +63,7 @@ export default function ShareModal({ isOpen, onClose, resourceType, resourceId }
   const fetchShares = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/sharing/${resourceType}/${resourceId}`, {
-        credentials: 'include',
-      });
+      const response = await apiFetch(`/api/sharing/${resourceType}/${resourceId}`);
       if (response.ok) {
         const data = await response.json();
         setShares(Array.isArray(data) ? data : []);
@@ -100,10 +98,9 @@ export default function ShareModal({ isOpen, onClose, resourceType, resourceId }
 
     setSubmitting(true);
     try {
-      const response = await fetch(`${API_URL}/api/sharing`, {
+      const response = await apiFetch('/api/sharing', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
           resourceType,
           resourceId,
@@ -139,9 +136,8 @@ export default function ShareModal({ isOpen, onClose, resourceType, resourceId }
 
   const handleRemoveShare = async (shareId: string) => {
     try {
-      const response = await fetch(`${API_URL}/api/sharing/${shareId}`, {
+      const response = await apiFetch(`/api/sharing/${shareId}`, {
         method: 'DELETE',
-        credentials: 'include',
       });
 
       if (!response.ok) {

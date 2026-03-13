@@ -18,6 +18,7 @@ import { useNavigate, useParams } from 'react-router';
 import ShareModal from '../components/ShareModal';
 import { ToolInfoCard } from '../components/ToolInfoCard';
 import { API_URL } from '../config/api';
+import { apiFetch } from '../lib/api-fetch';
 import { authClient } from '../lib/auth-client';
 
 interface McpServer {
@@ -87,7 +88,7 @@ export default function McpServerDetailPage() {
       setError(null);
 
       // Fetch server details
-      const serverResponse = await fetch(`${API_URL}/api/mcp-servers/${id}`);
+      const serverResponse = await apiFetch(`/api/mcp-servers/${id}`);
       if (!serverResponse.ok) {
         throw new Error('Failed to fetch MCP server');
       }
@@ -96,7 +97,7 @@ export default function McpServerDetailPage() {
 
       // Fetch tools
       try {
-        const toolsResponse = await fetch(`${API_URL}/api/mcp-servers/${id}/tools`);
+        const toolsResponse = await apiFetch(`/api/mcp-servers/${id}/tools`);
         if (toolsResponse.ok) {
           const toolsData = await toolsResponse.json();
           setTools(Array.isArray(toolsData.tools) ? toolsData.tools : []);
@@ -133,7 +134,7 @@ export default function McpServerDetailPage() {
 
       // Fetch connection status
       try {
-        const statusResponse = await fetch(`${API_URL}/api/mcp-servers/${id}/status`);
+        const statusResponse = await apiFetch(`/api/mcp-servers/${id}/status`);
         if (statusResponse.ok) {
           const statusData = await statusResponse.json();
           setConnectionStatus(statusData.status || 'unknown');
@@ -172,7 +173,7 @@ export default function McpServerDetailPage() {
 
       // Fetch debug logs filtered by server ID
       try {
-        const logsResponse = await fetch(`${API_URL}/api/debug/logs?mcpServerId=${id}&limit=50`);
+        const logsResponse = await apiFetch(`/api/debug/logs?mcpServerId=${id}&limit=50`);
         if (logsResponse.ok) {
           const logsData = await logsResponse.json();
           // API returns { logs: [...], total: ... }

@@ -28,7 +28,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import GatewayConfig from '../components/GatewayConfig';
 import ProfileForm from '../components/ProfileForm';
-import { API_URL, getGatewayUrl, getProfileUrl } from '../config/api';
+import { getGatewayUrl, getProfileUrl } from '../config/api';
+import { apiFetch } from '../lib/api-fetch';
 import { authClient } from '../lib/auth-client';
 
 // Get active org slug for org-scoped MCP URLs
@@ -79,7 +80,7 @@ export default function ProfilesPage() {
   const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/api/profiles`);
+      const response = await apiFetch('/api/profiles');
       if (!response.ok) {
         throw new Error('Failed to fetch profiles');
       }
@@ -92,10 +93,10 @@ export default function ProfilesPage() {
           let toolsCount = 0;
 
           try {
-            const infoUrl = orgSlug
-              ? `${API_URL}/api/mcp/${orgSlug}/${profile.name}/info`
-              : `${API_URL}/api/mcp/gateway/info`;
-            const infoResponse = await fetch(infoUrl);
+            const infoPath = orgSlug
+              ? `/api/mcp/${orgSlug}/${profile.name}/info`
+              : '/api/mcp/gateway/info';
+            const infoResponse = await apiFetch(infoPath);
             if (infoResponse.ok) {
               const infoData = await infoResponse.json();
               toolsCount = Array.isArray(infoData.tools) ? infoData.tools.length : 0;
@@ -122,7 +123,7 @@ export default function ProfilesPage() {
 
   const fetchSettings = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/api/settings/default-gateway-profile`);
+      const response = await apiFetch('/api/settings/default-gateway-profile');
       if (response.ok) {
         const data = await response.json();
         setDefaultGatewayProfile(data.profileName);
@@ -144,7 +145,7 @@ export default function ProfilesPage() {
     setDefaultGatewayProfile(profileName);
 
     try {
-      const response = await fetch(`${API_URL}/api/settings/default-gateway-profile`, {
+      const response = await apiFetch('/api/settings/default-gateway-profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ profileName }),
@@ -174,7 +175,7 @@ export default function ProfilesPage() {
     description?: string;
     serverIds?: string[];
   }) => {
-    const response = await fetch(`${API_URL}/api/profiles`, {
+    const response = await apiFetch('/api/profiles', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: data.name, description: data.description }),
@@ -190,7 +191,7 @@ export default function ProfilesPage() {
     if (data.serverIds && data.serverIds.length > 0) {
       await Promise.all(
         data.serverIds.map((serverId, index) =>
-          fetch(`${API_URL}/api/profiles/${profile.id}/servers`, {
+          apiFetch(`/api/profiles/${profile.id}/servers`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ mcpServerId: serverId, order: index }),
@@ -210,7 +211,7 @@ export default function ProfilesPage() {
   }) => {
     if (!editingProfile) return;
 
-    const response = await fetch(`${API_URL}/api/profiles/${editingProfile.id}`, {
+    const response = await apiFetch(`/api/profiles/${editingProfile.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: data.name, description: data.description }),
@@ -222,8 +223,8 @@ export default function ProfilesPage() {
     }
 
     if (data.serverIds !== undefined) {
-      const currentServersResponse = await fetch(
-        `${API_URL}/api/profiles/${editingProfile.id}/servers`
+      const currentServersResponse = await apiFetch(
+        `/api/profiles/${editingProfile.id}/servers`
       );
       const currentServersData = await currentServersResponse.json();
       const currentServerIds = new Set(
@@ -236,7 +237,7 @@ export default function ProfilesPage() {
 
       for (const serverId of currentServerIds) {
         if (typeof serverId === 'string' && !newServerIds.has(serverId)) {
-          await fetch(`${API_URL}/api/profiles/${editingProfile.id}/servers/${serverId}`, {
+          await apiFetch(`/api/profiles/${editingProfile.id}/servers/${serverId}`, {
             method: 'DELETE',
           });
         }
@@ -245,7 +246,7 @@ export default function ProfilesPage() {
       if (data.serverIds) {
         for (const serverId of newServerIds) {
           if (!currentServerIds.has(serverId)) {
-            await fetch(`${API_URL}/api/profiles/${editingProfile.id}/servers`, {
+            await apiFetch(`/api/profiles/${editingProfile.id}/servers`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -273,7 +274,7 @@ export default function ProfilesPage() {
     if (!profileToDelete) return;
 
     try {
-      const response = await fetch(`${API_URL}/api/profiles/${profileToDelete.id}`, {
+      const response = await apiFetch(`/api/profiles/${profileToDelete.id}`, {
         method: 'DELETE',
       });
 

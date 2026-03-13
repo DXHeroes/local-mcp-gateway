@@ -11,7 +11,7 @@ import { useNavigate, useParams } from 'react-router';
 import { McpServerToolsCard } from '../components/McpServerToolsCard';
 import { ProfileConfigCard } from '../components/ProfileConfigCard';
 import ShareModal from '../components/ShareModal';
-import { API_URL } from '../config/api';
+import { apiFetch } from '../lib/api-fetch';
 import { authClient } from '../lib/auth-client';
 
 interface Profile {
@@ -67,7 +67,7 @@ export default function ProfileEditPage() {
 
     try {
       // 1. Load profile
-      const profileRes = await fetch(`${API_URL}/api/profiles/${profileId}`);
+      const profileRes = await apiFetch(`/api/profiles/${profileId}`);
       if (!profileRes.ok) {
         throw new Error('Profile not found');
       }
@@ -75,7 +75,7 @@ export default function ProfileEditPage() {
       setProfile(profileData);
 
       // 2. Load servers for profile
-      const serversRes = await fetch(`${API_URL}/api/profiles/${profileId}/servers`);
+      const serversRes = await apiFetch(`/api/profiles/${profileId}/servers`);
       if (!serversRes.ok) {
         throw new Error('Failed to load servers');
       }
@@ -93,7 +93,7 @@ export default function ProfileEditPage() {
         serversList.map(
           async (server: { mcpServerId: string; order: number; isActive: boolean }) => {
             // Load server details
-            const serverRes = await fetch(`${API_URL}/api/mcp-servers/${server.mcpServerId}`);
+            const serverRes = await apiFetch(`/api/mcp-servers/${server.mcpServerId}`);
             if (!serverRes.ok) {
               throw new Error(`Failed to load server ${server.mcpServerId}`);
             }
@@ -103,8 +103,8 @@ export default function ProfileEditPage() {
             let tools = [];
             if (server.isActive) {
               try {
-                const toolsRes = await fetch(
-                  `${API_URL}/api/profiles/${profileId}/servers/${server.mcpServerId}/tools`
+                const toolsRes = await apiFetch(
+                  `/api/profiles/${profileId}/servers/${server.mcpServerId}/tools`
                 );
                 if (toolsRes.ok) {
                   const toolsData = await toolsRes.json();
@@ -153,8 +153,8 @@ export default function ProfileEditPage() {
     if (!profileId) return;
 
     try {
-      const response = await fetch(
-        `${API_URL}/api/profiles/${profileId}/servers/${serverId}/toggle`,
+      const response = await apiFetch(
+        `/api/profiles/${profileId}/servers/${serverId}/toggle`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -194,8 +194,8 @@ export default function ProfileEditPage() {
 
   const handleRefreshTools = async (serverId: string) => {
     if (!profileId) return;
-    const toolsRes = await fetch(
-      `${API_URL}/api/profiles/${profileId}/servers/${serverId}/tools?refresh=true`
+    const toolsRes = await apiFetch(
+      `/api/profiles/${profileId}/servers/${serverId}/tools?refresh=true`
     );
 
     if (!toolsRes.ok) {

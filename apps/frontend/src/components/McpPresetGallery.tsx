@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from '@dxheroes/local-mcp-ui';
 import { useCallback, useEffect, useState } from 'react';
-import { API_URL } from '../config/api';
+import { apiFetch } from '../lib/api-fetch';
 
 interface McpPreset {
   id: string;
@@ -37,7 +37,7 @@ export default function McpPresetGallery({ existingServerNames, onAdd }: McpPres
   const fetchPresets = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/api/mcp-servers/presets`);
+      const response = await apiFetch('/api/mcp-servers/presets');
       if (!response.ok) throw new Error('Failed to fetch presets');
       const data: McpPreset[] = await response.json();
       setPresets(data);
@@ -58,7 +58,7 @@ export default function McpPresetGallery({ existingServerNames, onAdd }: McpPres
     try {
       setAdding(presetId);
       setError(null);
-      const response = await fetch(`${API_URL}/api/mcp-servers/presets/${presetId}/add`, {
+      const response = await apiFetch(`/api/mcp-servers/presets/${presetId}/add`, {
         method: 'POST',
       });
       if (!response.ok) {

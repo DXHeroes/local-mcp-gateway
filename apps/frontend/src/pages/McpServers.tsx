@@ -72,6 +72,7 @@ interface McpServerWithStatus extends McpServer {
 }
 
 import { API_URL } from '../config/api';
+import { apiFetch } from '../lib/api-fetch';
 import { authClient } from '../lib/auth-client';
 
 // Helper to parse apiKeyConfig which may be a JSON string from the database
@@ -106,7 +107,7 @@ export default function McpServersPage() {
       } else {
         setLoading(true);
       }
-      const response = await fetch(`${API_URL}/api/mcp-servers`);
+      const response = await apiFetch('/api/mcp-servers');
       if (!response.ok) {
         throw new Error('Failed to fetch MCP servers');
       }
@@ -125,14 +126,14 @@ export default function McpServersPage() {
 
           try {
             // Fetch tools
-            const toolsResponse = await fetch(`${API_URL}/api/mcp-servers/${server.id}/tools`);
+            const toolsResponse = await apiFetch(`/api/mcp-servers/${server.id}/tools`);
             if (toolsResponse.ok) {
               const toolsData = await toolsResponse.json();
               toolsCount = Array.isArray(toolsData.tools) ? toolsData.tools.length : 0;
             }
 
             // Fetch status (now includes real API validation)
-            const statusResponse = await fetch(`${API_URL}/api/mcp-servers/${server.id}/status`);
+            const statusResponse = await apiFetch(`/api/mcp-servers/${server.id}/status`);
             if (statusResponse.ok) {
               const statusData = await statusResponse.json();
               connectionStatus = statusData.status || 'unknown';
@@ -173,7 +174,7 @@ export default function McpServersPage() {
   }, [fetchServers]);
 
   const handleCreate = async (data: McpServerFormData) => {
-    const response = await fetch(`${API_URL}/api/mcp-servers`, {
+    const response = await apiFetch('/api/mcp-servers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -191,7 +192,7 @@ export default function McpServersPage() {
   const handleUpdate = async (data: McpServerFormData) => {
     if (!editingServer) return;
 
-    const response = await fetch(`${API_URL}/api/mcp-servers/${editingServer.id}`, {
+    const response = await apiFetch(`/api/mcp-servers/${editingServer.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -213,7 +214,7 @@ export default function McpServersPage() {
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/mcp-servers/${serverId}`, {
+      const response = await apiFetch(`/api/mcp-servers/${serverId}`, {
         method: 'DELETE',
       });
 
