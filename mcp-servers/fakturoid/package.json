@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/mcp-fakturoid",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "MCP server for Fakturoid API v3 — invoicing, contacts, expenses, and accounting for Czech businesses",
   "type": "module",
   "main": "./dist/index.js",

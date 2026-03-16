@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.4.0](https://github.com/DXHeroes/local-mcp-gateway/compare/mcp-abra-flexi-v0.3.3...mcp-abra-flexi-v0.4.0) (2026-03-16)
+
+
+### Features
+
+* **organization-domains:** add auto-join domain management for organizations ([2e5071d](https://github.com/DXHeroes/local-mcp-gateway/commit/2e5071d82811725df5ef1729cc2f657d11fade14))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * peerDependencies
+    * @dxheroes/local-mcp-core bumped to 0.9.0
+
 ## [0.3.3](https://github.com/DXHeroes/local-mcp-gateway/compare/mcp-abra-flexi-v0.3.2...mcp-abra-flexi-v0.3.3) (2026-03-16)
 
 
