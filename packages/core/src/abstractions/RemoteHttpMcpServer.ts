@@ -148,6 +148,14 @@ export class RemoteHttpMcpServer extends McpServer {
 
         const response = await this.httpClient.post(this.config.url, initializeRequest, headers);
 
+        // Log 401 for debugging OAuth issues
+        if (response.status === 401) {
+          const wwwAuth = response.headers.get('www-authenticate');
+          console.warn(
+            `[RemoteHttpMcpServer] Initialize got 401 from ${this.config.url}: WWW-Authenticate=${wwwAuth}, hasOAuthToken=${!!this.oauthToken}`
+          );
+        }
+
         // Extract sessionId from Mcp-Session-Id response header if provided by server
         // Per MCP spec 2025-06-18: Server MAY assign sessionId in Mcp-Session-Id header
         const sessionIdHeader =
@@ -289,6 +297,9 @@ export class RemoteHttpMcpServer extends McpServer {
         // Check for OAuth requirement (401 with WWW-Authenticate header)
         if (response.status === 401) {
           const wwwAuthenticate = response.headers.get('www-authenticate');
+          console.warn(
+            `[RemoteHttpMcpServer] 401 from ${this.config.url}: WWW-Authenticate=${wwwAuthenticate}, hasOAuthToken=${!!this.oauthToken}, tokenType=${this.oauthToken?.tokenType}`
+          );
           if (wwwAuthenticate) {
             // Extract resource metadata URL from WWW-Authenticate header
             // Format: Bearer realm="...", resource_metadata_uri="https://..."

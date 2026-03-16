@@ -145,7 +145,7 @@ export class OAuthService {
       update: {
         accessToken: dto.accessToken,
         refreshToken: dto.refreshToken,
-        tokenType: dto.tokenType || 'Bearer',
+        tokenType: (dto.tokenType || 'Bearer').replace(/^bearer$/i, 'Bearer'),
         scope: dto.scope,
         expiresAt: dto.expiresAt,
       },
@@ -153,7 +153,7 @@ export class OAuthService {
         mcpServerId: dto.mcpServerId,
         accessToken: dto.accessToken,
         refreshToken: dto.refreshToken,
-        tokenType: dto.tokenType || 'Bearer',
+        tokenType: (dto.tokenType || 'Bearer').replace(/^bearer$/i, 'Bearer'),
         scope: dto.scope,
         expiresAt: dto.expiresAt,
       },
@@ -353,21 +353,34 @@ export class OAuthService {
     }
 
     try {
+      // Build token exchange params
+      const tokenParams: Record<string, string> = {
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: callbackUrl,
+        client_id: oauthConfig.clientId,
+        code_verifier: codeVerifier,
+      };
+
+      // RFC 8707: include resource indicator so token is audience-restricted
+      if (oauthConfig.resource) {
+        tokenParams.resource = oauthConfig.resource;
+      }
+
+      this.logger.log(
+        `Token exchange for ${serverId}: endpoint=${oauthConfig.tokenEndpoint}, resource=${oauthConfig.resource || 'none'}`
+      );
+
       // Exchange code for tokens
       const response = await fetch(oauthConfig.tokenEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          grant_type: 'authorization_code',
-          code,
-          redirect_uri: callbackUrl,
-          client_id: oauthConfig.clientId,
-          code_verifier: codeVerifier,
-        }),
+        body: new URLSearchParams(tokenParams),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
+        this.logger.error(`Token exchange failed for ${serverId}: ${response.status} ${errorText}`);
         return { success: false, error: `Token exchange failed: ${errorText}` };
       }
 
@@ -393,9 +406,14 @@ export class OAuthService {
         expiresAt,
       });
 
+      this.logger.log(
+        `Token stored for ${serverId}: type=${tokenData.token_type || 'Bearer'}, scope=${tokenData.scope || 'none'}, expiresIn=${tokenData.expires_in || 'never'}`
+      );
+
       return { success: true };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Token exchange error for ${serverId}: ${message}`);
       return { success: false, error: message };
     }
   }
