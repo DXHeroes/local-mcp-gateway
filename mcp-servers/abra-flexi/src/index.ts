@@ -2,7 +2,7 @@
  * Abra Flexi MCP Package
  *
  * Invoices, contacts, products, and accounting via the Abra Flexi REST API.
- * API docs: https://www.abra.eu/rest-api-flexi/
+ * API docs: https://podpora.flexibee.eu/en/collections/2592813-dokumentacia-rest-api
  */
 
 import type { ApiKeyConfig, McpPackage } from '@dxheroes/local-mcp-core';
@@ -25,7 +25,7 @@ export const mcpPackage: McpPackage = {
     },
     tags: ['erp', 'abra', 'flexibee', 'czech', 'accounting', 'invoicing'],
     icon: '📊',
-    docsUrl: 'https://www.abra.eu/rest-api-flexi/',
+    docsUrl: 'https://podpora.flexibee.eu/en/collections/2592813-dokumentacia-rest-api',
   },
 
   createServer: (apiKeyConfig: ApiKeyConfig | null) => {

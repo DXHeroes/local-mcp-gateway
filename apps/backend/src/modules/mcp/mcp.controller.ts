@@ -72,6 +72,14 @@ export class McpController {
   }
 
   /**
+   * Get batch status for all MCP servers (parallel)
+   */
+  @Get('batch-status')
+  async getBatchStatus(@CurrentUser() user: AuthUser, @ActiveOrgId() orgId: string) {
+    return this.mcpService.getBatchStatus(user.id, orgId);
+  }
+
+  /**
    * Get a specific MCP server
    */
   @Get(':id')

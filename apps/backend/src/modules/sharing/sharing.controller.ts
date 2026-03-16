@@ -6,6 +6,7 @@
 
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import type { AuthUser } from '../auth/auth.service.js';
+import { ActiveOrgId } from '../auth/decorators/active-org-id.decorator.js';
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import { SkipOrgCheck } from '../auth/decorators/skip-org-check.decorator.js';
 import { SharingService } from './sharing.service.js';
@@ -27,6 +28,16 @@ export class SharingController {
   @HttpCode(HttpStatus.CREATED)
   async share(@CurrentUser() user: AuthUser, @Body() dto: CreateShareDto) {
     return this.sharingService.share(user.id, dto);
+  }
+
+  @Get('summary/:resourceType')
+  async getSharingSummary(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string | null,
+    @Param('resourceType') resourceType: 'profile' | 'mcp_server'
+  ) {
+    const organizationIds = orgId ? [orgId] : [];
+    return this.sharingService.getSharingSummary(user.id, organizationIds, resourceType);
   }
 
   @Get(':resourceType/:resourceId')

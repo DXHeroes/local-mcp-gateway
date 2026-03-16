@@ -31,6 +31,7 @@ import ProfileForm from '../components/ProfileForm';
 import { getGatewayUrl, getProfileUrl } from '../config/api';
 import { apiFetch } from '../lib/api-fetch';
 import { authClient } from '../lib/auth-client';
+import { useSharingSummary } from '../hooks/useSharingSummary';
 
 // Get active org slug for org-scoped MCP URLs
 function useOrgSlug(): string | undefined {
@@ -61,8 +62,8 @@ interface ProfileWithStatus extends Profile {
 
 export default function ProfilesPage() {
   const navigate = useNavigate();
-  const { data: session } = authClient.useSession();
   const orgSlug = useOrgSlug();
+  const { summary: sharingSummary } = useSharingSummary('profile');
   const [profiles, setProfiles] = useState<ProfileWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,42 +85,44 @@ export default function ProfilesPage() {
       if (!response.ok) {
         throw new Error('Failed to fetch profiles');
       }
-      const data = await response.json();
+      const data: Profile[] = await response.json();
 
-      // Fetch server status and tools count for each profile
-      const profilesWithStatus = await Promise.all(
-        data.map(async (profile: Profile) => {
-          let serverStatus: ServerStatus = { total: 0, connected: 0, status: {} };
-          let toolsCount = 0;
-
-          try {
-            const infoPath = orgSlug
-              ? `/api/mcp/${orgSlug}/${profile.name}/info`
-              : '/api/mcp/gateway/info';
-            const infoResponse = await apiFetch(infoPath);
-            if (infoResponse.ok) {
-              const infoData = await infoResponse.json();
-              toolsCount = Array.isArray(infoData.tools) ? infoData.tools.length : 0;
-              if (infoData.serverStatus) {
-                serverStatus = infoData.serverStatus;
-              }
-            }
-          } catch {
-            // Ignore errors
-          }
-
-          return { ...profile, serverStatus, toolsCount };
-        })
-      );
-
-      setProfiles(profilesWithStatus);
+      // Stage 1: Show profiles immediately with no status
+      setProfiles(data.map((profile) => ({ ...profile })));
       setError(null);
+      setLoading(false);
+
+      // Stage 2: Enrich each profile with status in background (parallel)
+      const enrichPromises = data.map(async (profile) => {
+        try {
+          const infoPath = orgSlug
+            ? `/api/mcp/${orgSlug}/${profile.name}/info`
+            : '/api/mcp/gateway/info';
+          const infoResponse = await apiFetch(infoPath);
+          if (infoResponse.ok) {
+            const infoData = await infoResponse.json();
+            const toolsCount = Array.isArray(infoData.tools) ? infoData.tools.length : 0;
+            const serverStatus: ServerStatus = infoData.serverStatus || {
+              total: 0,
+              connected: 0,
+              status: {},
+            };
+
+            setProfiles((prev) =>
+              prev.map((p) => (p.id === profile.id ? { ...p, serverStatus, toolsCount } : p))
+            );
+          }
+        } catch {
+          // Ignore errors — profile card stays with default status
+        }
+      });
+
+      await Promise.allSettled(enrichPromises);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
       setLoading(false);
     }
-  }, []);
+  }, [orgSlug]);
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -406,11 +409,23 @@ export default function ProfilesPage() {
                     className={`h-2 w-2 rounded-full shrink-0 ${getStatusDot(profile.serverStatus)}`}
                   />
                   <h3 className="font-medium text-base truncate">{profile.name}</h3>
-                  {session?.user && profile.userId && profile.userId !== session.user.id && (
-                    <Badge variant="secondary" className="text-xs shrink-0">
-                      Shared
-                    </Badge>
-                  )}
+                  {(() => {
+                    const info = sharingSummary[profile.id];
+                    return (
+                      <>
+                        {info?.inbound && (
+                          <Badge variant="secondary" className="text-xs shrink-0">
+                            Shared · {info.inbound.permission.charAt(0).toUpperCase() + info.inbound.permission.slice(1)}
+                          </Badge>
+                        )}
+                        {info?.outbound && (
+                          <Badge variant="outline" className="text-xs shrink-0">
+                            Sharing · {info.outbound.total} member{info.outbound.total !== 1 ? 's' : ''}
+                          </Badge>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>

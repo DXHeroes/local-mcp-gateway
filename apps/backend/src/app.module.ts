@@ -22,6 +22,7 @@ import { OAuthModule } from './modules/oauth/oauth.module.js';
 import { ProfilesModule } from './modules/profiles/profiles.module.js';
 import { ProxyModule } from './modules/proxy/proxy.module.js';
 import { SettingsModule } from './modules/settings/settings.module.js';
+import { OrganizationDomainsModule } from './modules/organization-domains/organization-domains.module.js';
 import { SharingModule } from './modules/sharing/sharing.module.js';
 
 @Module({
@@ -65,6 +66,7 @@ import { SharingModule } from './modules/sharing/sharing.module.js';
     ProxyModule,
     HealthModule,
     DebugModule,
+    OrganizationDomainsModule,
     SharingModule,
   ],
   providers: [

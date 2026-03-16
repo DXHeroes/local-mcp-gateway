@@ -13,6 +13,7 @@ export * from './SessionSchema';
 export * from './AccountSchema';
 export * from './VerificationSchema';
 export * from './OrganizationSchema';
+export * from './OrganizationDomainSchema';
 export * from './MemberSchema';
 export * from './InvitationSchema';
 export * from './SharedResourceSchema';

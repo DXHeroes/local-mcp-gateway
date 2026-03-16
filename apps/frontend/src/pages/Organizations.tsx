@@ -4,8 +4,9 @@
  * Manage organizations, members, and invitations.
  */
 
-import { Mail, Plus, Users } from 'lucide-react';
-import { useState } from 'react';
+import { Globe, Mail, Plus, Trash2, Users } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { apiFetch } from '../lib/api-fetch';
 import { authClient } from '../lib/auth-client';
 
 export default function OrganizationsPage() {
@@ -18,6 +19,46 @@ export default function OrganizationsPage() {
   const [newOrgSlug, setNewOrgSlug] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'member' | 'admin'>('member');
+  const [domains, setDomains] = useState<{ id: string; domain: string }[]>([]);
+  const [showDomainForm, setShowDomainForm] = useState(false);
+  const [newDomain, setNewDomain] = useState('');
+
+  const fetchDomains = useCallback(async () => {
+    if (!activeOrg) return;
+    try {
+      const res = await apiFetch('/api/organization-domains');
+      if (res.ok) {
+        setDomains(await res.json());
+      }
+    } catch {
+      // ignore
+    }
+  }, [activeOrg]);
+
+  useEffect(() => {
+    fetchDomains();
+  }, [fetchDomains]);
+
+  const handleAddDomain = async () => {
+    if (!newDomain.trim()) return;
+    const res = await apiFetch('/api/organization-domains', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domain: newDomain }),
+    });
+    if (res.ok) {
+      setNewDomain('');
+      setShowDomainForm(false);
+      fetchDomains();
+    }
+  };
+
+  const handleRemoveDomain = async (id: string) => {
+    const res = await apiFetch(`/api/organization-domains/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      fetchDomains();
+    }
+  };
 
   const handleCreateOrg = async () => {
     if (!newOrgName.trim()) return;
@@ -184,6 +225,78 @@ export default function OrganizationsPage() {
               </div>
             </div>
           )}
+
+          <div className="border-t pt-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Globe className="w-5 h-5 text-gray-400" />
+                <h3 className="text-lg font-medium text-gray-900">Auto-Join Domains</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDomainForm(true)}
+                className="inline-flex items-center gap-2 px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50"
+              >
+                <Plus className="w-4 h-4" />
+                Add Domain
+              </button>
+            </div>
+            <p className="text-sm text-gray-500">
+              New users signing up with an email from these domains will automatically join this
+              organization as a member.
+            </p>
+
+            {showDomainForm && (
+              <div className="bg-white border rounded-lg p-4 space-y-3">
+                <h3 className="text-sm font-medium text-gray-900">Add Domain</h3>
+                <input
+                  type="text"
+                  placeholder="e.g. dxheroes.io"
+                  value={newDomain}
+                  onChange={(e) => setNewDomain(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleAddDomain}
+                    className="px-4 py-2 bg-primary text-white rounded-lg text-sm"
+                  >
+                    Add
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowDomainForm(false)}
+                    className="px-4 py-2 border rounded-lg text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {domains.length > 0 ? (
+              <div className="space-y-2">
+                {domains.map((d) => (
+                  <div
+                    key={d.id}
+                    className="flex items-center justify-between bg-white border rounded-lg px-4 py-2"
+                  >
+                    <span className="text-sm text-gray-900">{d.domain}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveDomain(d.id)}
+                      className="text-gray-400 hover:text-red-500"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400">No auto-join domains configured.</p>
+            )}
+          </div>
         </div>
       )}
     </div>

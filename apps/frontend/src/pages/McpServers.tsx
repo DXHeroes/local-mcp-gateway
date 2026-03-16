@@ -73,7 +73,8 @@ interface McpServerWithStatus extends McpServer {
 
 import { API_URL } from '../config/api';
 import { apiFetch } from '../lib/api-fetch';
-import { authClient } from '../lib/auth-client';
+
+import { useSharingSummary } from '../hooks/useSharingSummary';
 
 // Helper to parse apiKeyConfig which may be a JSON string from the database
 const parseApiKeyConfig = (
@@ -92,7 +93,7 @@ const parseApiKeyConfig = (
 
 export default function McpServersPage() {
   const navigate = useNavigate();
-  const { data: session } = authClient.useSession();
+  const { summary: sharingSummary } = useSharingSummary('mcp_server');
   const [servers, setServers] = useState<McpServerWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -113,58 +114,50 @@ export default function McpServersPage() {
       }
       const data: McpServer[] = await response.json();
 
-      // Fetch tools count and status for each server
-      const serversWithStatus = await Promise.all(
-        data.map(async (server) => {
-          let toolsCount = 0;
-          let connectionStatus: 'connected' | 'error' | 'unknown' = 'unknown';
-          let connectionError: string | undefined;
-
-          let validationDetails: string | undefined;
-          let validatedAt: string | undefined;
-          let oauthRequired = false;
-
-          try {
-            // Fetch tools
-            const toolsResponse = await apiFetch(`/api/mcp-servers/${server.id}/tools`);
-            if (toolsResponse.ok) {
-              const toolsData = await toolsResponse.json();
-              toolsCount = Array.isArray(toolsData.tools) ? toolsData.tools.length : 0;
-            }
-
-            // Fetch status (now includes real API validation)
-            const statusResponse = await apiFetch(`/api/mcp-servers/${server.id}/status`);
-            if (statusResponse.ok) {
-              const statusData = await statusResponse.json();
-              connectionStatus = statusData.status || 'unknown';
-              connectionError = statusData.error || undefined;
-              validationDetails = statusData.details || undefined;
-              validatedAt = statusData.validatedAt || undefined;
-              oauthRequired = !!statusData.oauthRequired;
-            }
-          } catch {
-            // Ignore errors when fetching status/tools - server might be unavailable
-            connectionStatus = 'unknown';
-          }
-
-          return {
-            ...server,
-            toolsCount,
-            connectionStatus,
-            connectionError,
-            validationDetails,
-            validatedAt,
-            oauthRequired,
-          };
-        })
-      );
-
-      setServers(serversWithStatus);
+      // Stage 1: Show servers immediately with undefined status
+      setServers(data.map((server) => ({ ...server })));
       setError(null);
+      setLoading(false);
+
+      // Stage 2: Fetch batch status in background
+      try {
+        const batchResponse = await apiFetch('/api/mcp-servers/batch-status');
+        if (batchResponse.ok) {
+          const batchData: Record<
+            string,
+            {
+              status?: string;
+              toolsCount?: number;
+              error?: string;
+              details?: string;
+              validatedAt?: string;
+              oauthRequired?: boolean;
+            }
+          > = await batchResponse.json();
+
+          setServers((prev) =>
+            prev.map((server) => {
+              const status = batchData[server.id];
+              if (!status) return server;
+              return {
+                ...server,
+                connectionStatus: (status.status as 'connected' | 'error' | 'unknown') || 'unknown',
+                toolsCount: status.toolsCount,
+                connectionError: status.error || undefined,
+                validationDetails: status.details || undefined,
+                validatedAt: status.validatedAt || undefined,
+                oauthRequired: !!status.oauthRequired,
+              };
+            })
+          );
+        }
+      } catch {
+        // Batch status fetch failed — servers still shown with unknown status
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
       setLoading(false);
+    } finally {
       setRefreshing(false);
     }
   }, []);
@@ -335,29 +328,55 @@ export default function McpServersPage() {
                         {server.type}
                       </Badge>
                       {/* Tools count badge */}
-                      <Badge variant="outline">
-                        {server.toolsCount ?? 0} tool{(server.toolsCount ?? 0) !== 1 ? 's' : ''}
-                      </Badge>
-                      {/* Connection status badge */}
-                      <Badge
-                        variant={
-                          server.connectionStatus === 'connected'
-                            ? 'success'
-                            : server.connectionStatus === 'error'
-                              ? 'destructive'
-                              : 'secondary'
-                        }
-                      >
-                        {server.connectionStatus === 'connected'
-                          ? 'Connected'
-                          : server.connectionStatus === 'error'
-                            ? 'Error'
-                            : 'Unknown'}
-                      </Badge>
-                      {/* Shared badge */}
-                      {session?.user && server.userId && server.userId !== session.user.id && (
-                        <Badge variant="secondary">Shared</Badge>
+                      {server.connectionStatus === undefined ? (
+                        <Badge variant="outline" className="animate-pulse">
+                          <span className="inline-block w-8 h-3 bg-gray-200 rounded" />
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline">
+                          {server.toolsCount ?? 0} tool{(server.toolsCount ?? 0) !== 1 ? 's' : ''}
+                        </Badge>
                       )}
+                      {/* Connection status badge */}
+                      {server.connectionStatus === undefined ? (
+                        <Badge variant="secondary" className="animate-pulse">
+                          <span className="inline-block w-12 h-3 bg-gray-200 rounded" />
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant={
+                            server.connectionStatus === 'connected'
+                              ? 'success'
+                              : server.connectionStatus === 'error'
+                                ? 'destructive'
+                                : 'secondary'
+                          }
+                        >
+                          {server.connectionStatus === 'connected'
+                            ? 'Connected'
+                            : server.connectionStatus === 'error'
+                              ? 'Error'
+                              : 'Unknown'}
+                        </Badge>
+                      )}
+                      {/* Shared badge */}
+                      {(() => {
+                        const info = sharingSummary[server.id];
+                        return (
+                          <>
+                            {info?.inbound && (
+                              <Badge variant="secondary">
+                                Shared · {info.inbound.permission.charAt(0).toUpperCase() + info.inbound.permission.slice(1)}
+                              </Badge>
+                            )}
+                            {info?.outbound && (
+                              <Badge variant="outline">
+                                Sharing · {info.outbound.total} member{info.outbound.total !== 1 ? 's' : ''}
+                              </Badge>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                     {/* Validation error alert */}
                     {server.connectionStatus === 'error' && server.connectionError && (

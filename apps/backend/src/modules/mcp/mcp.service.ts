@@ -379,6 +379,7 @@ export class McpService {
     let status: 'connected' | 'error' | 'unknown' = 'unknown';
     let validationError: string | undefined;
     let validationDetails: string | undefined;
+    let toolsCount: number | undefined;
 
     // For builtin servers with API key, actually validate
     if (isBuiltin && hasApiKey) {
@@ -391,9 +392,14 @@ export class McpService {
           const validation = await instance.validate();
           status = validation.valid ? 'connected' : 'error';
           validationError = validation.error;
-          validationDetails = validation.valid
-            ? 'API key validated successfully'
-            : `Validation failed: ${validation.error}`;
+          if (validation.valid) {
+            await instance.initialize();
+            const tools = await instance.listTools();
+            toolsCount = tools.length;
+            validationDetails = `API key validated successfully. ${tools.length} tools available.`;
+          } else {
+            validationDetails = `Validation failed: ${validation.error}`;
+          }
         } catch (error) {
           status = 'error';
           validationError = error instanceof Error ? error.message : 'Unknown error';
@@ -406,6 +412,17 @@ export class McpService {
       validationDetails = 'This server requires an API key to function';
     } else if (isBuiltin && !requiresApiKey) {
       status = 'connected';
+      try {
+        const pkg = this.registry.get(builtinId);
+        if (pkg) {
+          const instance = pkg.createServer(null);
+          await instance.initialize();
+          const tools = await instance.listTools();
+          toolsCount = tools.length;
+        }
+      } catch {
+        // Ignore — tools count will remain undefined
+      }
       validationDetails = 'Server ready (no API key required)';
     }
 
@@ -439,6 +456,7 @@ export class McpService {
         await remoteServer.initialize();
         const tools = await remoteServer.listTools();
         status = 'connected';
+        toolsCount = tools.length;
         validationDetails = `Connected successfully. ${tools.length} tools available.`;
       } catch (error) {
         status = 'error';
@@ -481,6 +499,7 @@ export class McpService {
         await remoteServer.initialize();
         const tools = await remoteServer.listTools();
         status = 'connected';
+        toolsCount = tools.length;
         validationDetails = `Connected successfully (SSE). ${tools.length} tools available.`;
       } catch (error) {
         status = 'error';
@@ -513,6 +532,7 @@ export class McpService {
           await externalServer.initialize();
           const tools = await externalServer.listTools();
           status = 'connected';
+          toolsCount = tools.length;
           validationDetails = `Connected successfully (stdio). ${tools.length} tools available.`;
           await externalServer.shutdown();
         } catch (error) {
@@ -537,10 +557,68 @@ export class McpService {
       oauthRequired,
       isReady,
       status,
+      toolsCount,
       error: validationError,
       details: validationDetails,
       validatedAt: new Date().toISOString(),
     };
+  }
+
+  /**
+   * Get batch status for all MCP servers (parallel)
+   */
+  async getBatchStatus(userId: string, orgId?: string) {
+    const servers = await this.findAll(userId, orgId);
+
+    const results = await Promise.allSettled(
+      servers.map(async (server) => {
+        const status = await this.getStatusInternal(server.id);
+        return { serverId: server.id, ...status };
+      })
+    );
+
+    const batchStatus: Record<
+      string,
+      {
+        status: string;
+        toolsCount?: number;
+        error?: string;
+        details?: string;
+        validatedAt?: string;
+        oauthRequired?: boolean;
+      }
+    > = {};
+
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        const { serverId, ...rest } = result.value;
+        batchStatus[serverId] = {
+          status: rest.status,
+          toolsCount: rest.toolsCount,
+          error: rest.error,
+          details: rest.details,
+          validatedAt: rest.validatedAt,
+          oauthRequired: rest.oauthRequired,
+        };
+      } else {
+        // For rejected promises, we don't have the server ID easily,
+        // but Promise.allSettled preserves order
+      }
+    }
+
+    // Handle rejected promises by mapping back using the original servers array
+    servers.forEach((server, index) => {
+      const result = results[index];
+      if (result.status === 'rejected') {
+        batchStatus[server.id] = {
+          status: 'error',
+          error: result.reason instanceof Error ? result.reason.message : 'Unknown error',
+          validatedAt: new Date().toISOString(),
+        };
+      }
+    });
+
+    return batchStatus;
   }
 
   /**

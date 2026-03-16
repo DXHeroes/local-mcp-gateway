@@ -3,7 +3,7 @@
  *
  * Auth: Basic auth (username:password)
  * API: https://{server}/c/{company}/{evidence}.json
- * Docs: https://www.abra.eu/rest-api-flexi/
+ * Docs: https://podpora.flexibee.eu/en/collections/2592813-dokumentacia-rest-api
  *
  * Response format: { "winstrom": { "@version": "...", "evidence-name": [...] } }
  */

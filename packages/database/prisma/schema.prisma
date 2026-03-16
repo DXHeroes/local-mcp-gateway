@@ -315,8 +315,23 @@ model Organization {
   invitations Invitation[]
   profiles    Profile[]
   mcpServers  McpServer[]
+  domains     OrganizationDomain[]
 
   @@map("organization")
+}
+
+/// Email domains for automatic organization membership on signup
+model OrganizationDomain {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  domain         String   // e.g. "dxheroes.io", always lowercase
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, domain])
+  @@index([domain])
+  @@map("organization_domains")
 }
 
 /// Organization members

@@ -20,6 +20,22 @@ interface CreateShareDto {
   permission?: string;
 }
 
+export interface ShareInboundInfo {
+  permission: string;
+  sharedByUserName: string;
+  sharedByUserEmail: string;
+}
+
+export interface ShareOutboundSummary {
+  total: number;
+  byPermission: Record<string, number>;
+}
+
+export interface ResourceSharingSummary {
+  inbound?: ShareInboundInfo;
+  outbound?: ShareOutboundSummary;
+}
+
 @Injectable()
 export class SharingService {
   constructor(private readonly prisma: PrismaService) {}
@@ -29,7 +45,26 @@ export class SharingService {
    */
   async share(userId: string, dto: CreateShareDto) {
     // Verify the user owns the resource
-    await this.verifyOwnership(userId, dto.resourceType, dto.resourceId);
+    const orgId = await this.verifyOwnership(userId, dto.resourceType, dto.resourceId);
+
+    // Validate share targets are org members
+    if (dto.sharedWithType === 'user') {
+      if (orgId) {
+        const member = await this.prisma.member.findFirst({
+          where: { organizationId: orgId, userId: dto.sharedWithId },
+        });
+        if (!member) {
+          throw new ForbiddenException('User is not a member of this organization');
+        }
+      }
+    } else if (dto.sharedWithType === 'organization') {
+      const org = await this.prisma.organization.findUnique({
+        where: { id: dto.sharedWithId },
+      });
+      if (!org) {
+        throw new NotFoundException('Organization not found');
+      }
+    }
 
     // Check for existing share
     const existing = await this.prisma.sharedResource.findUnique({
@@ -60,18 +95,43 @@ export class SharingService {
   }
 
   /**
-   * List shares for a resource
+   * List shares for a resource, enriched with resolved names
    */
   async listShares(userId: string, resourceType: string, resourceId: string) {
     // Verify the user owns the resource
     await this.verifyOwnership(userId, resourceType, resourceId);
 
-    return this.prisma.sharedResource.findMany({
+    const shares = await this.prisma.sharedResource.findMany({
       where: {
         resourceType,
         resourceId,
       },
+      include: {
+        sharedBy: { select: { id: true, name: true, email: true } },
+      },
     });
+
+    // Enrich with resolved names for share targets
+    const enriched = await Promise.all(
+      shares.map(async (share) => {
+        if (share.sharedWithType === 'user') {
+          const user = await this.prisma.user.findUnique({
+            where: { id: share.sharedWithId },
+            select: { name: true, email: true },
+          });
+          return { ...share, sharedWithUser: user ?? undefined };
+        } else if (share.sharedWithType === 'organization') {
+          const org = await this.prisma.organization.findUnique({
+            where: { id: share.sharedWithId },
+            select: { name: true },
+          });
+          return { ...share, sharedWithOrganization: org ?? undefined };
+        }
+        return share;
+      })
+    );
+
+    return enriched;
   }
 
   /**
@@ -151,7 +211,75 @@ export class SharingService {
     return shares.map((s) => s.resourceId);
   }
 
-  private async verifyOwnership(userId: string, resourceType: string, resourceId: string) {
+  /**
+   * Get sharing summary for resources of a given type
+   */
+  async getSharingSummary(
+    userId: string,
+    organizationIds: string[],
+    resourceType: 'profile' | 'mcp_server'
+  ): Promise<Record<string, ResourceSharingSummary>> {
+    const shares = await this.prisma.sharedResource.findMany({
+      where: {
+        resourceType,
+        OR: [
+          { sharedByUserId: userId },
+          { sharedWithType: 'user', sharedWithId: userId },
+          ...(organizationIds.length > 0
+            ? [
+                {
+                  sharedWithType: 'organization',
+                  sharedWithId: { in: organizationIds },
+                },
+              ]
+            : []),
+        ],
+      },
+      include: {
+        sharedBy: { select: { id: true, name: true, email: true } },
+      },
+    });
+
+    const result: Record<string, ResourceSharingSummary> = {};
+
+    for (const share of shares) {
+      if (!result[share.resourceId]) {
+        result[share.resourceId] = {};
+      }
+
+      const summary = result[share.resourceId];
+
+      if (share.sharedByUserId === userId) {
+        // Outbound share
+        if (!summary.outbound) {
+          summary.outbound = { total: 0, byPermission: {} };
+        }
+        summary.outbound.total++;
+        summary.outbound.byPermission[share.permission] =
+          (summary.outbound.byPermission[share.permission] || 0) + 1;
+      }
+
+      if (
+        share.sharedWithId === userId ||
+        organizationIds.includes(share.sharedWithId)
+      ) {
+        // Inbound share
+        summary.inbound = {
+          permission: share.permission,
+          sharedByUserName: share.sharedBy.name ?? '',
+          sharedByUserEmail: share.sharedBy.email ?? '',
+        };
+      }
+    }
+
+    return result;
+  }
+
+  private async verifyOwnership(
+    userId: string,
+    resourceType: string,
+    resourceId: string
+  ): Promise<string | null> {
     if (resourceType === 'profile') {
       const profile = await this.prisma.profile.findUnique({
         where: { id: resourceId },
@@ -160,6 +288,7 @@ export class SharingService {
       if (profile.userId && profile.userId !== userId) {
         throw new ForbiddenException('You do not own this profile');
       }
+      return profile.organizationId;
     } else if (resourceType === 'mcp_server') {
       const server = await this.prisma.mcpServer.findUnique({
         where: { id: resourceId },
@@ -168,6 +297,8 @@ export class SharingService {
       if (server.userId && server.userId !== userId) {
         throw new ForbiddenException('You do not own this MCP server');
       }
+      return server.organizationId;
     }
+    return null;
   }
 }

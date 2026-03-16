@@ -104,6 +104,31 @@ export function createAuth(prisma: PrismaClient): AuthInstance {
                 role: 'owner',
               },
             });
+
+            // Auto-join organizations by email domain
+            const emailDomain = user.email?.split('@')[1]?.toLowerCase();
+            if (emailDomain) {
+              const matchingDomains = await prisma.organizationDomain.findMany({
+                where: { domain: emailDomain },
+                select: { organizationId: true },
+              });
+
+              for (const { organizationId } of matchingDomains) {
+                const existing = await prisma.member.findFirst({
+                  where: { organizationId, userId: user.id },
+                });
+                if (!existing) {
+                  await prisma.member.create({
+                    data: {
+                      id: crypto.randomUUID(),
+                      organizationId,
+                      userId: user.id,
+                      role: 'member',
+                    },
+                  });
+                }
+              }
+            }
           },
         },
       },

@@ -825,25 +825,40 @@ export class ProxyService {
     const tools: Array<{ name: string; description: string }> = [];
     const serverStatus: Record<string, { connected: boolean; toolCount: number }> = {};
 
-    for (const ps of profile.mcpServers) {
-      const server = ps.mcpServer;
-      const instance = await this.getServerInstance(server);
+    const results = await Promise.allSettled(
+      profile.mcpServers.map(async (ps) => {
+        const server = ps.mcpServer;
+        const instance = await this.getServerInstance(server);
 
-      if (instance) {
-        const serverTools = await instance.listTools();
-        serverStatus[server.id] = { connected: true, toolCount: serverTools.length };
+        if (instance) {
+          const serverTools = await instance.listTools();
+          return { ps, serverTools, connected: true };
+        }
+        return { ps, serverTools: [] as Array<{ name: string; description: string; inputSchema: unknown }>, connected: false };
+      })
+    );
 
-        for (const tool of serverTools) {
-          const customization = ps.tools.find((t) => t.toolName === tool.name);
-          if (!customization || customization.isEnabled) {
-            tools.push({
-              name: customization?.customName || tool.name,
-              description: customization?.customDescription || tool.description,
-            });
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        const { ps, serverTools, connected } = result.value;
+        serverStatus[ps.mcpServer.id] = { connected, toolCount: serverTools.length };
+
+        if (connected) {
+          for (const tool of serverTools) {
+            const customization = ps.tools.find((t) => t.toolName === tool.name);
+            if (!customization || customization.isEnabled) {
+              tools.push({
+                name: customization?.customName || tool.name,
+                description: customization?.customDescription || tool.description,
+              });
+            }
           }
         }
       } else {
-        serverStatus[server.id] = { connected: false, toolCount: 0 };
+        // Failed — find the corresponding ps from the original array by index
+        const index = results.indexOf(result);
+        const ps = profile.mcpServers[index];
+        serverStatus[ps.mcpServer.id] = { connected: false, toolCount: 0 };
       }
     }
 
