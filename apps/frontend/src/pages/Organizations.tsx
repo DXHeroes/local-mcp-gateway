@@ -39,6 +39,20 @@ export default function OrganizationsPage() {
   const [membersLoading, setMembersLoading] = useState(false);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [invitationsLoading, setInvitationsLoading] = useState(false);
+  const { data: session } = authClient.useSession();
+
+  const currentUserRole = members.find((m) => m.userId === session?.user?.id)?.role;
+  const canChangeRoles = currentUserRole === 'owner' || currentUserRole === 'admin';
+
+  const handleRoleChange = async (memberId: string, newRole: string) => {
+    if (!activeOrg) return;
+    await authClient.organization.updateMemberRole({
+      memberId,
+      role: newRole,
+      organizationId: activeOrg.id,
+    });
+    fetchMembers();
+  };
 
   const fetchMembers = useCallback(async () => {
     if (!activeOrg?.id) return;
@@ -308,17 +322,38 @@ export default function OrganizationsPage() {
                       <p className="text-xs text-gray-500">{member.user.email}</p>
                     </div>
                   </div>
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full font-medium ${
-                      member.role === 'owner'
-                        ? 'bg-green-100 text-green-700'
-                        : member.role === 'admin'
+                  {canChangeRoles &&
+                  member.userId !== session?.user?.id &&
+                  member.role !== 'owner' ? (
+                    <select
+                      value={member.role}
+                      onChange={(e) => handleRoleChange(member.id, e.target.value)}
+                      className={`text-xs px-2 py-1 rounded-full font-medium border-none cursor-pointer appearance-none bg-no-repeat bg-[length:12px] bg-[right_4px_center] pr-5 ${
+                        member.role === 'admin'
                           ? 'bg-blue-100 text-blue-700'
                           : 'bg-gray-100 text-gray-600'
-                    }`}
-                  >
-                    {member.role}
-                  </span>
+                      }`}
+                      style={{
+                        backgroundImage:
+                          "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
+                      }}
+                    >
+                      <option value="member">member</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  ) : (
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full font-medium ${
+                        member.role === 'owner'
+                          ? 'bg-green-100 text-green-700'
+                          : member.role === 'admin'
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
+                      {member.role}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
