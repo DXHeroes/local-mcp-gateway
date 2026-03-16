@@ -753,6 +753,29 @@ describe('SharingService', () => {
         byPermission: { use: 2, admin: 1 },
       });
     });
+
+    it('should NOT classify owner\'s own org share as inbound', async () => {
+      prisma.sharedResource.findMany.mockResolvedValue([
+        {
+          resourceId: 'server-1',
+          sharedByUserId: 'user-1',
+          sharedWithId: 'org-1',
+          sharedWithType: 'organization',
+          permission: 'use',
+          sharedBy: { id: 'user-1', name: 'Owner', email: 'owner@test.com' },
+        },
+      ]);
+
+      // user-1 is the owner AND a member of org-1
+      const result = await service.getSharingSummary('user-1', ['org-1'], 'mcp_server');
+
+      // Should appear as outbound only, NOT inbound
+      expect(result['server-1'].outbound).toEqual({
+        total: 1,
+        byPermission: { use: 1 },
+      });
+      expect(result['server-1'].inbound).toBeUndefined();
+    });
   });
 
   describe('verifyOwnership (via share)', () => {

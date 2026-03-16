@@ -73,8 +73,6 @@ export default function ProfilesPage() {
       if (!currentUserId) return false;
       // Owner can always mutate
       if (profile.userId === currentUserId) return true;
-      // System profiles (no userId) can be mutated by anyone
-      if (!profile.userId) return true;
       // Admin share can mutate
       const info = sharingSummary[profile.id];
       if (info?.inbound?.permission === 'admin') return true;

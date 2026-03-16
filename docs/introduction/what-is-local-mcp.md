@@ -13,14 +13,15 @@ This application acts as a **smart middleware**:
 
 1.  **Unified Gateway**: It exposes a single `/api/mcp/gateway` endpoint that aggregates all tools from the default profile, plus profile-specific endpoints (e.g., `/api/mcp/work`).
 2.  **Profile Management**: Create profiles like "Work", "Creative", or "Debug" and switch context instantly.
-3.  **Auth Handling**: It handles OAuth flows (e.g., "Login with Linear") and securely stores API keys, injecting them into requests automatically.
-4.  **Developer Experience**:
+3.  **Auth Handling**: It handles user authentication (email/password, Google OAuth), OAuth flows for connecting to external services (e.g., "Login with Linear"), and securely stores API keys — injecting them into requests automatically.
+4.  **Team Collaboration**: Create organizations, invite team members, and share servers and profiles — all with role-based access control (owner, admin, member).
+5.  **Developer Experience**:
     - **HTTPS Tunnels**: One-click HTTPS connection for tools that require it (e.g. Claude).
     - **AI Prompts**: Copy-pasteable context in Markdown (human-readable) or TOON (token-optimized) format that teaches the AI how to use your tools perfectly.
     - **Debug Logging**: See exactly what the AI is sending and receiving.
 
 ## Why use it?
 - **For Developers**: Connect your local scripts and databases to Cursor seamlessly.
-- **For Teams**: Share standard configurations for company tools.
+- **For Teams**: Create organizations, invite members, share MCP server configurations and profiles with role-based access control.
 - **For Power Users**: Orchestrate complex workflows involving multiple APIs without the headache of manual auth management.
 

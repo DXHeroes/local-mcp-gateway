@@ -14,8 +14,11 @@ graph TB
     subgraph "Local MCP Gateway"
         Backend[Backend Server<br/>(NestJS)]
         FE[Frontend<br/>(React 19)]
-        DB[(SQLite DB<br/>via Prisma)]
+        Auth[Better Auth<br/>(Session + OAuth)]
+        DB[(PostgreSQL<br/>via Prisma)]
 
+        Backend -- Auth --> Auth
+        Auth -- Reads/Writes --> DB
         Backend -- Reads/Writes --> DB
         FE -- REST API --> Backend
     end
@@ -58,13 +61,16 @@ When an AI client requests a list of tools or calls a tool, the request flows th
 sequenceDiagram
     participant AI as AI Client (Claude)
     participant G as Gateway Handler
+    participant Auth as Better Auth
     participant S as MCP Server (Target)
 
     AI->>G: JSON-RPC Request (call_tool)
     Note over AI,G: Header: Authorization: Bearer <key>
 
-    G->>G: Validate Request & Auth
-    G->>G: Resolve Target Server (Routing)
+    G->>Auth: Validate session / Bearer token
+    Auth-->>G: User identity + org context
+    G->>G: Check org RBAC permissions
+    G->>G: Resolve target server (routing)
 
     opt OAuth Required
         G->>G: Inject OAuth Access Token

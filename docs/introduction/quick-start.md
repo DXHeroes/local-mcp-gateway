@@ -66,13 +66,25 @@ pnpm --filter backend start
 pnpm --filter frontend preview
 ```
 
-## Creating Your First Profile
+## Sign up
+
+After starting the application, open the UI and create your account:
+
+1. Navigate to the UI (http://localhost:3000 for source, http://localhost:9630 for Docker)
+2. Click **Sign up** and enter your name, email, and password
+3. Optionally, sign in with Google if your instance has Google OAuth configured
+
+A personal workspace (organization) is created automatically when you sign up.
+
+## Creating your first profile
 
 1. Open http://localhost:3000 in your browser
-2. Click "Create Profile"
-3. Enter a profile name (e.g., "my-profile")
-4. Optionally add a description
-5. Click "Create"
+2. Sign up with your email and password (or use Google sign-in if configured)
+3. You'll land in your personal workspace — an organization is automatically created for you
+4. Click "Create Profile"
+5. Enter a profile name (e.g., "my-profile")
+6. Optionally add a description
+7. Click "Create"
 
 Your profile will have its own MCP endpoint:
 - HTTP: `http://localhost:3001/api/mcp/my-profile`

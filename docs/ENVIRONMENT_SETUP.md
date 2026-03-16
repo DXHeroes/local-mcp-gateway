@@ -41,16 +41,52 @@ local-mcp-gateway/
 |----------|-------------|---------|
 | `NODE_ENV` | Environment mode | `development` |
 | `PORT` | Backend server port | `3001` |
-| `DATABASE_URL` | SQLite database path | `file:./dev.db` |
+| `DATABASE_URL` | PostgreSQL connection URL | `postgresql://postgres:postgres@localhost:5432/local_mcp_gateway` |
 | `CORS_ORIGINS` | Allowed CORS origins (comma-separated) | `http://localhost:3000` |
 | `LOG_LEVEL` | Logging level (error, warn, info, debug) | `info` (prod), `debug` (dev) |
-| `OAUTH_ENCRYPTION_KEY` | Encryption key for OAuth tokens (32+ chars) | Required for OAuth |
 
 ### Frontend
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `VITE_API_URL` | Backend API URL | `http://localhost:3001` |
+
+### Authentication
+
+Auth is always enabled with email+password as the baseline method.
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `BETTER_AUTH_SECRET` | Secret for signing sessions. Generate with `openssl rand -base64 32`. Sessions won't persist across restarts without this. | Auto-generated |
+| `BETTER_AUTH_URL` | Base URL for the auth server | `http://localhost:3001` |
+| `FRONTEND_URL` | Frontend URL (used for invitation links and redirects) | `http://localhost:3000` |
+| `AUTH_EMAIL_PASSWORD` | Enable email+password login. Set to `false` to disable. | `true` |
+
+### Google OAuth (optional)
+
+Enable "Sign in with Google" by setting both variables.
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID | — |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | — |
+
+### Email (Resend)
+
+Required for sending organization invitation emails.
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `RESEND_API_KEY` | Resend API key from https://resend.com | — |
+| `RESEND_FROM` | Sender address for emails | `Local MCP Gateway <noreply@example.com>` |
+
+### MCP server API keys (optional)
+
+API keys for built-in MCP server packages. These can also be configured via the UI.
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `GEMINI_API_KEY` | API key for Gemini Deep Research MCP server | — |
 
 ## Common Scenarios
 

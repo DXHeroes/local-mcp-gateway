@@ -33,7 +33,17 @@ const NAV_ITEMS: NavSection[] = [
     items: [
       { id: 'quick-start-docker', label: 'Docker (Recommended)' },
       { id: 'quick-start-source', label: 'From Source' },
+      { id: 'quick-start-signup', label: 'Sign Up' },
       { id: 'quick-start-profile', label: 'Creating Your First Profile' },
+    ],
+  },
+  {
+    title: 'Features',
+    items: [
+      { id: 'organizations', label: 'Organizations' },
+      { id: 'sharing', label: 'Sharing' },
+      { id: 'tool-customization', label: 'Tool Customization' },
+      { id: 'builtin-servers', label: 'Built-in MCP Servers' },
     ],
   },
   {

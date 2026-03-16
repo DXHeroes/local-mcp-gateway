@@ -135,6 +135,22 @@ export function createAuth(prisma: PrismaClient): AuthInstance {
                 },
               });
             }
+
+            // 3. Create default profile in the user's first organization
+            const firstMembership = await prisma.member.findFirst({
+              where: { userId: user.id },
+              select: { organizationId: true },
+            });
+            if (firstMembership) {
+              await prisma.profile.create({
+                data: {
+                  name: 'default',
+                  description: 'Default MCP profile',
+                  userId: user.id,
+                  organizationId: firstMembership.organizationId,
+                },
+              });
+            }
           },
         },
       },

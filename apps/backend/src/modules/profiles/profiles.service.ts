@@ -4,10 +4,9 @@
  * Business logic for profile management.
  * All queries are scoped to the individual user (per-user ownership).
  * Shared profiles are visible via the SharingService.
- * System records (organizationId=null) are visible to all users.
+ * Every profile MUST have a non-null userId and organizationId.
  */
 
-import { randomUUID } from 'node:crypto';
 import {
   ConflictException,
   ForbiddenException,
@@ -17,12 +16,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-/** Sentinel value for unauthenticated MCP access — can only see system profiles */
-const UNAUTHENTICATED_ID = '__unauthenticated__';
-
 import { PrismaService } from '../database/prisma.service.js';
 import { ProxyService } from '../proxy/proxy.service.js';
-import { RESERVED_PROFILE_NAMES, SETTING_KEYS } from '../settings/settings.constants.js';
+import { RESERVED_PROFILE_NAMES } from '../settings/settings.constants.js';
 import { SharingService } from '../sharing/sharing.service.js';
 
 interface CreateProfileDto {
@@ -63,10 +59,6 @@ export class ProfilesService {
     private readonly sharingService: SharingService
   ) {}
 
-  private isAnonymous(userId: string): boolean {
-    return userId === UNAUTHENTICATED_ID;
-  }
-
   /**
    * Get the user's organization IDs for sharing lookups
    */
@@ -89,19 +81,14 @@ export class ProfilesService {
   }
 
   /**
-   * Assert the user can read this profile (owner, shared, or system)
+   * Assert the user can read this profile (owner or shared)
    */
   private async assertAccess(profileId: string, userId: string, _orgId: string): Promise<void> {
-    if (this.isAnonymous(userId)) return;
-
     const profile = await this.prisma.profile.findUnique({
       where: { id: profileId },
       select: { userId: true, organizationId: true },
     });
     if (!profile) throw new NotFoundException(`Profile ${profileId} not found`);
-
-    // System record (no org) — accessible to all
-    if (!profile.organizationId) return;
 
     // Owner — always allowed
     if (profile.userId === userId) return;
@@ -117,16 +104,11 @@ export class ProfilesService {
    * Assert the user can mutate this profile (owner or shared with "admin" permission)
    */
   private async assertOwnership(profileId: string, userId: string, _orgId: string): Promise<void> {
-    if (this.isAnonymous(userId)) return;
-
     const profile = await this.prisma.profile.findUnique({
       where: { id: profileId },
       select: { userId: true, organizationId: true },
     });
     if (!profile) throw new NotFoundException(`Profile ${profileId} not found`);
-
-    // System records (organizationId=null) can be modified by anyone
-    if (!profile.organizationId) return;
 
     // Owner — always allowed
     if (profile.userId === userId) return;
@@ -139,22 +121,15 @@ export class ProfilesService {
   }
 
   /**
-   * Get all profiles owned by or shared with the user, plus system profiles
+   * Get all profiles owned by or shared with the user
    */
-  async findAll(userId: string, orgId?: string) {
+  async findAll(userId: string, orgId: string) {
     const include = {
       mcpServers: {
         include: { mcpServer: true },
         orderBy: { order: 'asc' as const },
       },
     };
-
-    if (this.isAnonymous(userId)) {
-      return this.prisma.profile.findMany({
-        include,
-        orderBy: { name: 'asc' },
-      });
-    }
 
     // Get shared profile IDs (direct user shares only — pass [] for orgIds)
     const sharedIds = await this.sharingService.getSharedResourceIds('profile', userId, []);
@@ -164,7 +139,6 @@ export class ProfilesService {
         OR: [
           { userId, organizationId: orgId }, // own org profiles
           ...(sharedIds.length > 0 ? [{ id: { in: sharedIds } }] : []), // shared
-          { organizationId: null }, // system profiles
         ],
       },
       include,
@@ -201,34 +175,18 @@ export class ProfilesService {
   }
 
   /**
-   * Get a specific profile by name within the active org
+   * Get a specific profile by name within the active org for the user
    */
-  async findByName(name: string, userId: string, orgId?: string) {
-    // Try org-scoped first, then system
-    let profile = orgId
-      ? await this.prisma.profile.findUnique({
-          where: { organizationId_name: { organizationId: orgId, name } },
-          include: {
-            mcpServers: {
-              include: { mcpServer: true, tools: true },
-              orderBy: { order: 'asc' },
-            },
-          },
-        })
-      : null;
-
-    if (!profile) {
-      // Try system profile (organizationId=null)
-      profile = await this.prisma.profile.findFirst({
-        where: { name, organizationId: null },
-        include: {
-          mcpServers: {
-            include: { mcpServer: true, tools: true },
-            orderBy: { order: 'asc' },
-          },
+  async findByName(name: string, userId: string, orgId: string) {
+    const profile = await this.prisma.profile.findUnique({
+      where: { userId_organizationId_name: { userId, organizationId: orgId, name } },
+      include: {
+        mcpServers: {
+          include: { mcpServer: true, tools: true },
+          orderBy: { order: 'asc' },
         },
-      });
-    }
+      },
+    });
 
     if (!profile) {
       throw new NotFoundException(`Profile with name "${name}" not found`);
@@ -240,26 +198,24 @@ export class ProfilesService {
   /**
    * Create a new profile in the active org
    */
-  async create(dto: CreateProfileDto, userId: string, orgId?: string) {
+  async create(dto: CreateProfileDto, userId: string, orgId: string) {
     // Validate against reserved names
     this.validateProfileName(dto.name);
 
-    // Check for unique name within the org
-    if (orgId) {
-      const existing = await this.prisma.profile.findUnique({
-        where: { organizationId_name: { organizationId: orgId, name: dto.name } },
-      });
-      if (existing) {
-        throw new ConflictException(`Profile with name "${dto.name}" already exists`);
-      }
+    // Check for unique name within the user+org
+    const existing = await this.prisma.profile.findUnique({
+      where: { userId_organizationId_name: { userId, organizationId: orgId, name: dto.name } },
+    });
+    if (existing) {
+      throw new ConflictException(`Profile with name "${dto.name}" already exists`);
     }
 
     return this.prisma.profile.create({
       data: {
         name: dto.name,
         description: dto.description,
-        userId: this.isAnonymous(userId) ? null : userId,
-        organizationId: orgId ?? null,
+        userId,
+        organizationId: orgId,
       },
     });
   }
@@ -282,16 +238,19 @@ export class ProfilesService {
       this.validateProfileName(dto.name);
     }
 
-    // Check for unique name if changing (within the same org)
+    // Check for unique name if changing (within the same user+org)
     if (dto.name && dto.name !== profile.name) {
-      const targetOrgId = profile.organizationId;
-      if (targetOrgId) {
-        const existing = await this.prisma.profile.findUnique({
-          where: { organizationId_name: { organizationId: targetOrgId, name: dto.name } },
-        });
-        if (existing) {
-          throw new ConflictException(`Profile with name "${dto.name}" already exists`);
-        }
+      const existing = await this.prisma.profile.findUnique({
+        where: {
+          userId_organizationId_name: {
+            userId: profile.userId,
+            organizationId: profile.organizationId,
+            name: dto.name,
+          },
+        },
+      });
+      if (existing) {
+        throw new ConflictException(`Profile with name "${dto.name}" already exists`);
       }
     }
 
@@ -312,15 +271,6 @@ export class ProfilesService {
     const profile = await this.prisma.profile.findUnique({ where: { id } });
     if (!profile) {
       throw new NotFoundException(`Profile ${id} not found`);
-    }
-
-    // If deleting default profile, mark it as intentionally deleted
-    if (profile.name === 'default') {
-      await this.prisma.gatewaySetting.upsert({
-        where: { key: SETTING_KEYS.DEFAULT_PROFILE_DELETED },
-        update: { value: 'true' },
-        create: { id: randomUUID(), key: SETTING_KEYS.DEFAULT_PROFILE_DELETED, value: 'true' },
-      });
     }
 
     await this.prisma.profile.delete({ where: { id } });
@@ -365,7 +315,7 @@ export class ProfilesService {
     }
 
     // Verify the user owns or has been shared the server
-    if (!this.isAnonymous(userId) && server.userId !== userId) {
+    if (server.userId !== userId) {
       const sharedIds = orgId
         ? await this.sharingService.getSharedResourceIds('mcp_server', userId, [orgId])
         : [];

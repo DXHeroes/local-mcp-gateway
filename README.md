@@ -22,6 +22,8 @@ curl -fsSL https://raw.githubusercontent.com/DXHeroes/local-mcp-gateway/main/doc
 - **MCP Endpoint**: http://localhost:9631/api/mcp/default
 - **Data**: Stored in `~/.local-mcp-gateway-data/`
 
+After starting, open the UI and **sign up** with your email and password to get started.
+
 To stop: `docker compose -f local-mcp-gateway.yml down`
 
 For more details, see [Docker Quick Start Guide](./docs/how-to/docker-quickstart.md).
@@ -33,6 +35,7 @@ For more details, see [Docker Quick Start Guide](./docs/how-to/docker-quickstart
 -   🔒 **Security**: Built-in API Key management and OAuth 2.1 support
 -   📊 **Observability**: Real-time request/response logging and inspection
 -   🖥️ **Web Interface**: Modern UI to manage servers, profiles, and logs
+-   👥 **Team Collaboration**: Organizations with member invitations and role-based access control
 -   🐳 **Docker Ready**: Easy deployment with Docker Compose
 
 ## How it works
@@ -247,6 +250,11 @@ local-mcp-gateway/
 - ✅ Debug logging
 - ✅ **HTTPS Tunneling** for Claude Desktop
 - ✅ **AI Prompt Generation** (TOON format) for easy context sharing
+- ✅ **User Authentication** (email/password, Google OAuth)
+- ✅ **Organizations & Teams** with role-based access control
+- ✅ **Resource Sharing** — share servers and profiles with team members
+- ✅ **Tool Customization** — enable/disable, rename, and override tool descriptions per profile
+- ✅ **Built-in MCP Servers** — auto-discovered packages (Gemini, Toggl, and more)
 
 ## License
 

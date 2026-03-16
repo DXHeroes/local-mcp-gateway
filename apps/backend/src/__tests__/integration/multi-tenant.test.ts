@@ -3,7 +3,7 @@
  *
  * Verifies that:
  * - McpService returns only servers owned by the user + shared servers
- * - ProfilesService still org-scopes profiles
+ * - ProfilesService org-scopes profiles (per-user, no system profiles)
  * - Cross-user access is denied unless shared
  */
 
@@ -18,9 +18,6 @@ import { ProfilesService } from '../../modules/profiles/profiles.service.js';
 import type { ProxyService } from '../../modules/proxy/proxy.service.js';
 import type { SharingService } from '../../modules/sharing/sharing.service.js';
 
-/** Sentinel value for unauthenticated MCP access */
-const UNAUTHENTICATED_ID = '__unauthenticated__';
-
 // ────────────────────────────────────────────────
 // In-memory data store simulating Prisma
 // ────────────────────────────────────────────────
@@ -29,8 +26,8 @@ interface InMemoryProfile {
   id: string;
   name: string;
   description: string | null;
-  userId: string | null;
-  organizationId: string | null;
+  userId: string;
+  organizationId: string;
   mcpServers: unknown[];
 }
 
@@ -65,9 +62,7 @@ function buildMockPrisma() {
                 return p.userId === cond.userId && p.organizationId === cond.organizationId;
               }
               if ('organizationId' in cond) {
-                return cond.organizationId === null
-                  ? p.organizationId === null
-                  : p.organizationId === cond.organizationId;
+                return p.organizationId === cond.organizationId;
               }
               if ('userId' in cond) {
                 return p.userId === cond.userId;
@@ -94,8 +89,8 @@ function buildMockPrisma() {
           id: `profile-${Date.now()}`,
           name: data.name as string,
           description: (data.description as string) ?? null,
-          userId: (data.userId as string) ?? null,
-          organizationId: (data.organizationId as string) ?? null,
+          userId: data.userId as string,
+          organizationId: data.organizationId as string,
           mcpServers: [],
         };
         PROFILES.push(profile);
@@ -155,14 +150,11 @@ function buildMockPrisma() {
     mcpServerToolsCache: {
       findMany: vi.fn().mockResolvedValue([]),
     },
-    gatewaySetting: {
-      upsert: vi.fn().mockResolvedValue({}),
-    },
   };
 }
 
 // ────────────────────────────────────────────────
-// Tests: ProfilesService data isolation (unchanged — org-scoped)
+// Tests: ProfilesService data isolation (org-scoped, per-user)
 // ────────────────────────────────────────────────
 
 describe('Multi-tenant data isolation', () => {
@@ -175,14 +167,6 @@ describe('Multi-tenant data isolation', () => {
     beforeEach(() => {
       PROFILES.length = 0;
       PROFILES.push(
-        {
-          id: 'sys-profile',
-          name: 'default',
-          description: 'System default profile',
-          userId: null,
-          organizationId: null,
-          mcpServers: [],
-        },
         {
           id: 'org-a-profile',
           name: 'org-a-dev',
@@ -218,27 +202,18 @@ describe('Multi-tenant data isolation', () => {
       );
     });
 
-    it('Org A sees org A profiles + system profiles, not Org B profiles', async () => {
+    it('Org A sees org A profiles, not Org B profiles', async () => {
       const result = await profilesService.findAll('user-a', 'org-a');
       const ids = result.map((p: { id: string }) => p.id);
-      expect(ids).toContain('sys-profile');
       expect(ids).toContain('org-a-profile');
       expect(ids).not.toContain('org-b-profile');
     });
 
-    it('Org B sees org B profiles + system profiles, not Org A profiles', async () => {
+    it('Org B sees org B profiles, not Org A profiles', async () => {
       const result = await profilesService.findAll('user-b', 'org-b');
       const ids = result.map((p: { id: string }) => p.id);
-      expect(ids).toContain('sys-profile');
       expect(ids).toContain('org-b-profile');
       expect(ids).not.toContain('org-a-profile');
-    });
-
-    it('system profiles (organizationId=null) are visible to all orgs', async () => {
-      const resultA = await profilesService.findAll('user-a', 'org-a');
-      const resultB = await profilesService.findAll('user-b', 'org-b');
-      expect(resultA.some((p: { id: string }) => p.id === 'sys-profile')).toBe(true);
-      expect(resultB.some((p: { id: string }) => p.id === 'sys-profile')).toBe(true);
     });
 
     it('creating a profile sets userId and organizationId', async () => {
@@ -251,22 +226,6 @@ describe('Multi-tenant data isolation', () => {
       await expect(profilesService.findById('org-b-profile', 'user-a', 'org-a')).rejects.toThrow(
         ForbiddenException
       );
-    });
-
-    it('Org A can access system profile by ID', async () => {
-      const profile = await profilesService.findById('sys-profile', 'user-a', 'org-a');
-      expect(profile).toBeDefined();
-      expect(profile.id).toBe('sys-profile');
-    });
-
-    it('unauthenticated user sees all profiles', async () => {
-      const result = await profilesService.findAll(UNAUTHENTICATED_ID);
-      expect(prisma.profile.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          orderBy: { name: 'asc' },
-        })
-      );
-      expect(result.length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -376,11 +335,6 @@ describe('Multi-tenant data isolation', () => {
       );
       const callData = prisma.mcpServer.create.mock.calls[0][0].data;
       expect(callData.organizationId).toBeUndefined();
-    });
-
-    it('unauthenticated user sees empty list', async () => {
-      const result = await mcpService.findAll(UNAUTHENTICATED_ID);
-      expect(result).toHaveLength(0);
     });
 
     it('User A cannot delete User B server', async () => {

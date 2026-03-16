@@ -19,7 +19,6 @@ describe('ProfilesService', () => {
   const userId = 'user-1';
   const profileId = 'profile-1';
   const serverId = 'srv-1';
-  const UNAUTHENTICATED = '__unauthenticated__';
 
   const sampleProfile = {
     id: profileId,
@@ -27,14 +26,6 @@ describe('ProfilesService', () => {
     description: 'Test profile',
     userId,
     organizationId: orgId,
-  };
-
-  const systemProfile = {
-    id: 'profile-sys',
-    name: 'default',
-    description: 'Default profile',
-    userId: null,
-    organizationId: null,
   };
 
   const sampleServer = {
@@ -81,9 +72,6 @@ describe('ProfilesService', () => {
       member: {
         findMany: vi.fn().mockResolvedValue([]),
       },
-      gatewaySetting: {
-        upsert: vi.fn().mockResolvedValue({}),
-      },
       $transaction: vi.fn().mockImplementation((cb) => cb(prisma)) as any,
     };
 
@@ -108,8 +96,8 @@ describe('ProfilesService', () => {
   // findAll
   // ---------------------------------------------------------------------------
   describe('findAll', () => {
-    it('should return own + shared + system profiles for authenticated user', async () => {
-      prisma.profile.findMany.mockResolvedValue([sampleProfile, systemProfile]);
+    it('should return own + shared profiles for authenticated user', async () => {
+      prisma.profile.findMany.mockResolvedValue([sampleProfile]);
 
       const result = await service.findAll(userId, orgId);
 
@@ -117,27 +105,11 @@ describe('ProfilesService', () => {
       expect(prisma.profile.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
-            OR: [{ userId, organizationId: orgId }, { organizationId: null }],
+            OR: [{ userId, organizationId: orgId }],
           },
         })
       );
-      expect(result).toHaveLength(2);
-    });
-
-    it('should return all profiles for anonymous user (no org filter)', async () => {
-      prisma.profile.findMany.mockResolvedValue([sampleProfile, systemProfile]);
-
-      const result = await service.findAll(UNAUTHENTICATED);
-
-      expect(prisma.profile.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          orderBy: { name: 'asc' },
-        })
-      );
-      // anonymous call should NOT have a where clause with OR
-      const call = prisma.profile.findMany.mock.calls[0][0];
-      expect(call.where).toBeUndefined();
-      expect(result).toHaveLength(2);
+      expect(result).toHaveLength(1);
     });
 
     it('should include mcpServers ordered by order asc', async () => {
@@ -154,17 +126,6 @@ describe('ProfilesService', () => {
       );
     });
 
-    it('should work when orgId is undefined for authenticated user', async () => {
-      prisma.profile.findMany.mockResolvedValue([]);
-
-      await service.findAll(userId);
-
-      const call = prisma.profile.findMany.mock.calls[0][0];
-      expect(call.where).toEqual({
-        OR: [{ userId, organizationId: undefined }, { organizationId: null }],
-      });
-    });
-
     it('should include shared profiles when sharing service returns IDs', async () => {
       sharingService.getSharedResourceIds.mockResolvedValue(['shared-profile-1']);
       prisma.profile.findMany.mockResolvedValue([]);
@@ -175,7 +136,6 @@ describe('ProfilesService', () => {
       expect(call.where.OR).toEqual([
         { userId, organizationId: orgId },
         { id: { in: ['shared-profile-1'] } },
-        { organizationId: null },
       ]);
     });
 
@@ -186,11 +146,8 @@ describe('ProfilesService', () => {
       await service.findAll(userId, orgId);
 
       const call = prisma.profile.findMany.mock.calls[0][0];
-      // Only own profiles + system — no org-wide query
-      expect(call.where.OR).toEqual([
-        { userId, organizationId: orgId },
-        { organizationId: null },
-      ]);
+      // Only own profiles — no org-wide query
+      expect(call.where.OR).toEqual([{ userId, organizationId: orgId }]);
     });
   });
 
@@ -251,15 +208,6 @@ describe('ProfilesService', () => {
       expect(prisma.profile.findUnique).toHaveBeenCalledTimes(1);
       expect(result).toBeDefined();
     });
-
-    it('should allow access to system profile (null organizationId)', async () => {
-      prisma.profile.findUnique
-        .mockResolvedValueOnce({ userId: null, organizationId: null }) // assertAccess
-        .mockResolvedValueOnce({ ...systemProfile, mcpServers: [] });
-
-      const result = await service.findById('profile-sys', userId, orgId);
-      expect(result).toBeDefined();
-    });
   });
 
   // ---------------------------------------------------------------------------
@@ -271,67 +219,31 @@ describe('ProfilesService', () => {
       mcpServers: [],
     };
 
-    it('should return org-scoped profile first when orgId provided', async () => {
+    it('should return profile by userId_organizationId_name unique constraint', async () => {
       prisma.profile.findUnique.mockResolvedValueOnce(profileWithServers);
 
       const result = await service.findByName('my-profile', userId, orgId);
 
       expect(prisma.profile.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { organizationId_name: { organizationId: orgId, name: 'my-profile' } },
+          where: {
+            userId_organizationId_name: {
+              userId,
+              organizationId: orgId,
+              name: 'my-profile',
+            },
+          },
         })
       );
       expect(result).toEqual(profileWithServers);
     });
 
-    it('should fall back to system profile when org profile not found', async () => {
-      prisma.profile.findUnique.mockResolvedValueOnce(null); // org lookup
-      prisma.profile.findFirst.mockResolvedValueOnce({
-        ...systemProfile,
-        mcpServers: [],
-      });
-
-      const result = await service.findByName('default', userId, orgId);
-
-      expect(prisma.profile.findFirst).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { name: 'default', organizationId: null },
-        })
-      );
-      expect(result.name).toBe('default');
-    });
-
-    it('should search system profile directly when no orgId', async () => {
-      prisma.profile.findFirst.mockResolvedValueOnce({
-        ...systemProfile,
-        mcpServers: [],
-      });
-
-      const result = await service.findByName('default', userId);
-
-      // findUnique should NOT be called (orgId is falsy)
-      expect(prisma.profile.findUnique).not.toHaveBeenCalled();
-      expect(prisma.profile.findFirst).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { name: 'default', organizationId: null },
-        })
-      );
-      expect(result.name).toBe('default');
-    });
-
-    it('should throw NotFoundException when profile not found anywhere', async () => {
+    it('should throw NotFoundException when profile not found', async () => {
       prisma.profile.findUnique.mockResolvedValueOnce(null);
-      prisma.profile.findFirst.mockResolvedValueOnce(null);
 
       await expect(service.findByName('nonexistent', userId, orgId)).rejects.toThrow(
         NotFoundException
       );
-    });
-
-    it('should throw NotFoundException when no orgId and system profile not found', async () => {
-      prisma.profile.findFirst.mockResolvedValueOnce(null);
-
-      await expect(service.findByName('nonexistent', userId)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -382,37 +294,28 @@ describe('ProfilesService', () => {
       );
     });
 
-    it('should set userId to null for anonymous user', async () => {
-      prisma.profile.create.mockResolvedValue({ id: 'new-anon' });
+    it('should check uniqueness using userId_organizationId_name constraint', async () => {
+      prisma.profile.findUnique.mockResolvedValueOnce(null);
+      prisma.profile.create.mockResolvedValue({ id: 'new-id' });
 
-      await service.create({ name: 'anon-profile' }, UNAUTHENTICATED);
+      await service.create({ name: 'test-profile' }, userId, orgId);
 
-      expect(prisma.profile.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          userId: null,
-          organizationId: null,
-        }),
-      });
-    });
-
-    it('should skip uniqueness check when orgId is not provided', async () => {
-      prisma.profile.create.mockResolvedValue({ id: 'new-no-org' });
-
-      await service.create({ name: 'no-org-profile' }, userId);
-
-      // findUnique should not be called for uniqueness check
-      expect(prisma.profile.findUnique).not.toHaveBeenCalled();
-      expect(prisma.profile.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          organizationId: null,
-        }),
+      expect(prisma.profile.findUnique).toHaveBeenCalledWith({
+        where: {
+          userId_organizationId_name: {
+            userId,
+            organizationId: orgId,
+            name: 'test-profile',
+          },
+        },
       });
     });
 
     it('should allow null description', async () => {
+      prisma.profile.findUnique.mockResolvedValueOnce(null); // uniqueness check
       prisma.profile.create.mockResolvedValue({ id: 'new-null-desc' });
 
-      await service.create({ name: 'test', description: null }, userId);
+      await service.create({ name: 'test', description: null }, userId, orgId);
 
       expect(prisma.profile.create).toHaveBeenCalledWith({
         data: expect.objectContaining({ description: null }),
@@ -503,19 +406,27 @@ describe('ProfilesService', () => {
       expect(prisma.profile.findUnique).toHaveBeenCalledTimes(2);
     });
 
-    it('should skip uniqueness check when profile has no organizationId', async () => {
+    it('should use userId_organizationId_name for uniqueness check', async () => {
       // assertOwnership
       prisma.profile.findUnique
-        .mockResolvedValueOnce({ userId: null, organizationId: null })
-        .mockResolvedValueOnce({ ...systemProfile });
+        .mockResolvedValueOnce({ userId, organizationId: orgId })
+        .mockResolvedValueOnce({ ...sampleProfile }) // existing profile
+        .mockResolvedValueOnce(null); // uniqueness check passes
 
-      prisma.profile.update.mockResolvedValue({ ...systemProfile, name: 'renamed' });
+      prisma.profile.update.mockResolvedValue({ ...sampleProfile, name: 'new-name' });
 
-      await service.update('profile-sys', { name: 'renamed' }, userId, orgId);
+      await service.update(profileId, { name: 'new-name' }, userId, orgId);
 
-      // no uniqueness check because profile.organizationId is null
-      expect(prisma.profile.findUnique).toHaveBeenCalledTimes(2);
-      expect(prisma.profile.update).toHaveBeenCalled();
+      // Third call should use the userId_organizationId_name constraint
+      expect(prisma.profile.findUnique).toHaveBeenNthCalledWith(3, {
+        where: {
+          userId_organizationId_name: {
+            userId,
+            organizationId: orgId,
+            name: 'new-name',
+          },
+        },
+      });
     });
 
     it('should skip ownership check when orgId is not provided', async () => {
@@ -562,37 +473,6 @@ describe('ProfilesService', () => {
         .mockResolvedValueOnce(null);
 
       await expect(service.delete(profileId, userId, orgId)).rejects.toThrow(NotFoundException);
-    });
-
-    it('should set gateway setting when deleting "default" profile', async () => {
-      prisma.profile.findUnique
-        .mockResolvedValueOnce({ userId: null, organizationId: null }) // assertOwnership
-        .mockResolvedValueOnce({ ...systemProfile, name: 'default' });
-
-      await service.delete('profile-sys', userId, orgId);
-
-      expect(prisma.gatewaySetting.upsert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { key: 'default_profile_deleted' },
-          update: { value: 'true' },
-          create: expect.objectContaining({
-            key: 'default_profile_deleted',
-            value: 'true',
-          }),
-        })
-      );
-      expect(prisma.profile.delete).toHaveBeenCalled();
-    });
-
-    it('should NOT set gateway setting when deleting non-default profile', async () => {
-      prisma.profile.findUnique
-        .mockResolvedValueOnce({ userId, organizationId: orgId }) // assertOwnership
-        .mockResolvedValueOnce({ ...sampleProfile });
-
-      await service.delete(profileId, userId, orgId);
-
-      expect(prisma.gatewaySetting.upsert).not.toHaveBeenCalled();
-      expect(prisma.profile.delete).toHaveBeenCalled();
     });
 
     it('should skip ownership check when orgId is not provided', async () => {
@@ -688,7 +568,7 @@ describe('ProfilesService', () => {
       prisma.profileMcpServer.findUnique.mockResolvedValueOnce(null);
       prisma.profileMcpServer.create.mockResolvedValue({});
 
-      await service.addServer(profileId, { mcpServerId: serverId }, UNAUTHENTICATED);
+      await service.addServer(profileId, { mcpServerId: serverId }, userId);
 
       expect(prisma.profileMcpServer.create).toHaveBeenCalledWith({
         data: expect.objectContaining({ order: 0, isActive: true }),
@@ -762,18 +642,6 @@ describe('ProfilesService', () => {
 
       await expect(service.addServer(profileId, dto, userId, orgId)).resolves.toBeDefined();
       expect(prisma.profileMcpServer.create).toHaveBeenCalled();
-    });
-
-    it('should allow anonymous user to add any server', async () => {
-      const otherUserServer = { ...sampleServer, userId: 'user-other' };
-
-      prisma.profile.findUnique.mockResolvedValueOnce({ ...sampleProfile });
-      prisma.mcpServer.findUnique.mockResolvedValueOnce(otherUserServer);
-      prisma.profileMcpServer.findUnique.mockResolvedValueOnce(null);
-      prisma.profileMcpServer.create.mockResolvedValue({});
-
-      // Anonymous user can add any server (no ownership check on the MCP server)
-      await expect(service.addServer(profileId, dto, UNAUTHENTICATED)).resolves.toBeDefined();
     });
   });
 
@@ -1172,32 +1040,7 @@ describe('ProfilesService', () => {
   // assertAccess (tested indirectly through public methods)
   // ---------------------------------------------------------------------------
   describe('assertAccess', () => {
-    it('should allow access for anonymous user without DB lookup', async () => {
-      // getServers triggers assertAccess
-      prisma.profileMcpServer.findMany.mockResolvedValue([]);
-
-      // This would normally call assertAccess with the anonymous sentinel
-      // but anonymous skips the check entirely
-      await service.getServers(profileId, UNAUTHENTICATED, orgId);
-
-      // profile.findUnique should NOT have been called (anonymous bypass)
-      expect(prisma.profile.findUnique).not.toHaveBeenCalled();
-    });
-
-    it('should allow access when profile has no organization (system profile)', async () => {
-      prisma.profile.findUnique.mockResolvedValueOnce({
-        userId: null,
-        organizationId: null,
-      });
-      prisma.profileMcpServer.findMany.mockResolvedValue([]);
-
-      await service.getServers(profileId, userId, orgId);
-
-      // Should not throw
-      expect(prisma.profileMcpServer.findMany).toHaveBeenCalled();
-    });
-
-    it('should allow access when profile belongs to the same org', async () => {
+    it('should allow access when profile belongs to the same user', async () => {
       prisma.profile.findUnique.mockResolvedValueOnce({
         userId,
         organizationId: orgId,
@@ -1245,28 +1088,6 @@ describe('ProfilesService', () => {
   // assertOwnership (tested indirectly through public methods)
   // ---------------------------------------------------------------------------
   describe('assertOwnership', () => {
-    it('should allow mutation for anonymous user without DB lookup', async () => {
-      prisma.profileMcpServer.findUnique.mockResolvedValueOnce(sampleLink);
-
-      await service.removeServer(profileId, serverId, UNAUTHENTICATED, orgId);
-
-      // profile.findUnique should NOT have been called (anonymous bypass)
-      expect(prisma.profile.findUnique).not.toHaveBeenCalled();
-      expect(prisma.profileMcpServer.delete).toHaveBeenCalled();
-    });
-
-    it('should allow mutation when profile has no organization (system profile)', async () => {
-      prisma.profile.findUnique.mockResolvedValueOnce({
-        userId: null,
-        organizationId: null,
-      });
-      prisma.profileMcpServer.findUnique.mockResolvedValueOnce(sampleLink);
-
-      await service.removeServer(profileId, serverId, userId, orgId);
-
-      expect(prisma.profileMcpServer.delete).toHaveBeenCalled();
-    });
-
     it('should allow mutation when user owns the profile', async () => {
       prisma.profile.findUnique.mockResolvedValueOnce({
         userId,

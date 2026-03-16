@@ -19,8 +19,8 @@ export const ProfileSchema = z.object({
   id: z.uuid(),
   name: z.string(),
   description: z.string().nullable(),
-  userId: z.string().nullable(),
-  organizationId: z.string().nullable(),
+  userId: z.string(),
+  organizationId: z.string(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 })
@@ -44,8 +44,8 @@ export type ProfileOptionalDefaults = z.infer<typeof ProfileOptionalDefaultsSche
 /////////////////////////////////////////
 
 export type ProfileRelations = {
-  user?: UserWithRelations | null;
-  organization?: OrganizationWithRelations | null;
+  user: UserWithRelations;
+  organization: OrganizationWithRelations;
   mcpServers: ProfileMcpServerWithRelations[];
   debugLogs: DebugLogWithRelations[];
 };
@@ -53,8 +53,8 @@ export type ProfileRelations = {
 export type ProfileWithRelations = z.infer<typeof ProfileSchema> & ProfileRelations
 
 export const ProfileWithRelationsSchema: z.ZodType<ProfileWithRelations> = ProfileSchema.merge(z.object({
-  user: z.lazy(() => UserWithRelationsSchema).nullable(),
-  organization: z.lazy(() => OrganizationWithRelationsSchema).nullable(),
+  user: z.lazy(() => UserWithRelationsSchema),
+  organization: z.lazy(() => OrganizationWithRelationsSchema),
   mcpServers: z.lazy(() => ProfileMcpServerWithRelationsSchema).array(),
   debugLogs: z.lazy(() => DebugLogWithRelationsSchema).array(),
 }))
@@ -64,8 +64,8 @@ export const ProfileWithRelationsSchema: z.ZodType<ProfileWithRelations> = Profi
 /////////////////////////////////////////
 
 export type ProfileOptionalDefaultsRelations = {
-  user?: UserOptionalDefaultsWithRelations | null;
-  organization?: OrganizationOptionalDefaultsWithRelations | null;
+  user: UserOptionalDefaultsWithRelations;
+  organization: OrganizationOptionalDefaultsWithRelations;
   mcpServers: ProfileMcpServerOptionalDefaultsWithRelations[];
   debugLogs: DebugLogOptionalDefaultsWithRelations[];
 };
@@ -73,8 +73,8 @@ export type ProfileOptionalDefaultsRelations = {
 export type ProfileOptionalDefaultsWithRelations = z.infer<typeof ProfileOptionalDefaultsSchema> & ProfileOptionalDefaultsRelations
 
 export const ProfileOptionalDefaultsWithRelationsSchema: z.ZodType<ProfileOptionalDefaultsWithRelations> = ProfileOptionalDefaultsSchema.merge(z.object({
-  user: z.lazy(() => UserOptionalDefaultsWithRelationsSchema).nullable(),
-  organization: z.lazy(() => OrganizationOptionalDefaultsWithRelationsSchema).nullable(),
+  user: z.lazy(() => UserOptionalDefaultsWithRelationsSchema),
+  organization: z.lazy(() => OrganizationOptionalDefaultsWithRelationsSchema),
   mcpServers: z.lazy(() => ProfileMcpServerOptionalDefaultsWithRelationsSchema).array(),
   debugLogs: z.lazy(() => DebugLogOptionalDefaultsWithRelationsSchema).array(),
 }))

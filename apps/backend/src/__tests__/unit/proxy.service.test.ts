@@ -69,7 +69,8 @@ function makeProfile(overrides?: Record<string, unknown>) {
   return {
     id: 'profile-1',
     name: 'default',
-    organizationId: null,
+    organizationId: 'org-1',
+    userId: 'user-1',
     mcpServers: [],
     ...overrides,
   };
@@ -132,6 +133,7 @@ describe('ProxyService', () => {
       },
       member: {
         findFirst: vi.fn().mockResolvedValue(null),
+        findMany: vi.fn().mockResolvedValue([{ organizationId: 'org-1' }]),
       },
       oAuthToken: {
         findUnique: vi.fn().mockResolvedValue(null),
@@ -162,7 +164,7 @@ describe('ProxyService', () => {
     it('should throw NotFoundException when profile not found', async () => {
       prisma.profile.findFirst.mockResolvedValue(null);
 
-      await expect(service.handleRequest('nonexistent', makeRequest())).rejects.toThrow(
+      await expect(service.handleRequest('nonexistent', makeRequest(), 'user-1')).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -174,6 +176,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ method: 'initialize' }),
+        'user-1',
       );
 
       expect(result.jsonrpc).toBe('2.0');
@@ -185,7 +188,7 @@ describe('ProxyService', () => {
       const profile = makeProfile();
       prisma.profile.findFirst.mockResolvedValue(profile);
 
-      await service.handleRequest('default', makeRequest({ method: 'initialize' }));
+      await service.handleRequest('default', makeRequest({ method: 'initialize' }), 'user-1');
 
       expect(debugService.createLog).not.toHaveBeenCalled();
     });
@@ -194,7 +197,7 @@ describe('ProxyService', () => {
       const profile = makeProfile();
       prisma.profile.findFirst.mockResolvedValue(profile);
 
-      await service.handleRequest('default', makeRequest({ method: 'tools/list' }));
+      await service.handleRequest('default', makeRequest({ method: 'tools/list' }), 'user-1');
 
       expect(debugService.createLog).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -209,7 +212,7 @@ describe('ProxyService', () => {
       const profile = makeProfile();
       prisma.profile.findFirst.mockResolvedValue(profile);
 
-      await service.handleRequest('default', makeRequest({ method: 'tools/list' }));
+      await service.handleRequest('default', makeRequest({ method: 'tools/list' }), 'user-1');
 
       expect(debugService.updateLog).toHaveBeenCalledWith(
         'log-1',
@@ -224,6 +227,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ method: 'unknown/method' }),
+        'user-1',
       );
 
       expect(result.error).toBeDefined();
@@ -243,6 +247,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ method: 'tools/list' }),
+        'user-1',
       );
 
       expect(result.result).toHaveProperty('tools');
@@ -269,6 +274,7 @@ describe('ProxyService', () => {
           method: 'tools/call',
           params: { name: 'myTool', arguments: { arg1: 'val' } },
         }),
+        'user-1',
       );
 
       expect(result.result).toBeDefined();
@@ -282,6 +288,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ method: 'resources/list' }),
+        'user-1',
       );
 
       expect(result.result).toHaveProperty('resources');
@@ -297,6 +304,7 @@ describe('ProxyService', () => {
           method: 'resources/read',
           params: { uri: 'file:///test.txt' },
         }),
+        'user-1',
       );
 
       // No servers, so resource not found
@@ -311,6 +319,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ method: 'prompts/list' }),
+        'user-1',
       );
 
       expect(result.error).toEqual({
@@ -335,6 +344,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ method: 'tools/list' }),
+        'user-1',
       );
 
       expect(result.error).toEqual({
@@ -356,7 +366,7 @@ describe('ProxyService', () => {
 
       mockListTools.mockRejectedValueOnce(new Error('Connection refused'));
 
-      await service.handleRequest('default', makeRequest({ method: 'tools/list' }));
+      await service.handleRequest('default', makeRequest({ method: 'tools/list' }), 'user-1');
 
       expect(debugService.updateLog).toHaveBeenCalledWith(
         'log-1',
@@ -383,6 +393,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ method: 'tools/list' }),
+        'user-1',
       );
 
       expect(result.error?.message).toBe('Internal error');
@@ -396,6 +407,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ method: 'tools/list' }),
+        'user-1',
       );
 
       expect(result.jsonrpc).toBe('2.0');
@@ -410,6 +422,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ method: 'tools/list' }),
+        'user-1',
       );
 
       expect(result.jsonrpc).toBe('2.0');
@@ -432,6 +445,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ method: 'tools/list' }),
+        'user-1',
       );
 
       expect(result.error).toBeDefined();
@@ -444,6 +458,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ id: 42, method: 'initialize' }),
+        'user-1',
       );
 
       expect(result.id).toBe(42);
@@ -461,6 +476,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ method: 'initialize' }),
+        'user-1',
       );
 
       const res = result.result as Record<string, unknown>;
@@ -496,6 +512,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ method: 'tools/list' }),
+        'user-1',
       );
 
       const tools = (result.result as { tools: unknown[] }).tools;
@@ -530,6 +547,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ method: 'tools/list' }),
+        'user-1',
       );
 
       const tools = (result.result as { tools: unknown[] }).tools;
@@ -559,6 +577,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ method: 'tools/list' }),
+        'user-1',
       );
 
       const tools = (result.result as { tools: unknown[] }).tools;
@@ -584,6 +603,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ method: 'tools/list' }),
+        'user-1',
       );
 
       const tools = (result.result as { tools: unknown[] }).tools;
@@ -606,6 +626,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ method: 'tools/list' }),
+        'user-1',
       );
 
       const tools = (result.result as { tools: unknown[] }).tools;
@@ -624,6 +645,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ method: 'tools/list' }),
+        'user-1',
       );
 
       const tools = (result.result as { tools: unknown[] }).tools;
@@ -656,6 +678,7 @@ describe('ProxyService', () => {
           method: 'tools/call',
           params: { name: 'myTool', arguments: { input: 'test' } },
         }),
+        'user-1',
       );
 
       expect(mockCallTool).toHaveBeenCalledWith('myTool', { input: 'test' });
@@ -683,6 +706,7 @@ describe('ProxyService', () => {
           method: 'tools/call',
           params: { name: 'aliasName', arguments: {} },
         }),
+        'user-1',
       );
 
       expect(mockCallTool).toHaveBeenCalledWith('originalName', {});
@@ -707,6 +731,7 @@ describe('ProxyService', () => {
           method: 'tools/call',
           params: { name: 'disabledTool', arguments: {} },
         }),
+        'user-1',
       );
 
       expect(result.error).toEqual({
@@ -734,6 +759,7 @@ describe('ProxyService', () => {
           method: 'tools/call',
           params: { name: 'nonexistentTool', arguments: {} },
         }),
+        'user-1',
       );
 
       expect(result.error).toEqual({
@@ -760,6 +786,7 @@ describe('ProxyService', () => {
           method: 'tools/call',
           params: { name: 'myTool', arguments: {} },
         }),
+        'user-1',
       );
 
       expect(debugService.updateLog).toHaveBeenCalledWith(
@@ -786,6 +813,7 @@ describe('ProxyService', () => {
           method: 'tools/call',
           params: { name: 'myTool' },
         }),
+        'user-1',
       );
 
       expect(mockCallTool).toHaveBeenCalledWith('myTool', {});
@@ -811,6 +839,7 @@ describe('ProxyService', () => {
           method: 'tools/call',
           params: { name: 'myTool', arguments: {} },
         }),
+        'user-1',
       );
 
       expect(result.error).toBeUndefined();
@@ -842,6 +871,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ method: 'resources/list' }),
+        'user-1',
       );
 
       const resources = (result.result as { resources: unknown[] }).resources;
@@ -855,6 +885,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ method: 'resources/list' }),
+        'user-1',
       );
 
       const resources = (result.result as { resources: unknown[] }).resources;
@@ -882,6 +913,7 @@ describe('ProxyService', () => {
           method: 'resources/read',
           params: { uri: 'file:///test.txt' },
         }),
+        'user-1',
       );
 
       expect(result.result).toEqual({ contents: [{ text: 'file content' }] });
@@ -909,6 +941,7 @@ describe('ProxyService', () => {
           method: 'resources/read',
           params: { uri: 'file:///test.txt' },
         }),
+        'user-1',
       );
 
       expect(result.result).toEqual({ contents: [{ text: 'found on second' }] });
@@ -930,6 +963,7 @@ describe('ProxyService', () => {
           method: 'resources/read',
           params: { uri: 'file:///nonexistent.txt' },
         }),
+        'user-1',
       );
 
       expect(result.error).toEqual({
@@ -993,11 +1027,11 @@ describe('ProxyService', () => {
       prisma.profile.findFirst.mockResolvedValue(profile);
 
       // First call creates the instance
-      await service.handleRequest('default', makeRequest({ method: 'tools/list' }));
+      await service.handleRequest('default', makeRequest({ method: 'tools/list' }), 'user-1');
       const firstInitCount = mockInitialize.mock.calls.length;
 
       // Second call should use cache
-      await service.handleRequest('default', makeRequest({ method: 'tools/list' }));
+      await service.handleRequest('default', makeRequest({ method: 'tools/list' }), 'user-1');
       expect(mockInitialize.mock.calls.length).toBe(firstInitCount);
     });
 
@@ -1037,7 +1071,7 @@ describe('ProxyService', () => {
       const profile = makeProfile({ mcpServers: [ps] });
       prisma.profile.findFirst.mockResolvedValue(profile);
 
-      await service.handleRequest('default', makeRequest({ method: 'tools/list' }));
+      await service.handleRequest('default', makeRequest({ method: 'tools/list' }), 'user-1');
 
       expect(mockCreateServer).toHaveBeenCalledWith(
         expect.objectContaining({ apiKey: 'key123' }),
@@ -1058,7 +1092,7 @@ describe('ProxyService', () => {
       const profile = makeProfile({ mcpServers: [ps] });
       prisma.profile.findFirst.mockResolvedValue(profile);
 
-      await service.handleRequest('default', makeRequest({ method: 'tools/list' }));
+      await service.handleRequest('default', makeRequest({ method: 'tools/list' }), 'user-1');
 
       expect(remoteHttpCtorArgs).toHaveBeenCalledWith(
         expect.objectContaining({ url: 'http://example.com/mcp', transport: 'http' }),
@@ -1093,7 +1127,7 @@ describe('ProxyService', () => {
       const profile = makeProfile({ mcpServers: [ps] });
       prisma.profile.findFirst.mockResolvedValue(profile);
 
-      await service.handleRequest('default', makeRequest({ method: 'tools/list' }));
+      await service.handleRequest('default', makeRequest({ method: 'tools/list' }), 'user-1');
 
       expect(remoteHttpCtorArgs).toHaveBeenCalledWith(
         expect.anything(),
@@ -1120,7 +1154,7 @@ describe('ProxyService', () => {
       const profile = makeProfile({ mcpServers: [ps] });
       prisma.profile.findFirst.mockResolvedValue(profile);
 
-      await service.handleRequest('default', makeRequest({ method: 'tools/list' }));
+      await service.handleRequest('default', makeRequest({ method: 'tools/list' }), 'user-1');
 
       expect(remoteSseCtorArgs).toHaveBeenCalledWith(
         expect.objectContaining({ url: 'http://example.com/sse', transport: 'sse' }),
@@ -1155,7 +1189,7 @@ describe('ProxyService', () => {
       const profile = makeProfile({ mcpServers: [ps] });
       prisma.profile.findFirst.mockResolvedValue(profile);
 
-      await service.handleRequest('default', makeRequest({ method: 'tools/list' }));
+      await service.handleRequest('default', makeRequest({ method: 'tools/list' }), 'user-1');
 
       expect(remoteSseCtorArgs).toHaveBeenCalledWith(
         expect.anything(),
@@ -1190,7 +1224,7 @@ describe('ProxyService', () => {
       const profile = makeProfile({ mcpServers: [ps] });
       prisma.profile.findFirst.mockResolvedValue(profile);
 
-      await service.handleRequest('default', makeRequest({ method: 'tools/list' }));
+      await service.handleRequest('default', makeRequest({ method: 'tools/list' }), 'user-1');
 
       expect(externalCtorArgs).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1217,6 +1251,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ method: 'tools/list' }),
+        'user-1',
       );
 
       const tools = (result.result as { tools: unknown[] }).tools;
@@ -1243,6 +1278,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ method: 'tools/list' }),
+        'user-1',
       );
 
       const tools = (result.result as { tools: unknown[] }).tools;
@@ -1267,7 +1303,7 @@ describe('ProxyService', () => {
       const profile = makeProfile({ mcpServers: [ps] });
       prisma.profile.findFirst.mockResolvedValue(profile);
 
-      await service.handleRequest('default', makeRequest({ method: 'tools/list' }));
+      await service.handleRequest('default', makeRequest({ method: 'tools/list' }), 'user-1');
 
       // 3rd arg (apiKeyConfig) should be null since no apiKey was provided
       const callArgs = remoteHttpCtorArgs.mock.calls[0];
@@ -1310,7 +1346,7 @@ describe('ProxyService', () => {
       const profile = makeProfile({ mcpServers: [ps] });
       prisma.profile.findFirst.mockResolvedValue(profile);
 
-      await service.handleRequest('default', makeRequest({ method: 'tools/list' }));
+      await service.handleRequest('default', makeRequest({ method: 'tools/list' }), 'user-1');
 
       expect(mockCreateServer).toHaveBeenCalledWith({
         apiKey: 'my-secret-key',
@@ -1359,7 +1395,7 @@ describe('ProxyService', () => {
       const profile = makeProfile({ mcpServers: [ps] });
       prisma.profile.findFirst.mockResolvedValue(profile);
 
-      await service.handleRequest('default', makeRequest({ method: 'tools/list' }));
+      await service.handleRequest('default', makeRequest({ method: 'tools/list' }), 'user-1');
 
       expect(mockCreateServer).toHaveBeenCalledWith({
         apiKey: 'custom-key',
@@ -1381,7 +1417,7 @@ describe('ProxyService', () => {
       const profile = makeProfile({ mcpServers: [ps] });
       prisma.profile.findFirst.mockResolvedValue(profile);
 
-      await service.handleRequest('default', makeRequest({ method: 'tools/list' }));
+      await service.handleRequest('default', makeRequest({ method: 'tools/list' }), 'user-1');
 
       // 3rd arg (apiKeyConfig) should be null since apiKey is empty string
       const callArgs = remoteHttpCtorArgs.mock.calls[0];
@@ -1406,7 +1442,7 @@ describe('ProxyService', () => {
       const profile = makeProfile({ mcpServers: [ps] });
       prisma.profile.findFirst.mockResolvedValue(profile);
 
-      await service.handleRequest('default', makeRequest({ method: 'tools/list' }));
+      await service.handleRequest('default', makeRequest({ method: 'tools/list' }), 'user-1');
 
       expect(externalCtorArgs).toHaveBeenCalledWith(
         expect.objectContaining({ command: 'node', args: ['app.js'] }),
@@ -1426,7 +1462,7 @@ describe('ProxyService', () => {
       const profile = makeProfile({ mcpServers: [ps] });
       prisma.profile.findFirst.mockResolvedValue(profile);
 
-      await service.handleRequest('default', makeRequest({ method: 'tools/list' }));
+      await service.handleRequest('default', makeRequest({ method: 'tools/list' }), 'user-1');
 
       expect(externalCtorArgs).toHaveBeenCalledWith(
         expect.objectContaining({ command: 'python', args: ['server.py'] }),
@@ -1449,6 +1485,7 @@ describe('ProxyService', () => {
       const result = await service.handleRequest(
         'default',
         makeRequest({ method: 'tools/list' }),
+        'user-1',
       );
 
       const tools = (result.result as { tools: unknown[] }).tools;
@@ -1460,98 +1497,60 @@ describe('ProxyService', () => {
   // findProfileByName
   // =========================================================================
   describe('findProfileByName', () => {
-    it('should find profile by name', async () => {
+    it('should find profile by name for authenticated user', async () => {
       const profile = makeProfile({ name: 'my-profile' });
+      prisma.member.findMany.mockResolvedValue([{ organizationId: 'org-1' }]);
       prisma.profile.findFirst.mockResolvedValue(profile);
 
       const result = await service.handleRequest(
         'my-profile',
         makeRequest({ method: 'initialize' }),
+        'user-1',
       );
 
       expect(result.result).toBeDefined();
+      expect(prisma.member.findMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
+        select: { organizationId: true },
+      });
     });
 
     it('should throw NotFoundException when profile not found', async () => {
+      prisma.member.findMany.mockResolvedValue([{ organizationId: 'org-1' }]);
       prisma.profile.findFirst.mockResolvedValue(null);
 
-      await expect(service.handleRequest('missing', makeRequest())).rejects.toThrow(
+      await expect(service.handleRequest('missing', makeRequest(), 'user-1')).rejects.toThrow(
         NotFoundException,
       );
     });
 
-    it('should allow unauthenticated user to access any profile', async () => {
-      const profile = makeProfile({ organizationId: 'org-1' });
-      prisma.profile.findFirst.mockResolvedValue(profile);
-
-      const result = await service.handleRequest(
-        'default',
-        makeRequest({ method: 'initialize' }),
-        '__unauthenticated__',
-      );
-
-      expect(result.result).toBeDefined();
-      expect(prisma.member.findFirst).not.toHaveBeenCalled();
-    });
-
-    it('should allow access without userId', async () => {
-      const profile = makeProfile({ organizationId: 'org-1' });
-      prisma.profile.findFirst.mockResolvedValue(profile);
-
-      const result = await service.handleRequest(
-        'default',
-        makeRequest({ method: 'initialize' }),
-      );
-
-      expect(result.result).toBeDefined();
-      expect(prisma.member.findFirst).not.toHaveBeenCalled();
-    });
-
-    it('should allow access to system profiles (no organizationId)', async () => {
-      const profile = makeProfile({ organizationId: null });
-      prisma.profile.findFirst.mockResolvedValue(profile);
-
-      const result = await service.handleRequest(
-        'default',
-        makeRequest({ method: 'initialize' }),
-        'user-1',
-      );
-
-      expect(result.result).toBeDefined();
-    });
-
-    it('should allow org members to access org profiles', async () => {
-      const profile = makeProfile({ organizationId: 'org-1' });
-      prisma.profile.findFirst.mockResolvedValue(profile);
-      prisma.member.findFirst.mockResolvedValue({
-        userId: 'user-1',
-        organizationId: 'org-1',
-      });
-
-      const result = await service.handleRequest(
-        'default',
-        makeRequest({ method: 'initialize' }),
-        'user-1',
-      );
-
-      expect(result.result).toBeDefined();
-      expect(prisma.member.findFirst).toHaveBeenCalledWith({
-        where: { userId: 'user-1', organizationId: 'org-1' },
-      });
-    });
-
-    it('should deny non-members access to org profiles', async () => {
-      const profile = makeProfile({ organizationId: 'org-1' });
-      prisma.profile.findFirst.mockResolvedValue(profile);
-      prisma.member.findFirst.mockResolvedValue(null);
+    it('should throw NotFoundException when user has no org memberships', async () => {
+      prisma.member.findMany.mockResolvedValue([]);
 
       await expect(
-        service.handleRequest(
-          'default',
-          makeRequest({ method: 'initialize' }),
-          'user-outsider',
-        ),
+        service.handleRequest('default', makeRequest(), 'user-no-org'),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should search across all user org memberships', async () => {
+      const profile = makeProfile({ organizationId: 'org-2' });
+      prisma.member.findMany.mockResolvedValue([
+        { organizationId: 'org-1' },
+        { organizationId: 'org-2' },
+      ]);
+      prisma.profile.findFirst.mockResolvedValue(profile);
+
+      const result = await service.handleRequest(
+        'default',
+        makeRequest({ method: 'initialize' }),
+        'user-1',
+      );
+
+      expect(result.result).toBeDefined();
+      expect(prisma.profile.findFirst).toHaveBeenCalledWith({
+        where: { name: 'default', organizationId: { in: ['org-1', 'org-2'] } },
+        include: expect.anything(),
+      });
     });
   });
 
@@ -1561,7 +1560,7 @@ describe('ProxyService', () => {
   describe('handleRequestByOrgSlug', () => {
     it('should resolve org slug and find profile', async () => {
       prisma.organization.findUnique.mockResolvedValue({ id: 'org-1' });
-      prisma.profile.findUnique.mockResolvedValue(
+      prisma.profile.findFirst.mockResolvedValue(
         makeProfile({ id: 'p-org', name: 'my-profile' }),
       );
 
@@ -1592,7 +1591,6 @@ describe('ProxyService', () => {
 
     it('should throw NotFoundException when profile not found in org', async () => {
       prisma.organization.findUnique.mockResolvedValue({ id: 'org-1' });
-      prisma.profile.findUnique.mockResolvedValue(null);
       prisma.profile.findFirst.mockResolvedValue(null);
 
       await expect(
@@ -1604,29 +1602,22 @@ describe('ProxyService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('should fall back to system profile when org profile not found', async () => {
+    it('should throw NotFoundException when org profile not found', async () => {
       prisma.organization.findUnique.mockResolvedValue({ id: 'org-1' });
-      prisma.profile.findUnique.mockResolvedValue(null);
-      prisma.profile.findFirst.mockResolvedValue(
-        makeProfile({ name: 'system-profile', organizationId: null }),
-      );
+      prisma.profile.findFirst.mockResolvedValue(null);
 
-      const result = await service.handleRequestByOrgSlug(
-        'system-profile',
-        'my-org',
-        makeRequest({ method: 'initialize' }),
-      );
-
-      expect(result.result).toBeDefined();
-      expect(prisma.profile.findFirst).toHaveBeenCalledWith({
-        where: { name: 'system-profile', organizationId: null },
-        include: expect.anything(),
-      });
+      await expect(
+        service.handleRequestByOrgSlug(
+          'missing-profile',
+          'my-org',
+          makeRequest({ method: 'initialize' }),
+        ),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should create debug log for non-initialize methods', async () => {
       prisma.organization.findUnique.mockResolvedValue({ id: 'org-1' });
-      prisma.profile.findUnique.mockResolvedValue(makeProfile());
+      prisma.profile.findFirst.mockResolvedValue(makeProfile());
 
       await service.handleRequestByOrgSlug(
         'default',
@@ -1641,7 +1632,7 @@ describe('ProxyService', () => {
 
     it('should skip debug log for initialize method', async () => {
       prisma.organization.findUnique.mockResolvedValue({ id: 'org-1' });
-      prisma.profile.findUnique.mockResolvedValue(makeProfile());
+      prisma.profile.findFirst.mockResolvedValue(makeProfile());
 
       await service.handleRequestByOrgSlug(
         'default',
@@ -1654,7 +1645,7 @@ describe('ProxyService', () => {
 
     it('should route to correct handler for all methods', async () => {
       prisma.organization.findUnique.mockResolvedValue({ id: 'org-1' });
-      prisma.profile.findUnique.mockResolvedValue(makeProfile());
+      prisma.profile.findFirst.mockResolvedValue(makeProfile());
 
       const listResult = await service.handleRequestByOrgSlug(
         'default',
@@ -1685,7 +1676,7 @@ describe('ProxyService', () => {
         { id: 'srv-org-err', type: 'external', config: '{"command":"node"}' },
         [],
       );
-      prisma.profile.findUnique.mockResolvedValue(makeProfile({ mcpServers: [ps] }));
+      prisma.profile.findFirst.mockResolvedValue(makeProfile({ mcpServers: [ps] }));
 
       mockListTools.mockRejectedValueOnce(new Error('Server crashed'));
 
@@ -1704,7 +1695,7 @@ describe('ProxyService', () => {
 
     it('should handle debug log creation failure gracefully', async () => {
       prisma.organization.findUnique.mockResolvedValue({ id: 'org-1' });
-      prisma.profile.findUnique.mockResolvedValue(makeProfile());
+      prisma.profile.findFirst.mockResolvedValue(makeProfile());
       debugService.createLog.mockRejectedValueOnce(new Error('DB error'));
 
       const result = await service.handleRequestByOrgSlug(
@@ -1722,7 +1713,7 @@ describe('ProxyService', () => {
         { id: 'srv-org-logfail', type: 'external', config: '{"command":"node"}' },
         [],
       );
-      prisma.profile.findUnique.mockResolvedValue(makeProfile({ mcpServers: [ps] }));
+      prisma.profile.findFirst.mockResolvedValue(makeProfile({ mcpServers: [ps] }));
 
       mockListTools.mockRejectedValueOnce(new Error('Fail'));
       debugService.updateLog.mockRejectedValueOnce(new Error('DB error'));
@@ -1742,7 +1733,7 @@ describe('ProxyService', () => {
         { id: 'srv-org-nonErr', type: 'external', config: '{"command":"node"}' },
         [],
       );
-      prisma.profile.findUnique.mockResolvedValue(makeProfile({ mcpServers: [ps] }));
+      prisma.profile.findFirst.mockResolvedValue(makeProfile({ mcpServers: [ps] }));
 
       mockListTools.mockRejectedValueOnce(42);
 
@@ -1763,7 +1754,7 @@ describe('ProxyService', () => {
     it('should throw NotFoundException when profile not found', async () => {
       prisma.profile.findFirst.mockResolvedValue(null);
 
-      await expect(service.getProfileInfo('nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(service.getProfileInfo('nonexistent', 'user-1')).rejects.toThrow(NotFoundException);
     });
 
     it('should return aggregated tools and server status', async () => {
@@ -1785,7 +1776,7 @@ describe('ProxyService', () => {
         { name: 'tool1', description: 'Original desc', inputSchema: {} },
       ]);
 
-      const result = await service.getProfileInfo('default');
+      const result = await service.getProfileInfo('default', 'user-1');
 
       expect(result.tools).toHaveLength(1);
       expect(result.tools[0]).toEqual({ name: 'renamedTool1', description: 'Custom desc' });
@@ -1813,7 +1804,7 @@ describe('ProxyService', () => {
         { name: 'disabled', description: 'desc', inputSchema: {} },
       ]);
 
-      const result = await service.getProfileInfo('default');
+      const result = await service.getProfileInfo('default', 'user-1');
 
       expect(result.tools).toHaveLength(1);
       expect(result.tools[0].name).toBe('enabled');
@@ -1827,7 +1818,7 @@ describe('ProxyService', () => {
       const profile = makeProfile({ mcpServers: [ps] });
       prisma.profile.findFirst.mockResolvedValue(profile);
 
-      const result = await service.getProfileInfo('default');
+      const result = await service.getProfileInfo('default', 'user-1');
 
       expect(result.serverStatus.connected).toBe(0);
       expect(result.serverStatus.servers['srv-info-bad']).toEqual({
@@ -1847,7 +1838,7 @@ describe('ProxyService', () => {
         { id: 'srv-orginfo-1', type: 'external', config: '{"command":"node"}' },
         [],
       );
-      prisma.profile.findUnique.mockResolvedValue(makeProfile({ mcpServers: [ps] }));
+      prisma.profile.findFirst.mockResolvedValue(makeProfile({ mcpServers: [ps] }));
 
       mockListTools.mockResolvedValue([
         { name: 'tool1', description: 'desc', inputSchema: {} },
@@ -1869,7 +1860,6 @@ describe('ProxyService', () => {
 
     it('should throw NotFoundException when profile not found in org', async () => {
       prisma.organization.findUnique.mockResolvedValue({ id: 'org-1' });
-      prisma.profile.findUnique.mockResolvedValue(null);
       prisma.profile.findFirst.mockResolvedValue(null);
 
       await expect(service.getProfileInfoByOrgSlug('missing', 'my-org')).rejects.toThrow(
@@ -1898,7 +1888,7 @@ describe('ProxyService', () => {
         .mockResolvedValueOnce([{ name: 'goodTool', description: 'desc', inputSchema: {} }])
         .mockRejectedValueOnce(new Error('Connection failed'));
 
-      const result = await service.getProfileInfo('default');
+      const result = await service.getProfileInfo('default', 'user-1');
 
       expect(result.serverStatus.total).toBe(2);
       expect(result.tools.length).toBeGreaterThanOrEqual(1);
@@ -1920,7 +1910,7 @@ describe('ProxyService', () => {
         { name: 'connectedTool', description: 'desc', inputSchema: {} },
       ]);
 
-      const result = await service.getProfileInfo('default');
+      const result = await service.getProfileInfo('default', 'user-1');
 
       expect(result.tools).toHaveLength(1);
       expect(result.tools[0].name).toBe('connectedTool');
@@ -1932,7 +1922,7 @@ describe('ProxyService', () => {
       const profile = makeProfile({ mcpServers: [] });
       prisma.profile.findFirst.mockResolvedValue(profile);
 
-      const result = await service.getProfileInfo('default');
+      const result = await service.getProfileInfo('default', 'user-1');
 
       expect(result.tools).toHaveLength(0);
       expect(result.serverStatus.total).toBe(0);

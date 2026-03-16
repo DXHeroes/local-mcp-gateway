@@ -295,7 +295,7 @@ export class SharingService {
           (summary.outbound.byPermission[share.permission] || 0) + 1;
       }
 
-      if (share.sharedWithId === userId || organizationIds.includes(share.sharedWithId)) {
+      if (share.sharedByUserId !== userId && (share.sharedWithId === userId || organizationIds.includes(share.sharedWithId))) {
         // Inbound share
         summary.inbound = {
           permission: share.permission,

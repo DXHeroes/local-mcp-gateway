@@ -6,8 +6,8 @@ export const ProfileCreateManyInputSchema: z.ZodType<Prisma.ProfileCreateManyInp
   id: z.uuid().optional(),
   name: z.string(),
   description: z.string().optional().nullable(),
-  userId: z.string().optional().nullable(),
-  organizationId: z.string().optional().nullable(),
+  userId: z.string(),
+  organizationId: z.string(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
 });

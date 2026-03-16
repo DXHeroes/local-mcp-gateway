@@ -76,7 +76,7 @@ export class ProxyService {
   async handleRequest(
     profileName: string,
     request: McpRequest,
-    userId?: string
+    userId: string
   ): Promise<McpResponse> {
     const requestId = request.id;
     const startTime = Date.now();
@@ -597,7 +597,7 @@ export class ProxyService {
   }
 
   /**
-   * Find a profile by name within an organization (or system profiles).
+   * Find a profile by name within an organization.
    */
   private async findProfileByNameAndOrg(profileName: string, orgId: string) {
     const include = {
@@ -611,28 +611,16 @@ export class ProxyService {
       },
     };
 
-    // Try org-scoped first
-    let profile = await this.prisma.profile.findUnique({
-      where: { organizationId_name: { organizationId: orgId, name: profileName } },
+    return this.prisma.profile.findFirst({
+      where: { name: profileName, organizationId: orgId },
       include,
     });
-
-    // Fallback to system profile (organizationId=null)
-    if (!profile) {
-      profile = await this.prisma.profile.findFirst({
-        where: { name: profileName, organizationId: null },
-        include,
-      });
-    }
-
-    return profile;
   }
 
   /**
-   * Find a profile by name, scoped to user if userId is provided.
-   * Anonymous users see all profiles. Authenticated users see own + system profiles.
+   * Find a profile by name, scoped to the user's organizations.
    */
-  private async findProfileByName(profileName: string, userId?: string) {
+  private async findProfileByName(profileName: string, userId: string) {
     const include = {
       mcpServers: {
         where: { isActive: true },
@@ -644,28 +632,19 @@ export class ProxyService {
       },
     };
 
-    // Try finding by unique (org, name) — for system profiles use null org
-    const profile = await this.prisma.profile.findFirst({
-      where: { name: profileName },
+    // Look up user's memberships and search in their orgs
+    const memberships = await this.prisma.member.findMany({
+      where: { userId },
+      select: { organizationId: true },
+    });
+    const orgIds = memberships.map((m) => m.organizationId);
+
+    if (orgIds.length === 0) return null;
+
+    return this.prisma.profile.findFirst({
+      where: { name: profileName, organizationId: { in: orgIds } },
       include,
     });
-
-    if (!profile) return null;
-
-    // If no userId or unauthenticated, allow access to all profiles
-    if (!userId || userId === '__unauthenticated__') return profile;
-
-    // System records — accessible to all
-    if (!profile.organizationId) return profile;
-
-    // Allow access if user is a member of the profile's org
-    const membership = await this.prisma.member.findFirst({
-      where: { userId, organizationId: profile.organizationId },
-    });
-    if (membership) return profile;
-
-    // Otherwise deny
-    return null;
   }
 
   /**
@@ -792,7 +771,7 @@ export class ProxyService {
   /**
    * Get profile info with aggregated tools and server status
    */
-  async getProfileInfo(profileName: string, userId?: string) {
+  async getProfileInfo(profileName: string, userId: string) {
     const profile = await this.findProfileByName(profileName, userId);
 
     if (!profile) {

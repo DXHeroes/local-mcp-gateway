@@ -74,6 +74,7 @@ interface McpServerWithStatus extends McpServer {
 import { API_URL } from '../config/api';
 import { useSharingSummary } from '../hooks/useSharingSummary';
 import { apiFetch } from '../lib/api-fetch';
+import { authClient } from '../lib/auth-client';
 
 // Helper to parse apiKeyConfig which may be a JSON string from the database
 const parseApiKeyConfig = (
@@ -92,6 +93,7 @@ const parseApiKeyConfig = (
 
 export default function McpServersPage() {
   const navigate = useNavigate();
+  const { data: session } = authClient.useSession();
   const { summary: sharingSummary } = useSharingSummary('mcp_server');
   const [servers, setServers] = useState<McpServerWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
@@ -288,8 +290,9 @@ export default function McpServersPage() {
         <div className="grid grid-cols-1 gap-3">
           {servers.map((server) => {
             const shareInfo = sharingSummary[server.id];
-            const isSharedUseOnly = shareInfo?.inbound && shareInfo.inbound.permission === 'use';
-            const canEdit = !shareInfo?.inbound || shareInfo.inbound.permission === 'admin';
+            const isOwner = server.userId === session?.user?.id;
+            const isSharedUseOnly = !isOwner && shareInfo?.inbound && shareInfo.inbound.permission === 'use';
+            const canEdit = isOwner || !shareInfo?.inbound || shareInfo.inbound.permission === 'admin';
             return (
               <Card key={server.id}>
                 <CardHeader>
@@ -316,7 +319,7 @@ export default function McpServersPage() {
                               Edit
                             </Button>
                           )}
-                          {!isSharedUseOnly && !shareInfo?.inbound && (
+                          {(isOwner || (!isSharedUseOnly && !shareInfo?.inbound)) && (
                             <Button
                               variant="ghost"
                               size="sm"

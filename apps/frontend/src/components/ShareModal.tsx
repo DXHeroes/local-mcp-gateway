@@ -99,7 +99,8 @@ export default function ShareModal({ isOpen, onClose, resourceType, resourceId }
       const result = await authClient.organization.listMembers({
         query: { organizationId: activeOrg.id },
       });
-      const allMembers: OrgMember[] = Array.isArray(result.data) ? result.data : [];
+      const data = result.data;
+      const allMembers: OrgMember[] = Array.isArray(data?.members) ? data.members : [];
       // Filter out the current user
       const currentUserId = session?.user?.id;
       setMembers(currentUserId ? allMembers.filter((m) => m.userId !== currentUserId) : allMembers);

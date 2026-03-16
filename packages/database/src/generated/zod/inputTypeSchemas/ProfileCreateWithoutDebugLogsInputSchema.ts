@@ -11,8 +11,8 @@ export const ProfileCreateWithoutDebugLogsInputSchema: z.ZodType<Prisma.ProfileC
   description: z.string().optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  user: z.lazy(() => UserCreateNestedOneWithoutProfilesInputSchema).optional(),
-  organization: z.lazy(() => OrganizationCreateNestedOneWithoutProfilesInputSchema).optional(),
+  user: z.lazy(() => UserCreateNestedOneWithoutProfilesInputSchema),
+  organization: z.lazy(() => OrganizationCreateNestedOneWithoutProfilesInputSchema),
   mcpServers: z.lazy(() => ProfileMcpServerCreateNestedManyWithoutProfileInputSchema).optional(),
 });
 

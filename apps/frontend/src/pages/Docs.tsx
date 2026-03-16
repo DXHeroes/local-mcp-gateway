@@ -41,7 +41,12 @@ const SECTION_IDS = [
   'core-concepts',
   'quick-start-docker',
   'quick-start-source',
+  'quick-start-signup',
   'quick-start-profile',
+  'organizations',
+  'sharing',
+  'tool-customization',
+  'builtin-servers',
   'ai-cursor',
   'ai-claude',
   'ai-prompt',
@@ -166,7 +171,12 @@ export default function DocsPage() {
                 switch instantly
               </li>
               <li>
-                <strong>Auth Handling</strong>: Automatic OAuth flows and API key injection
+                <strong>Auth Handling</strong>: User authentication (email/password, Google OAuth),
+                automatic OAuth flows for external services, and API key injection
+              </li>
+              <li>
+                <strong>Team Collaboration</strong>: Create organizations, invite team members, and
+                share servers and profiles with role-based access control
               </li>
               <li>
                 <strong>Debug Logging</strong>: See exactly what the AI is sending and receiving
@@ -193,8 +203,8 @@ export default function DocsPage() {
               <p className="text-gray-700">
                 A <strong>Profile</strong> is a logical grouping of MCP servers. Each profile gets a
                 unique endpoint (e.g.,{' '}
-                <code className="bg-gray-100 px-1 rounded">/api/mcp/my-org/work</code>). Use different
-                profiles for different contexts: Work, Personal, Debug, etc.
+                <code className="bg-gray-100 px-1 rounded">/api/mcp/my-org/work</code>). Use
+                different profiles for different contexts: Work, Personal, Debug, etc.
               </p>
             </div>
 
@@ -219,8 +229,36 @@ export default function DocsPage() {
             <div>
               <h3 className="text-md font-semibold text-gray-800 mb-1">The Proxy</h3>
               <p className="text-gray-700">
-                The proxy sits between your AI client and MCP servers. It handles routing, tool
-                aggregation, and security (OAuth tokens, API keys).
+                The proxy sits between your AI client and MCP servers. It handles authentication,
+                routing, tool aggregation, and security (OAuth tokens, API keys).
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-md font-semibold text-gray-800 mb-1">Organizations</h3>
+              <p className="text-gray-700">
+                An <strong>Organization</strong> is a multi-tenant workspace that groups users,
+                servers, and profiles. A personal workspace is created when you sign up. Create
+                additional organizations for team collaboration and switch between them using the
+                organization switcher.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-md font-semibold text-gray-800 mb-1">Roles &amp; Permissions</h3>
+              <p className="text-gray-700">
+                Each organization member has a role: <strong>Owner</strong> (full control),{' '}
+                <strong>Admin</strong> (manage servers, profiles, and invitations), or{' '}
+                <strong>Member</strong> (use shared resources).
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-md font-semibold text-gray-800 mb-1">Sharing</h3>
+              <p className="text-gray-700">
+                Share MCP servers and profiles with organization members. Permission levels:{' '}
+                <strong>admin</strong> (can modify) or <strong>use</strong> (read-only). Shared
+                resources appear alongside your own in the UI.
               </p>
             </div>
           </div>
@@ -270,20 +308,270 @@ pnpm dev`}
           </div>
         </section>
 
+        {/* Quick Start - Sign Up */}
+        <section id="quick-start-signup" className="mb-8 scroll-mt-4">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Sign Up</h2>
+          <p className="text-gray-700 mb-3">After starting the application, create your account:</p>
+          <ol className="list-decimal list-inside text-gray-700 space-y-1">
+            <li>Open the UI in your browser</li>
+            <li>
+              Click <strong>Sign up</strong> and enter your name, email, and password
+            </li>
+            <li>Optionally, sign in with Google if your instance has Google OAuth configured</li>
+          </ol>
+          <p className="text-gray-600 text-sm mt-3">
+            A personal workspace (organization) is created automatically when you sign up.
+          </p>
+        </section>
+
         {/* Quick Start - Creating Profile */}
         <section id="quick-start-profile" className="mb-8 scroll-mt-4">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Creating Your First Profile</h2>
           <ol className="list-decimal list-inside text-gray-700 space-y-1">
+            <li>Sign up or log in (see above)</li>
             <li>
               Go to <strong>Profiles</strong> page
             </li>
             <li>
-              Click <strong>"Create Profile"</strong>
+              Click <strong>&quot;Create Profile&quot;</strong>
             </li>
-            <li>Enter a profile name (e.g., "my-profile")</li>
+            <li>Enter a profile name (e.g., &quot;my-profile&quot;)</li>
             <li>Add MCP servers to your profile</li>
             <li>Copy the endpoint URL for your AI client</li>
           </ol>
+        </section>
+
+        {/* Organizations */}
+        <section id="organizations" className="mb-8 scroll-mt-4">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Organizations</h2>
+          <div className="prose prose-sm max-w-none">
+            <p className="text-gray-700 mb-4">
+              Organizations are multi-tenant workspaces that let you group users, MCP servers, and
+              profiles together. Use them to separate personal and team resources.
+            </p>
+
+            <h3 className="text-md font-semibold text-gray-800 mb-2">Create an organization</h3>
+            <ol className="list-decimal list-inside text-gray-700 mb-4 space-y-1">
+              <li>Click the organization switcher in the top navigation bar</li>
+              <li>
+                Select <strong>Create organization</strong>
+              </li>
+              <li>Enter a name for your organization</li>
+              <li>
+                Click <strong>Create</strong>
+              </li>
+            </ol>
+
+            <h3 className="text-md font-semibold text-gray-800 mb-2">Invite members</h3>
+            <p className="text-gray-700 mb-2">
+              You need the <strong>owner</strong> or <strong>admin</strong> role to invite members.
+            </p>
+            <ol className="list-decimal list-inside text-gray-700 mb-4 space-y-1">
+              <li>
+                Go to <strong>Settings</strong> &gt; <strong>Organization</strong>
+              </li>
+              <li>
+                Click <strong>Invite member</strong>
+              </li>
+              <li>Enter the person&apos;s email address and select a role</li>
+              <li>
+                Click <strong>Send invitation</strong>
+              </li>
+            </ol>
+
+            <h3 className="text-md font-semibold text-gray-800 mb-2">Roles</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm text-gray-700">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2 pr-4 font-semibold">Role</th>
+                    <th className="text-left py-2 pr-4 font-semibold">Manage members</th>
+                    <th className="text-left py-2 pr-4 font-semibold">Manage resources</th>
+                    <th className="text-left py-2 font-semibold">Use shared resources</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b">
+                    <td className="py-2 pr-4 font-medium">Owner</td>
+                    <td className="py-2 pr-4">Yes</td>
+                    <td className="py-2 pr-4">Yes</td>
+                    <td className="py-2">Yes</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-2 pr-4 font-medium">Admin</td>
+                    <td className="py-2 pr-4">Invite only</td>
+                    <td className="py-2 pr-4">Yes</td>
+                    <td className="py-2">Yes</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 pr-4 font-medium">Member</td>
+                    <td className="py-2 pr-4">No</td>
+                    <td className="py-2 pr-4">No</td>
+                    <td className="py-2">Yes</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3 className="text-md font-semibold text-gray-800 mt-4 mb-2">Auto-join domains</h3>
+            <p className="text-gray-700">
+              Configure email domains (e.g.,{' '}
+              <code className="bg-gray-100 px-1 rounded">company.com</code>) so new users with
+              matching emails automatically join your organization. Go to <strong>Settings</strong>{' '}
+              &gt; <strong>Organization</strong> &gt; <strong>Domains</strong> to set this up.
+            </p>
+          </div>
+        </section>
+
+        {/* Sharing */}
+        <section id="sharing" className="mb-8 scroll-mt-4">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Sharing</h2>
+          <div className="prose prose-sm max-w-none">
+            <p className="text-gray-700 mb-4">
+              Share your MCP servers and profiles with other members of your organization. Sharing
+              lets your team reuse configurations without duplicating setup.
+            </p>
+
+            <h3 className="text-md font-semibold text-gray-800 mb-2">How to share</h3>
+            <ol className="list-decimal list-inside text-gray-700 mb-4 space-y-1">
+              <li>Open the detail view of a server or profile</li>
+              <li>
+                Click <strong>Share</strong>
+              </li>
+              <li>Choose to share with the organization or a specific user</li>
+              <li>Select a permission level</li>
+            </ol>
+
+            <h3 className="text-md font-semibold text-gray-800 mb-2">Permission levels</h3>
+            <ul className="list-disc list-inside text-gray-700 space-y-1">
+              <li>
+                <strong>Admin</strong>: Can use and modify the resource
+              </li>
+              <li>
+                <strong>Use</strong>: Can use the resource but cannot modify it
+              </li>
+            </ul>
+            <p className="text-gray-600 text-sm mt-3">
+              Shared resources appear alongside your own servers and profiles in the UI. Sharing is
+              scoped to organizations — you can only share with members of the same organization.
+            </p>
+          </div>
+        </section>
+
+        {/* Tool Customization */}
+        <section id="tool-customization" className="mb-8 scroll-mt-4">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Tool Customization</h2>
+          <div className="prose prose-sm max-w-none">
+            <p className="text-gray-700 mb-4">
+              Customize individual tools within a profile to control what your AI assistant sees.
+              This helps reduce noise and improve accuracy.
+            </p>
+
+            <h3 className="text-md font-semibold text-gray-800 mb-2">What you can customize</h3>
+            <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
+              <li>
+                <strong>Enable/disable tools</strong>: Hide tools the AI doesn&apos;t need for a
+                specific use case
+              </li>
+              <li>
+                <strong>Rename tools</strong>: Give tools clearer names to help the AI pick the
+                right one
+              </li>
+              <li>
+                <strong>Override descriptions</strong>: Refine tool descriptions for better AI
+                understanding
+              </li>
+              <li>
+                <strong>Customize input schemas</strong>: Modify parameter definitions to restrict
+                or simplify inputs
+              </li>
+            </ul>
+
+            <h3 className="text-md font-semibold text-gray-800 mb-2">How to customize</h3>
+            <ol className="list-decimal list-inside text-gray-700 space-y-1">
+              <li>Open a profile&apos;s detail page</li>
+              <li>Find the MCP server whose tools you want to customize</li>
+              <li>Click on the server to expand its tool list</li>
+              <li>Toggle, rename, or edit individual tools</li>
+              <li>Save your changes</li>
+            </ol>
+            <p className="text-gray-600 text-sm mt-3">
+              Customizations are per-profile — the same server can have different tool
+              configurations in different profiles.
+            </p>
+          </div>
+        </section>
+
+        {/* Built-in MCP Servers */}
+        <section id="builtin-servers" className="mb-8 scroll-mt-4">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Built-in MCP Servers</h2>
+          <div className="prose prose-sm max-w-none">
+            <p className="text-gray-700 mb-4">
+              The gateway includes several built-in MCP server packages that are auto-discovered at
+              startup. Add them from the presets list — no manual configuration needed.
+            </p>
+
+            <div className="space-y-3 mb-4">
+              <div className="border border-gray-200 rounded-lg p-3">
+                <h3 className="text-md font-semibold text-gray-800 mb-1">Gemini Deep Research</h3>
+                <p className="text-gray-700 text-sm">
+                  AI-powered research using Google&apos;s Deep Research Agent. Autonomously searches
+                  the web and synthesizes detailed reports.
+                </p>
+                <p className="text-gray-500 text-xs mt-1">
+                  API key: <code className="bg-gray-100 px-1 rounded">GEMINI_API_KEY</code>
+                </p>
+              </div>
+
+              <div className="border border-gray-200 rounded-lg p-3">
+                <h3 className="text-md font-semibold text-gray-800 mb-1">Toggl Track</h3>
+                <p className="text-gray-700 text-sm">
+                  Time tracking, project management, and reporting via the Toggl Track API.
+                </p>
+                <p className="text-gray-500 text-xs mt-1">API key: Toggl API token (Basic auth)</p>
+              </div>
+
+              <div className="border border-gray-200 rounded-lg p-3">
+                <h3 className="text-md font-semibold text-gray-800 mb-1">Fakturoid</h3>
+                <p className="text-gray-700 text-sm">
+                  Invoicing, contacts, and accounting via Fakturoid API v3. Designed for Czech
+                  businesses.
+                </p>
+                <p className="text-gray-500 text-xs mt-1">
+                  API key: Personal access token (format: slug:token)
+                </p>
+              </div>
+
+              <div className="border border-gray-200 rounded-lg p-3">
+                <h3 className="text-md font-semibold text-gray-800 mb-1">Merk</h3>
+                <p className="text-gray-700 text-sm">
+                  Czech and Slovak company data — financials, relations, employees, and business
+                  intelligence.
+                </p>
+                <p className="text-gray-500 text-xs mt-1">API key: Merk API token</p>
+              </div>
+
+              <div className="border border-gray-200 rounded-lg p-3">
+                <h3 className="text-md font-semibold text-gray-800 mb-1">Abra Flexi</h3>
+                <p className="text-gray-700 text-sm">
+                  Invoices, contacts, and accounting via Abra Flexi REST API for Czech businesses.
+                </p>
+                <p className="text-gray-500 text-xs mt-1">API key: Basic auth credentials</p>
+              </div>
+            </div>
+
+            <h3 className="text-md font-semibold text-gray-800 mb-2">Adding a built-in server</h3>
+            <ol className="list-decimal list-inside text-gray-700 space-y-1">
+              <li>
+                Go to <strong>MCP Servers</strong> page
+              </li>
+              <li>
+                Click <strong>Add from presets</strong>
+              </li>
+              <li>Select the server and enter the required API key</li>
+              <li>Add the server to your profile</li>
+            </ol>
+          </div>
         </section>
 
         {/* AI Integration - Cursor */}

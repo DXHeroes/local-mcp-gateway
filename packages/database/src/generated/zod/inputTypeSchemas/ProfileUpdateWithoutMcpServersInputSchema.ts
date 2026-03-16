@@ -4,8 +4,8 @@ import { z } from 'zod';
 import { StringFieldUpdateOperationsInputSchema } from './StringFieldUpdateOperationsInputSchema';
 import { NullableStringFieldUpdateOperationsInputSchema } from './NullableStringFieldUpdateOperationsInputSchema';
 import { DateTimeFieldUpdateOperationsInputSchema } from './DateTimeFieldUpdateOperationsInputSchema';
-import { UserUpdateOneWithoutProfilesNestedInputSchema } from './UserUpdateOneWithoutProfilesNestedInputSchema';
-import { OrganizationUpdateOneWithoutProfilesNestedInputSchema } from './OrganizationUpdateOneWithoutProfilesNestedInputSchema';
+import { UserUpdateOneRequiredWithoutProfilesNestedInputSchema } from './UserUpdateOneRequiredWithoutProfilesNestedInputSchema';
+import { OrganizationUpdateOneRequiredWithoutProfilesNestedInputSchema } from './OrganizationUpdateOneRequiredWithoutProfilesNestedInputSchema';
 import { DebugLogUpdateManyWithoutProfileNestedInputSchema } from './DebugLogUpdateManyWithoutProfileNestedInputSchema';
 
 export const ProfileUpdateWithoutMcpServersInputSchema: z.ZodType<Prisma.ProfileUpdateWithoutMcpServersInput> = z.strictObject({
@@ -14,8 +14,8 @@ export const ProfileUpdateWithoutMcpServersInputSchema: z.ZodType<Prisma.Profile
   description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  user: z.lazy(() => UserUpdateOneWithoutProfilesNestedInputSchema).optional(),
-  organization: z.lazy(() => OrganizationUpdateOneWithoutProfilesNestedInputSchema).optional(),
+  user: z.lazy(() => UserUpdateOneRequiredWithoutProfilesNestedInputSchema).optional(),
+  organization: z.lazy(() => OrganizationUpdateOneRequiredWithoutProfilesNestedInputSchema).optional(),
   debugLogs: z.lazy(() => DebugLogUpdateManyWithoutProfileNestedInputSchema).optional(),
 });
 

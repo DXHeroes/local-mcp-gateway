@@ -24,13 +24,36 @@ The **Gateway** is the brain of this application.
 - It handles:
     - **Routing**: Directing requests to the correct server.
     - **Aggregation**: Combining lists of tools from multiple servers into one list for the AI.
+    - **Authentication**: Verifying user sessions before granting access to tools.
     - **Security**: Managing OAuth tokens and API keys so you don't have to paste them into every chat.
 
-## 5. Tunnels (HTTPS)
+## 5. Organizations
+
+An **Organization** is a multi-tenant workspace that groups users, servers, and profiles together.
+- **Personal workspace**: When you sign up, a personal workspace is created automatically.
+- **Team workspaces**: Create additional organizations to collaborate with colleagues.
+- **Switching**: You can switch between organizations using the organization switcher in the UI.
+- **Auto-join domains**: Admins can configure email domains (e.g., `@company.com`) so new users with matching emails automatically join the organization.
+
+## 6. Roles and permissions
+
+Each organization member has one of three roles:
+- **Owner**: Full control — can manage members, change roles, configure domains, and delete the organization.
+- **Admin**: Can manage servers, profiles, sharing, and invite new members.
+- **Member**: Can use shared servers and profiles but cannot modify organization settings.
+
+## 7. Sharing
+
+**Sharing** lets you grant other organization members access to your MCP servers and profiles.
+- **Permission levels**: `admin` (can modify) or `use` (read-only access).
+- **Shared resources** appear alongside your own servers and profiles in the UI.
+- Sharing is scoped to organizations — you can only share with members of the same organization.
+
+## 8. Tunnels (HTTPS)
 AI tools like **Claude Code** or **Claude Desktop** often require a **secure (HTTPS)** connection to work properly.
 - Since your local server runs on `http://localhost`, we use a **Tunnel** (via `localtunnel`) to create a temporary public HTTPS URL (e.g., `https://blue-sky.loca.lt`) that routes traffic securely to your machine.
 
-## 6. AI Prompt Formats
+## 9. AI Prompt Formats
 The gateway provides AI-readable descriptions of your tools in two formats:
 
 ### Markdown Format
@@ -46,13 +69,13 @@ The gateway provides AI-readable descriptions of your tools in two formats:
 
 Both formats contain the same information: profile details, available tools, and their input schemas. Choose based on your use case - Markdown for readability, TOON for efficiency.
 
-## 7. The Gateway Endpoint
+## 10. The Gateway Endpoint
 The **Gateway Endpoint** (`/api/mcp/gateway`) is a unified endpoint that aggregates all tools from the default profile.
 - **Simplified Configuration**: Connect once and get access to all your tools without managing multiple endpoints.
 - **Default Profile**: The gateway uses the profile configured as "default" in Settings.
 - **Full MCP Support**: Supports all MCP operations including tool listing, tool calls, resources, and prompts.
 
-## 8. Streamable HTTP Transport
+## 11. Streamable HTTP Transport
 The gateway supports the **MCP specification 2025-11-25** with **Streamable HTTP** transport.
 - **Server-Sent Events (SSE)**: Real-time notifications and streaming responses via `/api/mcp/gateway/sse`.
 - **JSON-RPC 2.0**: Standard request/response via POST to `/api/mcp/gateway`.

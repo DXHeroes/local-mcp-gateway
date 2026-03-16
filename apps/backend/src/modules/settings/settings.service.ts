@@ -53,19 +53,27 @@ export class SettingsService {
 
   /**
    * Set the default gateway profile
-   * Validates that the profile exists before setting.
+   * Validates that the profile exists in the user's org before setting.
    * Emits GATEWAY_PROFILE_CHANGED event for SSE subscribers.
    */
-  async setDefaultGatewayProfile(profileName: string): Promise<{ key: string; value: string }> {
+  async setDefaultGatewayProfile(
+    profileName: string,
+    userId?: string,
+    orgId?: string
+  ): Promise<{ key: string; value: string }> {
     // Input sanitization
     const trimmedName = profileName?.trim();
     if (!trimmedName) {
       throw new BadRequestException('Profile name cannot be empty');
     }
 
-    // Validate that profile exists
+    // Validate that profile exists (scoped to user+org if provided)
+    const whereClause: Record<string, unknown> = { name: trimmedName };
+    if (userId) whereClause.userId = userId;
+    if (orgId) whereClause.organizationId = orgId;
+
     const profile = await this.prisma.profile.findFirst({
-      where: { name: trimmedName },
+      where: whereClause,
     });
 
     if (!profile) {
