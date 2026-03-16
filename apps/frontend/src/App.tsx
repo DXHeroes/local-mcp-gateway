@@ -156,26 +156,103 @@ function App() {
 }
 
 /**
+ * OrgPicker — shown when user belongs to multiple orgs and none is active.
+ */
+function OrgPicker({ organizations }: { organizations: { id: string; name: string; slug: string }[] }) {
+  const [selecting, setSelecting] = useState<string | null>(null);
+
+  const handleSelect = async (orgId: string) => {
+    setSelecting(orgId);
+    try {
+      await authClient.organization.setActive({ organizationId: orgId });
+    } finally {
+      setSelecting(null);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg shadow-md p-8 w-full max-w-md">
+        <h2 className="text-xl font-semibold text-gray-900 text-center mb-2">
+          Select an Organization
+        </h2>
+        <p className="text-gray-500 text-sm text-center mb-6">
+          You belong to multiple organizations. Choose one to continue.
+        </p>
+        <div className="space-y-3">
+          {organizations.map((org) => (
+            <button
+              key={org.id}
+              type="button"
+              disabled={selecting !== null}
+              onClick={() => handleSelect(org.id)}
+              className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors disabled:opacity-50"
+            >
+              <div className="text-left">
+                <div className="font-medium text-gray-900">{org.name}</div>
+                <div className="text-sm text-gray-500">{org.slug}</div>
+              </div>
+              <span className="text-sm text-blue-600 font-medium">
+                {selecting === org.id ? 'Selecting...' : 'Select'}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
  * OrgGate — ensures an active organization is set before rendering the app.
- * Auto-selects the first available org if none is active on the session.
+ * - Single org: auto-selects it
+ * - Multiple orgs: shows OrgPicker
+ * - Zero orgs: retries up to 3 times (race condition with async signup hook)
  */
 function OrgGate() {
   const { data: orgs, isPending: orgsLoading } = authClient.useListOrganizations();
   const { data: activeOrg, isPending: activeOrgLoading } = authClient.useActiveOrganization();
   const organizations = Array.isArray(orgs) ? orgs : [];
   const [setting, setSetting] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
 
+  // Auto-select when exactly one org and no active org
   useEffect(() => {
-    const firstOrg = organizations[0];
-    if (!orgsLoading && !activeOrgLoading && !activeOrg && firstOrg && !setting) {
+    if (
+      !orgsLoading &&
+      !activeOrgLoading &&
+      !activeOrg &&
+      organizations.length === 1 &&
+      !setting
+    ) {
       setSetting(true);
       authClient.organization
-        .setActive({ organizationId: firstOrg.id })
+        .setActive({ organizationId: organizations[0].id })
         .finally(() => setSetting(false));
     }
   }, [organizations, activeOrg, orgsLoading, activeOrgLoading, setting]);
 
+  // Retry when zero orgs found (race condition with async signup hook)
+  useEffect(() => {
+    if (!orgsLoading && !activeOrgLoading && organizations.length === 0 && retryCount < maxRetries) {
+      const timer = setTimeout(() => {
+        setRetryCount((c) => c + 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [orgsLoading, activeOrgLoading, organizations.length, retryCount]);
+
   if (orgsLoading || activeOrgLoading || setting) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-400 text-sm">Loading organization...</div>
+      </div>
+    );
+  }
+
+  // Still retrying — show loading
+  if (organizations.length === 0 && retryCount < maxRetries) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-gray-400 text-sm">Loading organization...</div>
@@ -194,6 +271,11 @@ function OrgGate() {
         </div>
       </div>
     );
+  }
+
+  // Multiple orgs, none active — show picker
+  if (organizations.length > 1 && !activeOrg) {
+    return <OrgPicker organizations={organizations} />;
   }
 
   if (!activeOrg) {

@@ -71,42 +71,10 @@ export function createAuth(prisma: PrismaClient): AuthInstance {
       user: {
         create: {
           after: async (user) => {
-            // Auto-create a default organization for new users
-            const orgName = `${user.name}'s workspace`;
-            const baseSlug = `${toSlug(user.name)}-workspace`;
-
-            // Ensure unique slug
-            let slug = baseSlug;
-            let suffix = 0;
-            while (true) {
-              const existing = await prisma.organization.findUnique({ where: { slug } });
-              if (!existing) break;
-              suffix++;
-              slug = `${baseSlug}-${suffix}`;
-            }
-
-            const orgId = crypto.randomUUID();
-            const memberId = crypto.randomUUID();
-
-            await prisma.organization.create({
-              data: {
-                id: orgId,
-                name: orgName,
-                slug,
-              },
-            });
-
-            await prisma.member.create({
-              data: {
-                id: memberId,
-                organizationId: orgId,
-                userId: user.id,
-                role: 'owner',
-              },
-            });
-
-            // Auto-join organizations by email domain
+            // 1. Auto-join organizations by email domain FIRST
             const emailDomain = user.email?.split('@')[1]?.toLowerCase();
+            let autoJoinedCount = 0;
+
             if (emailDomain) {
               const matchingDomains = await prisma.organizationDomain.findMany({
                 where: { domain: emailDomain },
@@ -126,8 +94,45 @@ export function createAuth(prisma: PrismaClient): AuthInstance {
                       role: 'member',
                     },
                   });
+                  autoJoinedCount++;
                 }
               }
+            }
+
+            // 2. Fallback: create personal workspace only if no auto-join matched
+            if (autoJoinedCount === 0) {
+              const orgName = `${user.name}'s workspace`;
+              const baseSlug = `${toSlug(user.name)}-workspace`;
+
+              // Ensure unique slug
+              let slug = baseSlug;
+              let suffix = 0;
+              while (true) {
+                const existing = await prisma.organization.findUnique({ where: { slug } });
+                if (!existing) break;
+                suffix++;
+                slug = `${baseSlug}-${suffix}`;
+              }
+
+              const orgId = crypto.randomUUID();
+              const memberId = crypto.randomUUID();
+
+              await prisma.organization.create({
+                data: {
+                  id: orgId,
+                  name: orgName,
+                  slug,
+                },
+              });
+
+              await prisma.member.create({
+                data: {
+                  id: memberId,
+                  organizationId: orgId,
+                  userId: user.id,
+                  role: 'owner',
+                },
+              });
             }
           },
         },

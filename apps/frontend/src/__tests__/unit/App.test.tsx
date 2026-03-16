@@ -25,11 +25,16 @@ const mockUseActiveOrganization = vi.fn().mockReturnValue({
   isPending: false,
 });
 
+const mockSetActive = vi.fn().mockResolvedValue({});
+
 vi.mock('../../lib/auth-client', () => ({
   authClient: {
     useSession: () => mockUseSession(),
     useListOrganizations: () => mockUseListOrganizations(),
     useActiveOrganization: () => mockUseActiveOrganization(),
+    organization: {
+      setActive: (...args: unknown[]) => mockSetActive(...args),
+    },
     signOut: vi.fn(),
     signIn: {
       email: vi.fn(),
@@ -46,6 +51,7 @@ afterEach(() => {
   mockUseSession.mockReturnValue({ data: null, isPending: false });
   mockUseListOrganizations.mockReturnValue({ data: [], isPending: false });
   mockUseActiveOrganization.mockReturnValue({ data: null, isPending: false });
+  mockSetActive.mockClear();
   window.history.replaceState({}, '', '/');
 });
 
@@ -173,5 +179,61 @@ describe('App', () => {
     render(<App />);
 
     expect(screen.getByText('Loading...')).toBeInTheDocument();
+  });
+
+  it('should show org picker when user has multiple orgs and no active org', async () => {
+    mockUseSession.mockReturnValue({
+      data: {
+        user: { id: 'test', name: 'Test User', email: 'test@test.com' },
+        session: { id: 'sess-1', userId: 'test' },
+      },
+      isPending: false,
+    });
+    mockUseListOrganizations.mockReturnValue({
+      data: [
+        { id: 'org-1', name: 'Acme Corp', slug: 'acme-corp' },
+        { id: 'org-2', name: 'Beta Inc', slug: 'beta-inc' },
+      ],
+      isPending: false,
+    });
+    mockUseActiveOrganization.mockReturnValue({
+      data: null,
+      isPending: false,
+    });
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Select an Organization')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Acme Corp')).toBeInTheDocument();
+    expect(screen.getByText('Beta Inc')).toBeInTheDocument();
+    expect(screen.getByText('acme-corp')).toBeInTheDocument();
+    expect(screen.getByText('beta-inc')).toBeInTheDocument();
+  });
+
+  it('should auto-select when user has exactly one org and no active org', async () => {
+    mockUseSession.mockReturnValue({
+      data: {
+        user: { id: 'test', name: 'Test User', email: 'test@test.com' },
+        session: { id: 'sess-1', userId: 'test' },
+      },
+      isPending: false,
+    });
+    mockUseListOrganizations.mockReturnValue({
+      data: [{ id: 'org-1', name: 'Test Org', slug: 'test-org' }],
+      isPending: false,
+    });
+    mockUseActiveOrganization.mockReturnValue({
+      data: null,
+      isPending: false,
+    });
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(mockSetActive).toHaveBeenCalledWith({ organizationId: 'org-1' });
+    });
   });
 });
