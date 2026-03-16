@@ -226,9 +226,11 @@ function OrgGate() {
       organizations.length === 1 &&
       !setting
     ) {
+      const firstOrg = organizations[0];
+      if (!firstOrg) return;
       setSetting(true);
       authClient.organization
-        .setActive({ organizationId: organizations[0].id })
+        .setActive({ organizationId: firstOrg.id })
         .finally(() => setSetting(false));
     }
   }, [organizations, activeOrg, orgsLoading, activeOrgLoading, setting]);
@@ -241,6 +243,7 @@ function OrgGate() {
       }, 1000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [orgsLoading, activeOrgLoading, organizations.length, retryCount]);
 
   if (orgsLoading || activeOrgLoading || setting) {
