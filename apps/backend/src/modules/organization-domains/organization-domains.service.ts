@@ -6,6 +6,7 @@
 
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
+import { BLACKLISTED_DOMAINS } from './blacklisted-domains.js';
 
 const DOMAIN_REGEX = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
 
@@ -27,6 +28,12 @@ export class OrganizationDomainsService {
 
     if (!DOMAIN_REGEX.test(domain)) {
       throw new BadRequestException('Invalid domain format');
+    }
+
+    if (BLACKLISTED_DOMAINS.has(domain)) {
+      throw new BadRequestException(
+        'Public email provider domains (e.g. gmail.com) cannot be used for auto-join'
+      );
     }
 
     return this.prisma.organizationDomain.create({

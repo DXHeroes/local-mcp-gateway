@@ -22,6 +22,7 @@ export default function OrganizationsPage() {
   const [domains, setDomains] = useState<{ id: string; domain: string }[]>([]);
   const [showDomainForm, setShowDomainForm] = useState(false);
   const [newDomain, setNewDomain] = useState('');
+  const [domainError, setDomainError] = useState('');
 
   const fetchDomains = useCallback(async () => {
     if (!activeOrg) return;
@@ -48,8 +49,12 @@ export default function OrganizationsPage() {
     });
     if (res.ok) {
       setNewDomain('');
+      setDomainError('');
       setShowDomainForm(false);
       fetchDomains();
+    } else {
+      const body = await res.json().catch(() => null);
+      setDomainError(body?.message || 'Failed to add domain');
     }
   };
 
@@ -253,9 +258,15 @@ export default function OrganizationsPage() {
                   type="text"
                   placeholder="e.g. dxheroes.io"
                   value={newDomain}
-                  onChange={(e) => setNewDomain(e.target.value)}
+                  onChange={(e) => {
+                    setNewDomain(e.target.value);
+                    setDomainError('');
+                  }}
                   className="w-full px-3 py-2 border rounded-lg text-sm"
                 />
+                {domainError && (
+                  <p className="text-sm text-red-600">{domainError}</p>
+                )}
                 <div className="flex gap-2">
                   <button
                     type="button"
@@ -266,7 +277,10 @@ export default function OrganizationsPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowDomainForm(false)}
+                    onClick={() => {
+                      setShowDomainForm(false);
+                      setDomainError('');
+                    }}
                     className="px-4 py-2 border rounded-lg text-sm"
                   >
                     Cancel
