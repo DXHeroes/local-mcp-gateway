@@ -124,8 +124,9 @@ export default function McpPresetGallery({ onAdd, onConfigurePreset }: McpPreset
   const handleAdd = async (presetId: string) => {
     const preset = presets.find((p) => p.id === presetId);
 
-    // For presets requiring API key, open configure form instead of creating immediately
-    if (preset?.requiresApiKey && onConfigurePreset) {
+    // For non-builtin presets requiring API key, open configure form instead of creating immediately
+    // Builtin presets always go through create-then-edit flow (edit form handles builtin UI correctly)
+    if (preset?.requiresApiKey && preset.source !== 'builtin' && onConfigurePreset) {
       onConfigurePreset({
         id: preset.id,
         name: preset.name,
