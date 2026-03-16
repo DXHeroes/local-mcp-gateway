@@ -219,6 +219,20 @@ export class ProxyService {
     };
   }
 
+  /**
+   * Check if a tool is allowed by the server-level allowlist.
+   * If no tool configs exist, all tools are allowed (backwards compat).
+   * If configs exist, only explicitly enabled tools pass.
+   */
+  private isToolAllowedByServer(
+    toolName: string,
+    toolConfigs?: Array<{ toolName: string; isEnabled: boolean }>
+  ): boolean {
+    if (!toolConfigs || toolConfigs.length === 0) return true;
+    const config = toolConfigs.find((c) => c.toolName === toolName);
+    return config?.isEnabled ?? false;
+  }
+
   private async handleToolsList(
     requestId: string | number,
     profile: {
@@ -229,6 +243,7 @@ export class ProxyService {
           type: string;
           config: unknown;
           apiKeyConfig: unknown;
+          toolConfigs?: Array<{ toolName: string; isEnabled: boolean }>;
         };
         tools: Array<{
           toolName: string;
@@ -252,10 +267,14 @@ export class ProxyService {
       if (instance) {
         const tools = await instance.listTools();
 
-        // Apply tool customizations
         for (const tool of tools) {
-          const customization = profileServer.tools.find((t) => t.toolName === tool.name);
+          // Server-level allowlist filter
+          if (!this.isToolAllowedByServer(tool.name, server.toolConfigs)) {
+            continue;
+          }
 
+          // Profile-level customization filter
+          const customization = profileServer.tools.find((t) => t.toolName === tool.name);
           if (!customization || customization.isEnabled) {
             allTools.push({
               name: customization?.customName || tool.name,
@@ -286,6 +305,7 @@ export class ProxyService {
           type: string;
           config: unknown;
           apiKeyConfig: unknown;
+          toolConfigs?: Array<{ toolName: string; isEnabled: boolean }>;
         };
         tools: Array<{
           toolName: string;
@@ -310,8 +330,14 @@ export class ProxyService {
           (t) => t.customName === params.name || t.toolName === params.name
         );
 
-        // Skip if tool is disabled
+        // Skip if tool is disabled at profile level
         if (customization && !customization.isEnabled) {
+          continue;
+        }
+
+        // Skip if tool is disabled at server level (allowlist)
+        const resolvedToolName = customization?.toolName || params.name;
+        if (!this.isToolAllowedByServer(resolvedToolName, server.toolConfigs)) {
           continue;
         }
 
@@ -604,7 +630,9 @@ export class ProxyService {
       mcpServers: {
         where: { isActive: true },
         include: {
-          mcpServer: true,
+          mcpServer: {
+            include: { toolConfigs: true },
+          },
           tools: true,
         },
         orderBy: { order: 'asc' as const },
@@ -625,7 +653,9 @@ export class ProxyService {
       mcpServers: {
         where: { isActive: true },
         include: {
-          mcpServer: true,
+          mcpServer: {
+            include: { toolConfigs: true },
+          },
           tools: true,
         },
         orderBy: { order: 'asc' as const },
@@ -660,7 +690,9 @@ export class ProxyService {
     const profile = await this.findProfileByNameAndOrg(profileName, orgId);
 
     if (!profile) {
-      throw new NotFoundException(`Profile "${profileName}" not found in organization "${orgSlug}"`);
+      throw new NotFoundException(
+        `Profile "${profileName}" not found in organization "${orgSlug}"`
+      );
     }
 
     const requestId = request.id;
@@ -762,7 +794,9 @@ export class ProxyService {
     const profile = await this.findProfileByNameAndOrg(profileName, orgId);
 
     if (!profile) {
-      throw new NotFoundException(`Profile "${profileName}" not found in organization "${orgSlug}"`);
+      throw new NotFoundException(
+        `Profile "${profileName}" not found in organization "${orgSlug}"`
+      );
     }
 
     return this.aggregateProfileInfo(profile);
@@ -792,6 +826,7 @@ export class ProxyService {
         type: string;
         config: unknown;
         apiKeyConfig: unknown;
+        toolConfigs?: Array<{ toolName: string; isEnabled: boolean }>;
       };
       tools: Array<{
         toolName: string;
@@ -813,7 +848,11 @@ export class ProxyService {
           const serverTools = await instance.listTools();
           return { ps, serverTools, connected: true };
         }
-        return { ps, serverTools: [] as Array<{ name: string; description: string; inputSchema: unknown }>, connected: false };
+        return {
+          ps,
+          serverTools: [] as Array<{ name: string; description: string; inputSchema: unknown }>,
+          connected: false,
+        };
       })
     );
 
@@ -824,6 +863,11 @@ export class ProxyService {
 
         if (connected) {
           for (const tool of serverTools) {
+            // Server-level allowlist filter
+            if (!this.isToolAllowedByServer(tool.name, ps.mcpServer.toolConfigs)) {
+              continue;
+            }
+
             const customization = ps.tools.find((t) => t.toolName === tool.name);
             if (!customization || customization.isEnabled) {
               tools.push({

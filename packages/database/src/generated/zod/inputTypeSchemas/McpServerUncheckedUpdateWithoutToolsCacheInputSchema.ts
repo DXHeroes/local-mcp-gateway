@@ -7,6 +7,7 @@ import { DateTimeFieldUpdateOperationsInputSchema } from './DateTimeFieldUpdateO
 import { ProfileMcpServerUncheckedUpdateManyWithoutMcpServerNestedInputSchema } from './ProfileMcpServerUncheckedUpdateManyWithoutMcpServerNestedInputSchema';
 import { OAuthTokenUncheckedUpdateOneWithoutMcpServerNestedInputSchema } from './OAuthTokenUncheckedUpdateOneWithoutMcpServerNestedInputSchema';
 import { OAuthClientRegistrationUncheckedUpdateManyWithoutMcpServerNestedInputSchema } from './OAuthClientRegistrationUncheckedUpdateManyWithoutMcpServerNestedInputSchema';
+import { McpServerToolConfigUncheckedUpdateManyWithoutMcpServerNestedInputSchema } from './McpServerToolConfigUncheckedUpdateManyWithoutMcpServerNestedInputSchema';
 import { DebugLogUncheckedUpdateManyWithoutMcpServerNestedInputSchema } from './DebugLogUncheckedUpdateManyWithoutMcpServerNestedInputSchema';
 
 export const McpServerUncheckedUpdateWithoutToolsCacheInputSchema: z.ZodType<Prisma.McpServerUncheckedUpdateWithoutToolsCacheInput> = z.strictObject({
@@ -23,6 +24,7 @@ export const McpServerUncheckedUpdateWithoutToolsCacheInputSchema: z.ZodType<Pri
   profiles: z.lazy(() => ProfileMcpServerUncheckedUpdateManyWithoutMcpServerNestedInputSchema).optional(),
   oauthToken: z.lazy(() => OAuthTokenUncheckedUpdateOneWithoutMcpServerNestedInputSchema).optional(),
   oauthClientRegistrations: z.lazy(() => OAuthClientRegistrationUncheckedUpdateManyWithoutMcpServerNestedInputSchema).optional(),
+  toolConfigs: z.lazy(() => McpServerToolConfigUncheckedUpdateManyWithoutMcpServerNestedInputSchema).optional(),
   debugLogs: z.lazy(() => DebugLogUncheckedUpdateManyWithoutMcpServerNestedInputSchema).optional(),
 });
 

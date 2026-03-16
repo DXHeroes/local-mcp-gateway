@@ -7,6 +7,7 @@ import { ProfileMcpServerFindManyArgsSchema } from "../outputTypeSchemas/Profile
 import { OAuthTokenArgsSchema } from "../outputTypeSchemas/OAuthTokenArgsSchema"
 import { OAuthClientRegistrationFindManyArgsSchema } from "../outputTypeSchemas/OAuthClientRegistrationFindManyArgsSchema"
 import { McpServerToolsCacheFindManyArgsSchema } from "../outputTypeSchemas/McpServerToolsCacheFindManyArgsSchema"
+import { McpServerToolConfigFindManyArgsSchema } from "../outputTypeSchemas/McpServerToolConfigFindManyArgsSchema"
 import { DebugLogFindManyArgsSchema } from "../outputTypeSchemas/DebugLogFindManyArgsSchema"
 import { McpServerCountOutputTypeArgsSchema } from "../outputTypeSchemas/McpServerCountOutputTypeArgsSchema"
 // Select schema needs to be in file to prevent circular imports
@@ -28,6 +29,7 @@ export const McpServerSelectSchema: z.ZodType<Prisma.McpServerSelect> = z.object
   oauthToken: z.union([z.boolean(),z.lazy(() => OAuthTokenArgsSchema)]).optional(),
   oauthClientRegistrations: z.union([z.boolean(),z.lazy(() => OAuthClientRegistrationFindManyArgsSchema)]).optional(),
   toolsCache: z.union([z.boolean(),z.lazy(() => McpServerToolsCacheFindManyArgsSchema)]).optional(),
+  toolConfigs: z.union([z.boolean(),z.lazy(() => McpServerToolConfigFindManyArgsSchema)]).optional(),
   debugLogs: z.union([z.boolean(),z.lazy(() => DebugLogFindManyArgsSchema)]).optional(),
   _count: z.union([z.boolean(),z.lazy(() => McpServerCountOutputTypeArgsSchema)]).optional(),
 }).strict()

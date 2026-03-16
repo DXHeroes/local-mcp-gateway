@@ -9,6 +9,7 @@ import { ProfileMcpServerUpdateManyWithoutMcpServerNestedInputSchema } from './P
 import { OAuthTokenUpdateOneWithoutMcpServerNestedInputSchema } from './OAuthTokenUpdateOneWithoutMcpServerNestedInputSchema';
 import { OAuthClientRegistrationUpdateManyWithoutMcpServerNestedInputSchema } from './OAuthClientRegistrationUpdateManyWithoutMcpServerNestedInputSchema';
 import { McpServerToolsCacheUpdateManyWithoutMcpServerNestedInputSchema } from './McpServerToolsCacheUpdateManyWithoutMcpServerNestedInputSchema';
+import { McpServerToolConfigUpdateManyWithoutMcpServerNestedInputSchema } from './McpServerToolConfigUpdateManyWithoutMcpServerNestedInputSchema';
 
 export const McpServerUpdateWithoutDebugLogsInputSchema: z.ZodType<Prisma.McpServerUpdateWithoutDebugLogsInput> = z.strictObject({
   id: z.union([ z.uuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
@@ -25,6 +26,7 @@ export const McpServerUpdateWithoutDebugLogsInputSchema: z.ZodType<Prisma.McpSer
   oauthToken: z.lazy(() => OAuthTokenUpdateOneWithoutMcpServerNestedInputSchema).optional(),
   oauthClientRegistrations: z.lazy(() => OAuthClientRegistrationUpdateManyWithoutMcpServerNestedInputSchema).optional(),
   toolsCache: z.lazy(() => McpServerToolsCacheUpdateManyWithoutMcpServerNestedInputSchema).optional(),
+  toolConfigs: z.lazy(() => McpServerToolConfigUpdateManyWithoutMcpServerNestedInputSchema).optional(),
 });
 
 export default McpServerUpdateWithoutDebugLogsInputSchema;

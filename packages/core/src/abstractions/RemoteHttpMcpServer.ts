@@ -285,7 +285,7 @@ export class RemoteHttpMcpServer extends McpServer {
   /**
    * Make JSON-RPC request to remote MCP server
    */
-  private async makeRequest(request: JsonRpcRequest): Promise<JsonRpcResponse> {
+  private async makeRequest(request: JsonRpcRequest, sessionRetryCount = 0): Promise<JsonRpcResponse> {
     const headers = this.buildHeaders();
     const maxRetries = 3;
     let lastError: Error | null = null;
@@ -320,9 +320,8 @@ export class RemoteHttpMcpServer extends McpServer {
           try {
             result = await response.json();
           } catch {
-            // If JSON parsing fails, continue with normal error handling
-            const result = await response.json();
-            return result as JsonRpcResponse;
+            // If JSON parsing fails, throw with status info so the outer retry loop can handle it
+            throw new Error(`HTTP ${response.status}: Failed to parse response as JSON`);
           }
 
           const errorMessage =
@@ -368,9 +367,18 @@ export class RemoteHttpMcpServer extends McpServer {
                 throw new Error(`Session initialization failed: ${initErrorMessage}`);
               }
             } else {
-              // Already initializing - this shouldn't happen, but if it does, throw error
+              // We're inside initialize() and got a session error.
+              // Instead of re-initializing (which would loop), retry with a fresh sessionId once.
+              if (sessionRetryCount < 1) {
+                console.log(
+                  '[RemoteHttpMcpServer] Session error during initialization, regenerating sessionId and retrying...'
+                );
+                this.sessionId = randomUUID();
+                return this.makeRequest(request, sessionRetryCount + 1);
+              }
+              // Already retried once during initialization - give up
               throw new Error(
-                'Session not found and already initializing - possible infinite loop'
+                'Session not found during initialization after retry - server may require a different session flow'
               );
             }
           }
@@ -392,6 +400,11 @@ export class RemoteHttpMcpServer extends McpServer {
           lastError.message.includes('parse JSON') ||
           lastError.message.includes('Consider configuring this server as type')
         ) {
+          throw lastError;
+        }
+
+        // Don't retry on session errors that already exhausted session retries
+        if (lastError.message.includes('during initialization after retry')) {
           throw lastError;
         }
 

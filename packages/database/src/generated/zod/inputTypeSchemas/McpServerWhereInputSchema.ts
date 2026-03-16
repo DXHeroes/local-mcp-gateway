@@ -11,6 +11,7 @@ import { OAuthTokenNullableScalarRelationFilterSchema } from './OAuthTokenNullab
 import { OAuthTokenWhereInputSchema } from './OAuthTokenWhereInputSchema';
 import { OAuthClientRegistrationListRelationFilterSchema } from './OAuthClientRegistrationListRelationFilterSchema';
 import { McpServerToolsCacheListRelationFilterSchema } from './McpServerToolsCacheListRelationFilterSchema';
+import { McpServerToolConfigListRelationFilterSchema } from './McpServerToolConfigListRelationFilterSchema';
 import { DebugLogListRelationFilterSchema } from './DebugLogListRelationFilterSchema';
 
 export const McpServerWhereInputSchema: z.ZodType<Prisma.McpServerWhereInput> = z.strictObject({
@@ -32,6 +33,7 @@ export const McpServerWhereInputSchema: z.ZodType<Prisma.McpServerWhereInput> = 
   oauthToken: z.union([ z.lazy(() => OAuthTokenNullableScalarRelationFilterSchema), z.lazy(() => OAuthTokenWhereInputSchema) ]).optional().nullable(),
   oauthClientRegistrations: z.lazy(() => OAuthClientRegistrationListRelationFilterSchema).optional(),
   toolsCache: z.lazy(() => McpServerToolsCacheListRelationFilterSchema).optional(),
+  toolConfigs: z.lazy(() => McpServerToolConfigListRelationFilterSchema).optional(),
   debugLogs: z.lazy(() => DebugLogListRelationFilterSchema).optional(),
 });
 

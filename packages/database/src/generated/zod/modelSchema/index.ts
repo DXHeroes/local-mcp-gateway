@@ -1,5 +1,6 @@
 export * from './ProfileSchema';
 export * from './McpServerSchema';
+export * from './McpServerToolConfigSchema';
 export * from './ProfileMcpServerSchema';
 export * from './ProfileMcpServerToolSchema';
 export * from './McpServerToolsCacheSchema';

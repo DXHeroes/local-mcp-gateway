@@ -8,6 +8,7 @@ import { ProfileMcpServerOrderByRelationAggregateInputSchema } from './ProfileMc
 import { OAuthTokenOrderByWithRelationInputSchema } from './OAuthTokenOrderByWithRelationInputSchema';
 import { OAuthClientRegistrationOrderByRelationAggregateInputSchema } from './OAuthClientRegistrationOrderByRelationAggregateInputSchema';
 import { McpServerToolsCacheOrderByRelationAggregateInputSchema } from './McpServerToolsCacheOrderByRelationAggregateInputSchema';
+import { McpServerToolConfigOrderByRelationAggregateInputSchema } from './McpServerToolConfigOrderByRelationAggregateInputSchema';
 import { DebugLogOrderByRelationAggregateInputSchema } from './DebugLogOrderByRelationAggregateInputSchema';
 
 export const McpServerOrderByWithRelationInputSchema: z.ZodType<Prisma.McpServerOrderByWithRelationInput> = z.strictObject({
@@ -26,6 +27,7 @@ export const McpServerOrderByWithRelationInputSchema: z.ZodType<Prisma.McpServer
   oauthToken: z.lazy(() => OAuthTokenOrderByWithRelationInputSchema).optional(),
   oauthClientRegistrations: z.lazy(() => OAuthClientRegistrationOrderByRelationAggregateInputSchema).optional(),
   toolsCache: z.lazy(() => McpServerToolsCacheOrderByRelationAggregateInputSchema).optional(),
+  toolConfigs: z.lazy(() => McpServerToolConfigOrderByRelationAggregateInputSchema).optional(),
   debugLogs: z.lazy(() => DebugLogOrderByRelationAggregateInputSchema).optional(),
 });
 

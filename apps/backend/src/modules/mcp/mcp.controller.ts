@@ -139,6 +139,31 @@ export class McpController {
   }
 
   /**
+   * Get server-level tool configurations (allowlist)
+   */
+  @Get(':id/tool-configs')
+  async getToolConfigs(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string,
+    @Param('id') id: string
+  ) {
+    return this.mcpService.getServerToolConfigs(id, user.id, orgId);
+  }
+
+  /**
+   * Update server-level tool configurations (allowlist)
+   */
+  @Put(':id/tool-configs')
+  async updateToolConfigs(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string,
+    @Param('id') id: string,
+    @Body() dto: { tools: Array<{ toolName: string; isEnabled: boolean }> }
+  ) {
+    return this.mcpService.updateServerToolConfigs(id, dto.tools, user.id, orgId);
+  }
+
+  /**
    * Get MCP server status
    */
   @Get(':id/status')

@@ -5,6 +5,7 @@ export const McpServerCountOutputTypeSelectSchema: z.ZodType<Prisma.McpServerCou
   profiles: z.boolean().optional(),
   oauthClientRegistrations: z.boolean().optional(),
   toolsCache: z.boolean().optional(),
+  toolConfigs: z.boolean().optional(),
   debugLogs: z.boolean().optional(),
 }).strict();
 

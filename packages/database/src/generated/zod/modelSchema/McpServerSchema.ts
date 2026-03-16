@@ -9,6 +9,8 @@ import { OAuthClientRegistrationWithRelationsSchema, OAuthClientRegistrationOpti
 import type { OAuthClientRegistrationWithRelations, OAuthClientRegistrationOptionalDefaultsWithRelations } from './OAuthClientRegistrationSchema'
 import { McpServerToolsCacheWithRelationsSchema, McpServerToolsCacheOptionalDefaultsWithRelationsSchema } from './McpServerToolsCacheSchema'
 import type { McpServerToolsCacheWithRelations, McpServerToolsCacheOptionalDefaultsWithRelations } from './McpServerToolsCacheSchema'
+import { McpServerToolConfigWithRelationsSchema, McpServerToolConfigOptionalDefaultsWithRelationsSchema } from './McpServerToolConfigSchema'
+import type { McpServerToolConfigWithRelations, McpServerToolConfigOptionalDefaultsWithRelations } from './McpServerToolConfigSchema'
 import { DebugLogWithRelationsSchema, DebugLogOptionalDefaultsWithRelationsSchema } from './DebugLogSchema'
 import type { DebugLogWithRelations, DebugLogOptionalDefaultsWithRelations } from './DebugLogSchema'
 
@@ -57,6 +59,7 @@ export type McpServerRelations = {
   oauthToken?: OAuthTokenWithRelations | null;
   oauthClientRegistrations: OAuthClientRegistrationWithRelations[];
   toolsCache: McpServerToolsCacheWithRelations[];
+  toolConfigs: McpServerToolConfigWithRelations[];
   debugLogs: DebugLogWithRelations[];
 };
 
@@ -68,6 +71,7 @@ export const McpServerWithRelationsSchema: z.ZodType<McpServerWithRelations> = M
   oauthToken: z.lazy(() => OAuthTokenWithRelationsSchema).nullable(),
   oauthClientRegistrations: z.lazy(() => OAuthClientRegistrationWithRelationsSchema).array(),
   toolsCache: z.lazy(() => McpServerToolsCacheWithRelationsSchema).array(),
+  toolConfigs: z.lazy(() => McpServerToolConfigWithRelationsSchema).array(),
   debugLogs: z.lazy(() => DebugLogWithRelationsSchema).array(),
 }))
 
@@ -81,6 +85,7 @@ export type McpServerOptionalDefaultsRelations = {
   oauthToken?: OAuthTokenOptionalDefaultsWithRelations | null;
   oauthClientRegistrations: OAuthClientRegistrationOptionalDefaultsWithRelations[];
   toolsCache: McpServerToolsCacheOptionalDefaultsWithRelations[];
+  toolConfigs: McpServerToolConfigOptionalDefaultsWithRelations[];
   debugLogs: DebugLogOptionalDefaultsWithRelations[];
 };
 
@@ -92,6 +97,7 @@ export const McpServerOptionalDefaultsWithRelationsSchema: z.ZodType<McpServerOp
   oauthToken: z.lazy(() => OAuthTokenOptionalDefaultsWithRelationsSchema).nullable(),
   oauthClientRegistrations: z.lazy(() => OAuthClientRegistrationOptionalDefaultsWithRelationsSchema).array(),
   toolsCache: z.lazy(() => McpServerToolsCacheOptionalDefaultsWithRelationsSchema).array(),
+  toolConfigs: z.lazy(() => McpServerToolConfigOptionalDefaultsWithRelationsSchema).array(),
   debugLogs: z.lazy(() => DebugLogOptionalDefaultsWithRelationsSchema).array(),
 }))
 

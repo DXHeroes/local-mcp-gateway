@@ -64,6 +64,7 @@ interface McpServer {
 
 interface McpServerWithStatus extends McpServer {
   toolsCount?: number;
+  enabledToolsCount?: number;
   connectionStatus?: 'connected' | 'error' | 'unknown';
   connectionError?: string;
   validationDetails?: string;
@@ -128,6 +129,7 @@ export default function McpServersPage() {
         const status = (await statusRes.json()) as {
           status?: string;
           toolsCount?: number;
+          enabledToolsCount?: number;
           error?: string;
           details?: string;
           validatedAt?: string;
@@ -141,6 +143,7 @@ export default function McpServersPage() {
                   connectionStatus:
                     (status.status as 'connected' | 'error' | 'unknown') || 'unknown',
                   toolsCount: status.toolsCount,
+                  enabledToolsCount: status.enabledToolsCount,
                   connectionError: status.error || undefined,
                   validationDetails: status.details || undefined,
                   validatedAt: status.validatedAt || undefined,
@@ -240,6 +243,7 @@ export default function McpServersPage() {
                       connectionStatus:
                         (status.status as 'connected' | 'error' | 'unknown') || 'unknown',
                       toolsCount: status.toolsCount,
+                      enabledToolsCount: status.enabledToolsCount,
                       connectionError: status.error || undefined,
                       validationDetails: status.details || undefined,
                       oauthRequired: !!status.oauthRequired,
@@ -313,8 +317,10 @@ export default function McpServersPage() {
           {servers.map((server) => {
             const shareInfo = sharingSummary[server.id];
             const isOwner = server.userId === session?.user?.id;
-            const isSharedUseOnly = !isOwner && shareInfo?.inbound && shareInfo.inbound.permission === 'use';
-            const canEdit = isOwner || !shareInfo?.inbound || shareInfo.inbound.permission === 'admin';
+            const isSharedUseOnly =
+              !isOwner && shareInfo?.inbound && shareInfo.inbound.permission === 'use';
+            const canEdit =
+              isOwner || !shareInfo?.inbound || shareInfo.inbound.permission === 'admin';
             return (
               <Card key={server.id}>
                 <CardHeader>
@@ -365,8 +371,19 @@ export default function McpServersPage() {
                             <span className="inline-block w-8 h-3 bg-gray-200 rounded" />
                           </Badge>
                         ) : (
-                          <Badge variant="outline">
-                            {server.toolsCount ?? 0} tool{(server.toolsCount ?? 0) !== 1 ? 's' : ''}
+                          <Badge
+                            variant="outline"
+                            className={
+                              server.enabledToolsCount !== undefined &&
+                              server.enabledToolsCount !== server.toolsCount
+                                ? 'border-amber-300 text-amber-700'
+                                : undefined
+                            }
+                          >
+                            {server.enabledToolsCount !== undefined &&
+                            server.enabledToolsCount !== server.toolsCount
+                              ? `${server.enabledToolsCount}/${server.toolsCount} tools`
+                              : `${server.toolsCount ?? 0} tool${(server.toolsCount ?? 0) !== 1 ? 's' : ''}`}
                           </Badge>
                         )}
                         {/* Connection status badge */}

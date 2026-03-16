@@ -5,6 +5,7 @@ import { UserCreateNestedOneWithoutMcpServersInputSchema } from './UserCreateNes
 import { ProfileMcpServerCreateNestedManyWithoutMcpServerInputSchema } from './ProfileMcpServerCreateNestedManyWithoutMcpServerInputSchema';
 import { OAuthTokenCreateNestedOneWithoutMcpServerInputSchema } from './OAuthTokenCreateNestedOneWithoutMcpServerInputSchema';
 import { McpServerToolsCacheCreateNestedManyWithoutMcpServerInputSchema } from './McpServerToolsCacheCreateNestedManyWithoutMcpServerInputSchema';
+import { McpServerToolConfigCreateNestedManyWithoutMcpServerInputSchema } from './McpServerToolConfigCreateNestedManyWithoutMcpServerInputSchema';
 import { DebugLogCreateNestedManyWithoutMcpServerInputSchema } from './DebugLogCreateNestedManyWithoutMcpServerInputSchema';
 
 export const McpServerCreateWithoutOauthClientRegistrationsInputSchema: z.ZodType<Prisma.McpServerCreateWithoutOauthClientRegistrationsInput> = z.strictObject({
@@ -21,6 +22,7 @@ export const McpServerCreateWithoutOauthClientRegistrationsInputSchema: z.ZodTyp
   profiles: z.lazy(() => ProfileMcpServerCreateNestedManyWithoutMcpServerInputSchema).optional(),
   oauthToken: z.lazy(() => OAuthTokenCreateNestedOneWithoutMcpServerInputSchema).optional(),
   toolsCache: z.lazy(() => McpServerToolsCacheCreateNestedManyWithoutMcpServerInputSchema).optional(),
+  toolConfigs: z.lazy(() => McpServerToolConfigCreateNestedManyWithoutMcpServerInputSchema).optional(),
   debugLogs: z.lazy(() => DebugLogCreateNestedManyWithoutMcpServerInputSchema).optional(),
 });
 

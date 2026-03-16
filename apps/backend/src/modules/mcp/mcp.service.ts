@@ -35,6 +35,7 @@ export class McpService {
         {
           status: string;
           toolsCount?: number;
+          enabledToolsCount?: number;
           error?: string;
           details?: string;
           validatedAt?: string;
@@ -626,6 +627,20 @@ export class McpService {
 
     const isReady = status === 'connected';
 
+    // Get enabled tools count from server-level allowlist
+    let enabledToolsCount = toolsCount;
+    try {
+      const toolConfigs = await this.prisma.mcpServerToolConfig.findMany({
+        where: { mcpServerId: id },
+        select: { isEnabled: true },
+      });
+      if (toolConfigs.length > 0) {
+        enabledToolsCount = toolConfigs.filter((c) => c.isEnabled).length;
+      }
+    } catch {
+      // Table may not exist yet
+    }
+
     return {
       id: server.id,
       name: server.name,
@@ -639,6 +654,7 @@ export class McpService {
       isReady,
       status,
       toolsCount,
+      enabledToolsCount,
       error: validationError,
       details: validationDetails,
       validatedAt: new Date().toISOString(),
@@ -657,6 +673,18 @@ export class McpService {
 
     const servers = await this.findAll(userId, orgId);
 
+    // Pre-fetch tool configs for all servers in one query
+    const serverIds = servers.map((s) => s.id);
+    let allToolConfigs: Array<{ mcpServerId: string; isEnabled: boolean }> = [];
+    try {
+      allToolConfigs = await this.prisma.mcpServerToolConfig.findMany({
+        where: { mcpServerId: { in: serverIds } },
+        select: { mcpServerId: true, isEnabled: true },
+      });
+    } catch {
+      // Table may not exist yet
+    }
+
     const results = await Promise.allSettled(
       servers.map(async (server) => {
         const status = await this.getStatusInternal(server.id);
@@ -669,6 +697,7 @@ export class McpService {
       {
         status: string;
         toolsCount?: number;
+        enabledToolsCount?: number;
         error?: string;
         details?: string;
         validatedAt?: string;
@@ -679,9 +708,14 @@ export class McpService {
     for (const result of results) {
       if (result.status === 'fulfilled') {
         const { serverId, ...rest } = result.value;
+        const serverConfigs = allToolConfigs.filter((c) => c.mcpServerId === serverId);
+        const hasConfigs = serverConfigs.length > 0;
         batchStatus[serverId] = {
           status: rest.status,
           toolsCount: rest.toolsCount,
+          enabledToolsCount: hasConfigs
+            ? serverConfigs.filter((c) => c.isEnabled).length
+            : rest.toolsCount,
           error: rest.error,
           details: rest.details,
           validatedAt: rest.validatedAt,
@@ -780,6 +814,86 @@ export class McpService {
     const metadata = builtinId ? this.registry.get(builtinId)?.metadata : undefined;
 
     return { ...created, metadata };
+  }
+
+  /**
+   * Get server-level tool configurations (allowlist)
+   * Tools without a config record are treated as disabled (new tools default off).
+   */
+  async getServerToolConfigs(serverId: string, userId: string, _orgId?: string) {
+    await this.assertAccess(serverId, userId);
+
+    // Fetch live tools from the server
+    const { tools: liveTools } = await this.getToolsInternal(serverId);
+
+    // Fetch existing configs (graceful fallback if table doesn't exist yet)
+    let configs: Array<{ toolName: string; isEnabled: boolean }> = [];
+    try {
+      configs = await this.prisma.mcpServerToolConfig.findMany({
+        where: { mcpServerId: serverId },
+      });
+    } catch {
+      // Table may not exist yet — treat as unconfigured
+    }
+
+    const hasConfigs = configs.length > 0;
+
+    // Normalize tools (getToolsInternal may return different shapes)
+    const normalizedTools = liveTools.map((tool) => ({
+      name:
+        'name' in tool ? (tool as { name: string }).name : (tool as { toolName: string }).toolName,
+      description: (tool as { description?: string }).description ?? undefined,
+      inputSchema: (tool as { inputSchema?: unknown }).inputSchema ?? undefined,
+    }));
+
+    // Merge: live tools + config records
+    const tools = normalizedTools.map((tool) => {
+      const config = configs.find((c) => c.toolName === tool.name);
+      return {
+        name: tool.name,
+        description: tool.description,
+        inputSchema: tool.inputSchema,
+        // If no configs exist at all, treat all tools as enabled (unconfigured server)
+        // If configs exist, tools without a record are disabled (new tools default off)
+        isEnabled: hasConfigs ? (config?.isEnabled ?? false) : true,
+        hasConfig: !!config,
+      };
+    });
+
+    return { tools, hasConfigs };
+  }
+
+  /**
+   * Update server-level tool configurations (allowlist)
+   * Creates records for ALL tools — enabled and disabled.
+   */
+  async updateServerToolConfigs(
+    serverId: string,
+    tools: Array<{ toolName: string; isEnabled: boolean }>,
+    userId: string,
+    _orgId?: string
+  ) {
+    await this.assertOwnership(serverId, userId);
+
+    await this.prisma.$transaction(async (tx) => {
+      // Delete all existing configs
+      await tx.mcpServerToolConfig.deleteMany({
+        where: { mcpServerId: serverId },
+      });
+
+      // Create records for all tools
+      if (tools.length > 0) {
+        await tx.mcpServerToolConfig.createMany({
+          data: tools.map((tool) => ({
+            mcpServerId: serverId,
+            toolName: tool.toolName,
+            isEnabled: tool.isEnabled,
+          })),
+        });
+      }
+    });
+
+    return this.getServerToolConfigs(serverId, userId, _orgId);
   }
 
   /**

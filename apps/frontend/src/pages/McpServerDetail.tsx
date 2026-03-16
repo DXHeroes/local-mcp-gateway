@@ -6,11 +6,13 @@
 import {
   Alert,
   AlertDescription,
+  Badge,
   Button,
   Card,
   CardContent,
   CardHeader,
   CardTitle,
+  Checkbox,
 } from '@dxheroes/local-mcp-ui';
 import { LogIn, Share2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
@@ -51,6 +53,14 @@ interface McpTool {
   inputSchema?: unknown;
 }
 
+interface ToolConfig {
+  name: string;
+  description?: string;
+  inputSchema?: unknown;
+  isEnabled: boolean;
+  hasConfig: boolean;
+}
+
 interface DebugLog {
   id: string;
   profileId: string;
@@ -79,6 +89,10 @@ export default function McpServerDetailPage() {
   );
   const [connectionError, setConnectionError] = useState<string | undefined>();
   const [oauthRequired, setOauthRequired] = useState(false);
+  const [toolConfigs, setToolConfigs] = useState<ToolConfig[]>([]);
+  const [hasToolConfigs, setHasToolConfigs] = useState(false);
+  const [toolConfigSaving, setToolConfigSaving] = useState(false);
+  const [toolConfigDirty, setToolConfigDirty] = useState(false);
 
   const fetchServerDetails = useCallback(async () => {
     if (!id) return;
@@ -130,6 +144,19 @@ export default function McpServerDetailPage() {
         }
       } catch {
         setTools([]);
+      }
+
+      // Fetch tool configs (server-level allowlist)
+      try {
+        const configsResponse = await apiFetch(`/api/mcp-servers/${id}/tool-configs`);
+        if (configsResponse.ok) {
+          const configsData = await configsResponse.json();
+          setToolConfigs(Array.isArray(configsData.tools) ? configsData.tools : []);
+          setHasToolConfigs(!!configsData.hasConfigs);
+          setToolConfigDirty(false);
+        }
+      } catch {
+        setToolConfigs([]);
       }
 
       // Fetch connection status
@@ -303,7 +330,130 @@ export default function McpServerDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Tools List */}
+      {/* Tool Configuration (Server-level allowlist) */}
+      <Card className="mb-4">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>
+                Tool Configuration
+                {toolConfigs.length > 0 && (
+                  <Badge variant="outline" className="ml-2 font-normal">
+                    {toolConfigs.filter((t) => t.isEnabled).length} / {toolConfigs.length} enabled
+                  </Badge>
+                )}
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                {hasToolConfigs
+                  ? 'New tools from the server are disabled by default until you enable them.'
+                  : 'All tools are currently allowed. Save a configuration to create an allowlist.'}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              {toolConfigs.length > 0 && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setToolConfigs((prev) => prev.map((t) => ({ ...t, isEnabled: true })));
+                      setToolConfigDirty(true);
+                    }}
+                  >
+                    Enable All
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setToolConfigs((prev) => prev.map((t) => ({ ...t, isEnabled: false })));
+                      setToolConfigDirty(true);
+                    }}
+                  >
+                    Disable All
+                  </Button>
+                </>
+              )}
+              <Button
+                size="sm"
+                disabled={!toolConfigDirty || toolConfigSaving}
+                onClick={async () => {
+                  setToolConfigSaving(true);
+                  try {
+                    const response = await apiFetch(`/api/mcp-servers/${id}/tool-configs`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        tools: toolConfigs.map((t) => ({
+                          toolName: t.name,
+                          isEnabled: t.isEnabled,
+                        })),
+                      }),
+                    });
+                    if (response.ok) {
+                      const data = await response.json();
+                      setToolConfigs(Array.isArray(data.tools) ? data.tools : []);
+                      setHasToolConfigs(!!data.hasConfigs);
+                      setToolConfigDirty(false);
+                    }
+                  } catch {
+                    setError('Failed to save tool configuration');
+                  } finally {
+                    setToolConfigSaving(false);
+                  }
+                }}
+              >
+                {toolConfigSaving ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {toolConfigs.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No tools available. Connect to the server first.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {toolConfigs.map((tool) => (
+                <div
+                  key={tool.name}
+                  className="flex items-start gap-3 p-3 rounded-lg border border-border"
+                >
+                  <Checkbox
+                    checked={tool.isEnabled}
+                    onCheckedChange={(checked) => {
+                      setToolConfigs((prev) =>
+                        prev.map((t) => (t.name === tool.name ? { ...t, isEnabled: !!checked } : t))
+                      );
+                      setToolConfigDirty(true);
+                    }}
+                    className="mt-0.5"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <span className="font-medium text-sm">{tool.name}</span>
+                    {tool.description && (
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                        {tool.description}
+                      </p>
+                    )}
+                  </div>
+                  {!tool.hasConfig && hasToolConfigs && (
+                    <Badge
+                      variant="outline"
+                      className="bg-amber-50 text-amber-800 border-amber-200 text-xs shrink-0"
+                    >
+                      New
+                    </Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Tools List (read-only view) */}
       <Card className="mb-4">
         <CardHeader>
           <CardTitle>Tools ({tools.length})</CardTitle>

@@ -68,11 +68,28 @@ model McpServer {
   oauthToken               OAuthToken?
   oauthClientRegistrations OAuthClientRegistration[]
   toolsCache               McpServerToolsCache[]
+  toolConfigs              McpServerToolConfig[]
   debugLogs                DebugLog[]
 
   @@index([type])
   @@index([userId])
   @@map("mcp_servers")
+}
+
+/// Per-server tool enable/disable configuration (server-level allowlist)
+model McpServerToolConfig {
+  id          String   @id @default(uuid())
+  mcpServerId String   @map("mcp_server_id")
+  toolName    String   @map("tool_name")
+  isEnabled   Boolean  @default(true) @map("is_enabled")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  mcpServer McpServer @relation(fields: [mcpServerId], references: [id], onDelete: Cascade)
+
+  @@unique([mcpServerId, toolName])
+  @@index([mcpServerId])
+  @@map("mcp_server_tool_configs")
 }
 
 /// Many-to-many relationship between profiles and MCP servers

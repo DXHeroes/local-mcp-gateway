@@ -756,6 +756,122 @@ describe('RemoteHttpMcpServer', () => {
 
       expect(requestCount).toBeGreaterThan(1);
     });
+
+    it('should recover from session error during initialization by regenerating sessionId', async () => {
+      const initializeResponse: JsonRpcResponse = {
+        jsonrpc: '2.0',
+        id: 1,
+        result: {
+          protocolVersion: '2024-11-05',
+          capabilities: {},
+          serverInfo: { name: 'test-server', version: '1.0.0' },
+        },
+      };
+
+      const toolsResponse: JsonRpcResponse = {
+        jsonrpc: '2.0',
+        id: 2,
+        result: { tools: [{ name: 'test-tool', description: 'Test', inputSchema: {} }] },
+      };
+
+      const resourcesResponse: JsonRpcResponse = {
+        jsonrpc: '2.0',
+        id: 3,
+        result: { resources: [] },
+      };
+
+      let requestCount = 0;
+      mockHttpClient.post = vi.fn().mockImplementation(async (_url, body, _headers) => {
+        const request = body as JsonRpcRequest;
+        requestCount++;
+
+        if (request.method === 'initialize') {
+          return {
+            status: 200,
+            headers: new Headers({ 'Mcp-Session-Id': 'session-1' }),
+            async json() { return initializeResponse; },
+          };
+        }
+
+        if (request.method === 'tools/list') {
+          if (requestCount === 2) {
+            // First tools/list during init fails with session error
+            return {
+              status: 404,
+              headers: new Headers(),
+              async json() {
+                return { error: { code: -32000, message: 'Session not found' } };
+              },
+            };
+          }
+          // Retry with new sessionId succeeds
+          return {
+            status: 200,
+            headers: new Headers(),
+            async json() { return toolsResponse; },
+          };
+        }
+
+        if (request.method === 'resources/list') {
+          return {
+            status: 200,
+            headers: new Headers(),
+            async json() { return resourcesResponse; },
+          };
+        }
+
+        throw new Error(`Unexpected request: ${request.method}`);
+      });
+
+      const server = new RemoteHttpMcpServer(config, null, null, mockHttpClient);
+      await expect(server.initialize()).resolves.not.toThrow();
+
+      const tools = await server.listTools();
+      expect(tools).toHaveLength(1);
+      expect(tools[0].name).toBe('test-tool');
+    });
+
+    it('should throw after session retry exhausted during initialization', async () => {
+      const initializeResponse: JsonRpcResponse = {
+        jsonrpc: '2.0',
+        id: 1,
+        result: {
+          protocolVersion: '2024-11-05',
+          capabilities: {},
+          serverInfo: { name: 'test-server', version: '1.0.0' },
+        },
+      };
+
+      mockHttpClient.post = vi.fn().mockImplementation(async (_url, body, _headers) => {
+        const request = body as JsonRpcRequest;
+
+        if (request.method === 'initialize') {
+          return {
+            status: 200,
+            headers: new Headers({ 'Mcp-Session-Id': 'session-1' }),
+            async json() { return initializeResponse; },
+          };
+        }
+
+        if (request.method === 'tools/list') {
+          // Always fail with session error
+          return {
+            status: 404,
+            headers: new Headers(),
+            async json() {
+              return { error: { code: -32000, message: 'Session not found' } };
+            },
+          };
+        }
+
+        throw new Error(`Unexpected request: ${request.method}`);
+      });
+
+      const server = new RemoteHttpMcpServer(config, null, null, mockHttpClient);
+      await expect(server.initialize()).rejects.toThrow(
+        'Session not found during initialization after retry'
+      );
+    });
   });
 
   describe('OAuth 401 handling', () => {
