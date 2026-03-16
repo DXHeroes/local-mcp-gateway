@@ -49,21 +49,20 @@ model Profile {
   @@map("profiles")
 }
 
-/// MCP server configurations
+/// MCP server configurations — owned by individual users (per-user, not per-org)
 model McpServer {
-  id             String   @id @default(uuid())
-  name           String
-  type           String   // 'builtin' | 'external' | 'custom' | 'remote_http' | 'remote_sse'
-  config         String   @default("{}") // JSON config
-  oauthConfig    String?  @map("oauth_config") // JSON OAuth config
-  apiKeyConfig   String?  @map("api_key_config") // JSON API key config
-  userId         String?  @map("user_id")
-  organizationId String?  @map("organization_id")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id           String   @id @default(uuid())
+  name         String
+  type         String   // 'builtin' | 'external' | 'custom' | 'remote_http' | 'remote_sse'
+  config       String   @default("{}") // JSON config
+  oauthConfig  String?  @map("oauth_config") // JSON OAuth config
+  apiKeyConfig String?  @map("api_key_config") // JSON API key config
+  userId       String   @map("user_id")
+  presetId     String?  @map("preset_id") // tracks which preset/builtin created this server
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  user                     User?                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization             Organization?            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user                     User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   profiles                 ProfileMcpServer[]
   oauthToken               OAuthToken?
   oauthClientRegistrations OAuthClientRegistration[]
@@ -71,6 +70,7 @@ model McpServer {
   debugLogs                DebugLog[]
 
   @@index([type])
+  @@index([userId])
   @@map("mcp_servers")
 }
 
@@ -314,7 +314,6 @@ model Organization {
   members     Member[]
   invitations Invitation[]
   profiles    Profile[]
-  mcpServers  McpServer[]
   domains     OrganizationDomain[]
 
   @@map("organization")

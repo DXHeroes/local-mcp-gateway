@@ -51,7 +51,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
     this.logger.log('First run detected, seeding default data...');
 
-    // Create default profile
+    // Create default profile (system-level, no user/org)
     const defaultProfile = await this.profile.create({
       data: {
         name: 'default',
@@ -60,26 +60,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     });
     this.logger.log(`Created default profile: ${defaultProfile.id}`);
 
-    // Create Context7 MCP server
-    const context7 = await this.mcpServer.create({
-      data: {
-        name: 'Context7',
-        type: 'remote_http',
-        config: JSON.stringify({ url: 'https://mcp.context7.com/mcp' }),
-      },
-    });
-    this.logger.log(`Created Context7 MCP server: ${context7.id}`);
-
-    // Link Context7 to default profile
-    await this.profileMcpServer.create({
-      data: {
-        profileId: defaultProfile.id,
-        mcpServerId: context7.id,
-        order: 0,
-      },
-    });
-    this.logger.log('Linked Context7 to default profile');
-
+    // MCP servers are per-user — users add them from the presets gallery
     this.logger.log('Default data seeding complete');
   }
 

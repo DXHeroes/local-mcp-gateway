@@ -72,9 +72,8 @@ interface McpServerWithStatus extends McpServer {
 }
 
 import { API_URL } from '../config/api';
-import { apiFetch } from '../lib/api-fetch';
-
 import { useSharingSummary } from '../hooks/useSharingSummary';
+import { apiFetch } from '../lib/api-fetch';
 
 // Helper to parse apiKeyConfig which may be a JSON string from the database
 const parseApiKeyConfig = (
@@ -261,7 +260,7 @@ export default function McpServersPage() {
     <div className="p-4">
       <div className="mb-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <h2 className="text-xl font-semibold text-gray-900">MCP Servers</h2>
+          <h2 className="text-xl font-semibold text-gray-900">My MCP Servers</h2>
           {refreshing && (
             <span className="text-sm text-muted-foreground flex items-center gap-2">
               <span className="inline-block w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
@@ -287,164 +286,176 @@ export default function McpServersPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-3">
-          {servers.map((server) => (
-            <Card key={server.id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{server.name}</CardTitle>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/mcp-servers/${server.id}`)}
-                          aria-label={`View details for ${server.name}`}
-                        >
-                          View
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditForm(server)}
-                          aria-label={`Edit ${server.name}`}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(server.id)}
-                          aria-label={`Delete ${server.name}`}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          Delete
-                        </Button>
+          {servers.map((server) => {
+            const shareInfo = sharingSummary[server.id];
+            const isSharedUseOnly = shareInfo?.inbound && shareInfo.inbound.permission === 'use';
+            const canEdit = !shareInfo?.inbound || shareInfo.inbound.permission === 'admin';
+            return (
+              <Card key={server.id}>
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg">{server.name}</CardTitle>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/mcp-servers/${server.id}`)}
+                            aria-label={`View details for ${server.name}`}
+                          >
+                            View
+                          </Button>
+                          {canEdit && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openEditForm(server)}
+                              aria-label={`Edit ${server.name}`}
+                            >
+                              Edit
+                            </Button>
+                          )}
+                          {!isSharedUseOnly && !shareInfo?.inbound && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(server.id)}
+                              aria-label={`Delete ${server.name}`}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              Delete
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2 mt-2 flex-wrap">
-                      {/* Type badge */}
-                      <Badge variant={server.type === 'builtin' ? 'default' : 'secondary'}>
-                        {server.type}
-                      </Badge>
-                      {/* Tools count badge */}
-                      {server.connectionStatus === undefined ? (
-                        <Badge variant="outline" className="animate-pulse">
-                          <span className="inline-block w-8 h-3 bg-gray-200 rounded" />
+                      <div className="flex items-center gap-2 mt-2 flex-wrap">
+                        {/* Type badge */}
+                        <Badge variant={server.type === 'builtin' ? 'default' : 'secondary'}>
+                          {server.type}
                         </Badge>
-                      ) : (
-                        <Badge variant="outline">
-                          {server.toolsCount ?? 0} tool{(server.toolsCount ?? 0) !== 1 ? 's' : ''}
-                        </Badge>
-                      )}
-                      {/* Connection status badge */}
-                      {server.connectionStatus === undefined ? (
-                        <Badge variant="secondary" className="animate-pulse">
-                          <span className="inline-block w-12 h-3 bg-gray-200 rounded" />
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant={
-                            server.connectionStatus === 'connected'
-                              ? 'success'
+                        {/* Tools count badge */}
+                        {server.connectionStatus === undefined ? (
+                          <Badge variant="outline" className="animate-pulse">
+                            <span className="inline-block w-8 h-3 bg-gray-200 rounded" />
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline">
+                            {server.toolsCount ?? 0} tool{(server.toolsCount ?? 0) !== 1 ? 's' : ''}
+                          </Badge>
+                        )}
+                        {/* Connection status badge */}
+                        {server.connectionStatus === undefined ? (
+                          <Badge variant="secondary" className="animate-pulse">
+                            <span className="inline-block w-12 h-3 bg-gray-200 rounded" />
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant={
+                              server.connectionStatus === 'connected'
+                                ? 'success'
+                                : server.connectionStatus === 'error'
+                                  ? 'destructive'
+                                  : 'secondary'
+                            }
+                          >
+                            {server.connectionStatus === 'connected'
+                              ? 'Connected'
                               : server.connectionStatus === 'error'
-                                ? 'destructive'
-                                : 'secondary'
-                          }
-                        >
-                          {server.connectionStatus === 'connected'
-                            ? 'Connected'
-                            : server.connectionStatus === 'error'
-                              ? 'Error'
-                              : 'Unknown'}
-                        </Badge>
-                      )}
-                      {/* Shared badge */}
-                      {(() => {
-                        const info = sharingSummary[server.id];
-                        return (
-                          <>
-                            {info?.inbound && (
-                              <Badge variant="secondary">
-                                Shared · {info.inbound.permission.charAt(0).toUpperCase() + info.inbound.permission.slice(1)}
-                              </Badge>
-                            )}
-                            {info?.outbound && (
-                              <Badge variant="outline">
-                                Sharing · {info.outbound.total} member{info.outbound.total !== 1 ? 's' : ''}
-                              </Badge>
-                            )}
-                          </>
-                        );
-                      })()}
-                    </div>
-                    {/* Validation error alert */}
-                    {server.connectionStatus === 'error' && server.connectionError && (
-                      <Alert variant="destructive" className="mt-3 py-2">
-                        <AlertDescription className="text-xs">
-                          {server.connectionError}
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                    {/* Validation details for connected servers */}
-                    {server.connectionStatus === 'connected' && server.validationDetails && (
-                      <p className="text-xs mt-2 text-green-700">{server.validationDetails}</p>
-                    )}
-                    {/* API Key warning for builtin servers */}
-                    {server.type === 'builtin' &&
-                      server.metadata?.requiresApiKey &&
-                      !server.apiKeyConfig && (
-                        <Alert variant="default" className="mt-3 py-2 border-amber-200 bg-amber-50">
-                          <AlertDescription className="text-xs text-amber-800">
-                            <span className="font-medium">API Key Required:</span>{' '}
-                            {server.metadata.apiKeyHint ||
-                              'This built-in server requires an API key to function. Click Edit to configure.'}
+                                ? 'Error'
+                                : 'Unknown'}
+                          </Badge>
+                        )}
+                        {/* Shared badge */}
+                        {(() => {
+                          const info = sharingSummary[server.id];
+                          return (
+                            <>
+                              {info?.inbound && (
+                                <Badge variant="secondary">
+                                  Shared ·{' '}
+                                  {info.inbound.permission.charAt(0).toUpperCase() +
+                                    info.inbound.permission.slice(1)}
+                                </Badge>
+                              )}
+                              {info?.outbound && (
+                                <Badge variant="outline">
+                                  Sharing · {info.outbound.total} member
+                                  {info.outbound.total !== 1 ? 's' : ''}
+                                </Badge>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
+                      {/* Validation error alert */}
+                      {server.connectionStatus === 'error' && server.connectionError && (
+                        <Alert variant="destructive" className="mt-3 py-2">
+                          <AlertDescription className="text-xs">
+                            {server.connectionError}
                           </AlertDescription>
                         </Alert>
                       )}
-                    {/* OAuth configuration or OAuth required */}
-                    {(server.oauthConfig || server.oauthRequired) && (
-                      <div className="mt-3 flex items-center gap-2">
-                        <Badge variant="outline">OAuth</Badge>
-                        {server.oauthConfig?.authorizationServerUrl && (
-                          <span className="text-xs text-muted-foreground truncate max-w-xs">
-                            {server.oauthConfig.authorizationServerUrl}
-                          </span>
+                      {/* Validation details for connected servers */}
+                      {server.connectionStatus === 'connected' && server.validationDetails && (
+                        <p className="text-xs mt-2 text-green-700">{server.validationDetails}</p>
+                      )}
+                      {/* API Key warning for builtin servers */}
+                      {server.type === 'builtin' &&
+                        server.metadata?.requiresApiKey &&
+                        !server.apiKeyConfig && (
+                          <Alert
+                            variant="default"
+                            className="mt-3 py-2 border-amber-200 bg-amber-50"
+                          >
+                            <AlertDescription className="text-xs text-amber-800">
+                              <span className="font-medium">API Key Required:</span>{' '}
+                              {server.metadata.apiKeyHint ||
+                                'This built-in server requires an API key to function. Click Edit to configure.'}
+                            </AlertDescription>
+                          </Alert>
                         )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleOAuthAuthorize(server.id)}
-                        >
-                          {server.oauthRequired ? 'Login with OAuth' : 'Re-authorize'}
-                        </Button>
-                      </div>
-                    )}
-                    {/* API Key configured */}
-                    {server.apiKeyConfig &&
-                      (() => {
-                        const parsed = parseApiKeyConfig(server.apiKeyConfig);
-                        return parsed ? (
-                          <div className="mt-3 flex items-center gap-2">
-                            <Badge variant="outline">API Key</Badge>
-                            <span className="text-xs text-muted-foreground">
-                              Header: {parsed.headerName}
+                      {/* OAuth configuration or OAuth required */}
+                      {(server.oauthConfig || server.oauthRequired) && (
+                        <div className="mt-3 flex items-center gap-2">
+                          <Badge variant="outline">OAuth</Badge>
+                          {server.oauthConfig?.authorizationServerUrl && (
+                            <span className="text-xs text-muted-foreground truncate max-w-xs">
+                              {server.oauthConfig.authorizationServerUrl}
                             </span>
-                          </div>
-                        ) : null;
-                      })()}
+                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleOAuthAuthorize(server.id)}
+                          >
+                            {server.oauthRequired ? 'Login with OAuth' : 'Re-authorize'}
+                          </Button>
+                        </div>
+                      )}
+                      {/* API Key configured */}
+                      {server.apiKeyConfig &&
+                        (() => {
+                          const parsed = parseApiKeyConfig(server.apiKeyConfig);
+                          return parsed ? (
+                            <div className="mt-3 flex items-center gap-2">
+                              <Badge variant="outline">API Key</Badge>
+                              <span className="text-xs text-muted-foreground">
+                                Header: {parsed.headerName}
+                              </span>
+                            </div>
+                          ) : null;
+                        })()}
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
-            </Card>
-          ))}
+                </CardHeader>
+              </Card>
+            );
+          })}
         </div>
       )}
 
-      <McpPresetGallery
-        existingServerNames={servers.map((s) => s.name)}
-        onAdd={() => fetchServers(true)}
-      />
+      <McpPresetGallery onAdd={() => fetchServers(true)} />
 
       <McpServerForm
         server={editingServer}

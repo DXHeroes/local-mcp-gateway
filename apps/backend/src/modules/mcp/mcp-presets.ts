@@ -12,6 +12,13 @@ export interface McpPreset {
   description: string;
   type: 'external' | 'remote_http';
   config: Record<string, unknown>;
+  requiresApiKey?: boolean;
+  icon?: string;
+  docsUrl?: string;
+  apiKeyDefaults?: {
+    headerName: string;
+    headerValueTemplate: string;
+  };
 }
 
 export const MCP_PRESETS: McpPreset[] = [

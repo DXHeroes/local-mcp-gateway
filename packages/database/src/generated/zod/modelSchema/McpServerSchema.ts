@@ -1,8 +1,6 @@
 import { z } from 'zod';
 import { UserWithRelationsSchema, UserOptionalDefaultsWithRelationsSchema } from './UserSchema'
 import type { UserWithRelations, UserOptionalDefaultsWithRelations } from './UserSchema'
-import { OrganizationWithRelationsSchema, OrganizationOptionalDefaultsWithRelationsSchema } from './OrganizationSchema'
-import type { OrganizationWithRelations, OrganizationOptionalDefaultsWithRelations } from './OrganizationSchema'
 import { ProfileMcpServerWithRelationsSchema, ProfileMcpServerOptionalDefaultsWithRelationsSchema } from './ProfileMcpServerSchema'
 import type { ProfileMcpServerWithRelations, ProfileMcpServerOptionalDefaultsWithRelations } from './ProfileMcpServerSchema'
 import { OAuthTokenWithRelationsSchema, OAuthTokenOptionalDefaultsWithRelationsSchema } from './OAuthTokenSchema'
@@ -19,7 +17,7 @@ import type { DebugLogWithRelations, DebugLogOptionalDefaultsWithRelations } fro
 /////////////////////////////////////////
 
 /**
- * MCP server configurations
+ * MCP server configurations — owned by individual users (per-user, not per-org)
  */
 export const McpServerSchema = z.object({
   id: z.uuid(),
@@ -28,8 +26,8 @@ export const McpServerSchema = z.object({
   config: z.string(),
   oauthConfig: z.string().nullable(),
   apiKeyConfig: z.string().nullable(),
-  userId: z.string().nullable(),
-  organizationId: z.string().nullable(),
+  userId: z.string(),
+  presetId: z.string().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 })
@@ -54,8 +52,7 @@ export type McpServerOptionalDefaults = z.infer<typeof McpServerOptionalDefaults
 /////////////////////////////////////////
 
 export type McpServerRelations = {
-  user?: UserWithRelations | null;
-  organization?: OrganizationWithRelations | null;
+  user: UserWithRelations;
   profiles: ProfileMcpServerWithRelations[];
   oauthToken?: OAuthTokenWithRelations | null;
   oauthClientRegistrations: OAuthClientRegistrationWithRelations[];
@@ -66,8 +63,7 @@ export type McpServerRelations = {
 export type McpServerWithRelations = z.infer<typeof McpServerSchema> & McpServerRelations
 
 export const McpServerWithRelationsSchema: z.ZodType<McpServerWithRelations> = McpServerSchema.merge(z.object({
-  user: z.lazy(() => UserWithRelationsSchema).nullable(),
-  organization: z.lazy(() => OrganizationWithRelationsSchema).nullable(),
+  user: z.lazy(() => UserWithRelationsSchema),
   profiles: z.lazy(() => ProfileMcpServerWithRelationsSchema).array(),
   oauthToken: z.lazy(() => OAuthTokenWithRelationsSchema).nullable(),
   oauthClientRegistrations: z.lazy(() => OAuthClientRegistrationWithRelationsSchema).array(),
@@ -80,8 +76,7 @@ export const McpServerWithRelationsSchema: z.ZodType<McpServerWithRelations> = M
 /////////////////////////////////////////
 
 export type McpServerOptionalDefaultsRelations = {
-  user?: UserOptionalDefaultsWithRelations | null;
-  organization?: OrganizationOptionalDefaultsWithRelations | null;
+  user: UserOptionalDefaultsWithRelations;
   profiles: ProfileMcpServerOptionalDefaultsWithRelations[];
   oauthToken?: OAuthTokenOptionalDefaultsWithRelations | null;
   oauthClientRegistrations: OAuthClientRegistrationOptionalDefaultsWithRelations[];
@@ -92,8 +87,7 @@ export type McpServerOptionalDefaultsRelations = {
 export type McpServerOptionalDefaultsWithRelations = z.infer<typeof McpServerOptionalDefaultsSchema> & McpServerOptionalDefaultsRelations
 
 export const McpServerOptionalDefaultsWithRelationsSchema: z.ZodType<McpServerOptionalDefaultsWithRelations> = McpServerOptionalDefaultsSchema.merge(z.object({
-  user: z.lazy(() => UserOptionalDefaultsWithRelationsSchema).nullable(),
-  organization: z.lazy(() => OrganizationOptionalDefaultsWithRelationsSchema).nullable(),
+  user: z.lazy(() => UserOptionalDefaultsWithRelationsSchema),
   profiles: z.lazy(() => ProfileMcpServerOptionalDefaultsWithRelationsSchema).array(),
   oauthToken: z.lazy(() => OAuthTokenOptionalDefaultsWithRelationsSchema).nullable(),
   oauthClientRegistrations: z.lazy(() => OAuthClientRegistrationOptionalDefaultsWithRelationsSchema).array(),

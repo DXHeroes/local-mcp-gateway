@@ -1,21 +1,22 @@
 /**
  * MCP Module
  *
- * Handles MCP server management, discovery, seeding, and registry.
+ * Handles MCP server management, discovery, and registry.
+ * Builtin packages are registered in-memory; users add them via presets.
  */
 
 import { Logger, Module, OnModuleInit } from '@nestjs/common';
 import { DebugModule } from '../debug/debug.module.js';
+import { SharingModule } from '../sharing/sharing.module.js';
 import { McpController } from './mcp.controller.js';
 import { McpService } from './mcp.service.js';
 import { McpDiscoveryService } from './mcp-discovery.service.js';
 import { McpRegistry } from './mcp-registry.js';
-import { McpSeedService } from './mcp-seed.service.js';
 
 @Module({
-  imports: [DebugModule],
+  imports: [DebugModule, SharingModule],
   controllers: [McpController],
-  providers: [McpService, McpDiscoveryService, McpSeedService, McpRegistry],
+  providers: [McpService, McpDiscoveryService, McpRegistry],
   exports: [McpService, McpRegistry],
 })
 export class McpModule implements OnModuleInit {
@@ -23,7 +24,6 @@ export class McpModule implements OnModuleInit {
 
   constructor(
     private readonly discoveryService: McpDiscoveryService,
-    private readonly seedService: McpSeedService,
     private readonly registry: McpRegistry
   ) {}
 
@@ -34,15 +34,13 @@ export class McpModule implements OnModuleInit {
     const packages = await this.discoveryService.discoverPackages();
     this.logger.log(`Discovered ${packages.length} MCP packages`);
 
-    // 2. Register them in the in-memory registry
+    // 2. Register them in the in-memory registry (for proxy use + presets gallery)
     for (const pkg of packages) {
       this.registry.register(pkg);
       this.logger.log(`Registered: ${pkg.package.metadata.name} (${pkg.package.metadata.id})`);
     }
 
-    // 3. Run seed data for all packages
-    await this.seedService.runSeeds(packages);
-
+    // No auto-seeding — users add builtins from the presets gallery
     this.logger.log('MCP Module initialization complete');
   }
 }

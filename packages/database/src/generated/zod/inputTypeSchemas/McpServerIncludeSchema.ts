@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import type { Prisma } from '../../prisma';
 import { UserArgsSchema } from "../outputTypeSchemas/UserArgsSchema"
-import { OrganizationArgsSchema } from "../outputTypeSchemas/OrganizationArgsSchema"
 import { ProfileMcpServerFindManyArgsSchema } from "../outputTypeSchemas/ProfileMcpServerFindManyArgsSchema"
 import { OAuthTokenArgsSchema } from "../outputTypeSchemas/OAuthTokenArgsSchema"
 import { OAuthClientRegistrationFindManyArgsSchema } from "../outputTypeSchemas/OAuthClientRegistrationFindManyArgsSchema"
@@ -11,7 +10,6 @@ import { McpServerCountOutputTypeArgsSchema } from "../outputTypeSchemas/McpServ
 
 export const McpServerIncludeSchema: z.ZodType<Prisma.McpServerInclude> = z.object({
   user: z.union([z.boolean(),z.lazy(() => UserArgsSchema)]).optional(),
-  organization: z.union([z.boolean(),z.lazy(() => OrganizationArgsSchema)]).optional(),
   profiles: z.union([z.boolean(),z.lazy(() => ProfileMcpServerFindManyArgsSchema)]).optional(),
   oauthToken: z.union([z.boolean(),z.lazy(() => OAuthTokenArgsSchema)]).optional(),
   oauthClientRegistrations: z.union([z.boolean(),z.lazy(() => OAuthClientRegistrationFindManyArgsSchema)]).optional(),

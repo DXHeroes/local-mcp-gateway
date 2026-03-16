@@ -93,14 +93,18 @@ describe('OAuth authorize and callback HTTP contract', () => {
   });
 
   it('redirects authorize requests to the discovered authorization URL', async () => {
-    oauthService.discoverAndAuthorize.mockResolvedValue('https://auth.example.com/authorize?client_id=abc');
+    oauthService.discoverAndAuthorize.mockResolvedValue(
+      'https://auth.example.com/authorize?client_id=abc'
+    );
 
     const response = await fetch(`${baseUrl}/api/oauth/authorize/server-1`, {
       redirect: 'manual',
     });
 
     expect(response.status).toBe(302);
-    expect(response.headers.get('location')).toBe('https://auth.example.com/authorize?client_id=abc');
+    expect(response.headers.get('location')).toBe(
+      'https://auth.example.com/authorize?client_id=abc'
+    );
     expect(oauthService.discoverAndAuthorize).toHaveBeenCalledWith(
       'server-1',
       `${baseUrl}/api/oauth/callback`

@@ -2,8 +2,8 @@
  * MCP Service
  *
  * Business logic for MCP server management.
- * All queries are scoped to the user's active organization.
- * System records (organizationId=null, including builtin) are visible to all.
+ * All queries are scoped to the individual user (per-user ownership).
+ * Shared servers are visible via the SharingService.
  */
 
 import {
@@ -11,13 +11,14 @@ import {
   RemoteHttpMcpServer,
   RemoteSseMcpServer,
 } from '@dxheroes/local-mcp-core';
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 
-/** Sentinel value for unauthenticated MCP access — can only see system servers */
+/** Sentinel value for unauthenticated MCP access */
 const UNAUTHENTICATED_ID = '__unauthenticated__';
 
 import { PrismaService } from '../database/prisma.service.js';
 import { DebugService } from '../debug/debug.service.js';
+import { SharingService } from '../sharing/sharing.service.js';
 import type { CreateMcpServerDto } from './dto/create-mcp-server.dto.js';
 import type { UpdateMcpServerDto } from './dto/update-mcp-server.dto.js';
 import { MCP_PRESETS } from './mcp-presets.js';
@@ -28,65 +29,100 @@ export class McpService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly registry: McpRegistry,
-    private readonly debugService: DebugService
+    private readonly debugService: DebugService,
+    private readonly sharingService: SharingService
   ) {}
 
   private isAnonymous(userId: string): boolean {
     return userId === UNAUTHENTICATED_ID;
   }
 
-  private async assertAccess(serverId: string, userId: string, orgId?: string): Promise<void> {
+  /**
+   * Get the user's organization IDs for sharing lookups
+   */
+  private async getUserOrgIds(userId: string): Promise<string[]> {
+    const memberships = await this.prisma.member.findMany({
+      where: { userId },
+      select: { organizationId: true },
+    });
+    return memberships.map((m) => m.organizationId);
+  }
+
+  /**
+   * Assert the user can read this server (owner or shared with any permission)
+   */
+  private async assertAccess(serverId: string, userId: string): Promise<void> {
     if (this.isAnonymous(userId)) return;
 
     const server = await this.prisma.mcpServer.findUnique({
       where: { id: serverId },
-      select: { userId: true, organizationId: true },
+      select: { userId: true },
     });
     if (!server) throw new NotFoundException(`MCP server ${serverId} not found`);
 
-    // System record (no org) — accessible to all
-    if (!server.organizationId) return;
+    // Owner — always allowed
+    if (server.userId === userId) return;
 
-    // Must belong to the active org
-    if (orgId && server.organizationId === orgId) return;
+    // Check sharing
+    const orgIds = await this.getUserOrgIds(userId);
+    const shared = await this.sharingService.isSharedWith('mcp_server', serverId, userId, orgIds);
+    if (shared) return;
 
     throw new ForbiddenException('You do not have access to this MCP server');
   }
 
-  private async assertOwnership(serverId: string, userId: string, orgId?: string): Promise<void> {
+  /**
+   * Assert the user can mutate this server (owner or shared with "admin" permission)
+   */
+  private async assertOwnership(serverId: string, userId: string): Promise<void> {
     if (this.isAnonymous(userId)) return;
 
     const server = await this.prisma.mcpServer.findUnique({
       where: { id: serverId },
-      select: { userId: true, organizationId: true },
+      select: { userId: true },
     });
     if (!server) throw new NotFoundException(`MCP server ${serverId} not found`);
-    if (!server.organizationId) return; // system record
 
-    if (orgId && server.organizationId === orgId) return;
+    // Owner — always allowed
+    if (server.userId === userId) return;
+
+    // Check for admin sharing permission
+    const orgIds = await this.getUserOrgIds(userId);
+    const permission = await this.sharingService.getPermission(
+      'mcp_server',
+      serverId,
+      userId,
+      orgIds
+    );
+    if (permission === 'admin') return;
 
     throw new ForbiddenException('You do not own this MCP server');
   }
 
   /**
-   * Get all MCP servers visible in the active org (org servers + system servers)
+   * Get all MCP servers owned by or shared with the user
    */
   async findAll(userId: string, orgId?: string) {
     const include = { profiles: { include: { profile: true as const } } };
     const orderBy = { name: 'asc' as const };
 
-    const servers = this.isAnonymous(userId)
-      ? await this.prisma.mcpServer.findMany({ include, orderBy })
-      : await this.prisma.mcpServer.findMany({
-          where: {
-            OR: [
-              { organizationId: orgId }, // org servers
-              { organizationId: null }, // system servers
-            ],
-          },
-          include,
-          orderBy,
-        });
+    if (this.isAnonymous(userId)) {
+      // Unauthenticated users see nothing (no system servers anymore)
+      return [];
+    }
+
+    // Get shared server IDs
+    const orgIds = orgId ? [orgId] : await this.getUserOrgIds(userId);
+    const sharedIds = await this.sharingService.getSharedResourceIds('mcp_server', userId, orgIds);
+
+    // Own servers + shared servers
+    const servers = await this.prisma.mcpServer.findMany({
+      where: {
+        OR: [{ userId }, ...(sharedIds.length > 0 ? [{ id: { in: sharedIds } }] : [])],
+      },
+      include,
+      orderBy,
+    });
 
     // Enrich with metadata from registry for builtin servers
     return servers.map((server) => {
@@ -100,9 +136,9 @@ export class McpService {
   /**
    * Get a specific MCP server
    */
-  async findById(id: string, userId?: string, orgId?: string) {
+  async findById(id: string, userId?: string, _orgId?: string) {
     if (userId) {
-      await this.assertAccess(id, userId, orgId);
+      await this.assertAccess(id, userId);
     }
 
     const server = await this.prisma.mcpServer.findUnique({
@@ -132,9 +168,13 @@ export class McpService {
   }
 
   /**
-   * Create a new MCP server in the active org
+   * Create a new MCP server owned by the user
    */
-  async create(dto: CreateMcpServerDto, userId: string, orgId?: string) {
+  async create(dto: CreateMcpServerDto, userId: string, _orgId?: string) {
+    if (this.isAnonymous(userId)) {
+      throw new ForbiddenException('Authentication required to create MCP servers');
+    }
+
     return this.prisma.mcpServer.create({
       data: {
         name: dto.name,
@@ -142,8 +182,7 @@ export class McpService {
         config: JSON.stringify(dto.config || {}),
         apiKeyConfig: dto.apiKeyConfig ? JSON.stringify(dto.apiKeyConfig) : null,
         oauthConfig: dto.oauthConfig ? JSON.stringify(dto.oauthConfig) : null,
-        userId: this.isAnonymous(userId) ? null : userId,
-        organizationId: orgId ?? null,
+        userId,
       },
     });
   }
@@ -151,8 +190,8 @@ export class McpService {
   /**
    * Update an MCP server
    */
-  async update(id: string, dto: UpdateMcpServerDto, userId: string, orgId?: string) {
-    await this.assertOwnership(id, userId, orgId);
+  async update(id: string, dto: UpdateMcpServerDto, userId: string, _orgId?: string) {
+    await this.assertOwnership(id, userId);
 
     const server = await this.prisma.mcpServer.findUnique({ where: { id } });
     if (!server) {
@@ -179,8 +218,8 @@ export class McpService {
   /**
    * Delete an MCP server
    */
-  async delete(id: string, userId: string, orgId?: string) {
-    await this.assertOwnership(id, userId, orgId);
+  async delete(id: string, userId: string, _orgId?: string) {
+    await this.assertOwnership(id, userId);
 
     const server = await this.prisma.mcpServer.findUnique({ where: { id } });
     if (!server) {
@@ -193,9 +232,9 @@ export class McpService {
   /**
    * Get tools from an MCP server
    */
-  async getTools(id: string, userId?: string, orgId?: string) {
+  async getTools(id: string, userId?: string, _orgId?: string) {
     if (userId) {
-      await this.assertAccess(id, userId, orgId);
+      await this.assertAccess(id, userId);
     }
 
     const startTime = Date.now();
@@ -254,7 +293,10 @@ export class McpService {
 
     // For remote_http servers, connect and fetch tools
     if (server.type === 'remote_http') {
-      const config = this.parseConfig(server.config) as { url: string; headers?: Record<string, string> };
+      const config = this.parseConfig(server.config) as {
+        url: string;
+        headers?: Record<string, string>;
+      };
       const apiKeyConfig = server.apiKeyConfig ? JSON.parse(server.apiKeyConfig as string) : null;
 
       const remoteServer = new RemoteHttpMcpServer(
@@ -269,7 +311,10 @@ export class McpService {
 
     // For remote_sse servers, connect and fetch tools
     if (server.type === 'remote_sse') {
-      const config = this.parseConfig(server.config) as { url: string; headers?: Record<string, string> };
+      const config = this.parseConfig(server.config) as {
+        url: string;
+        headers?: Record<string, string>;
+      };
       const apiKeyConfig = server.apiKeyConfig ? JSON.parse(server.apiKeyConfig as string) : null;
 
       const remoteServer = new RemoteSseMcpServer(
@@ -316,9 +361,9 @@ export class McpService {
   /**
    * Get MCP server status with real validation
    */
-  async getStatus(id: string, userId?: string, orgId?: string) {
+  async getStatus(id: string, userId?: string, _orgId?: string) {
     if (userId) {
-      await this.assertAccess(id, userId, orgId);
+      await this.assertAccess(id, userId);
     }
 
     const startTime = Date.now();
@@ -429,7 +474,10 @@ export class McpService {
     // For remote_http servers, validate by connecting
     let oauthRequired = false;
     if (server.type === 'remote_http' && status === 'unknown') {
-      const config = this.parseConfig(server.config) as { url: string; headers?: Record<string, string> };
+      const config = this.parseConfig(server.config) as {
+        url: string;
+        headers?: Record<string, string>;
+      };
       const apiKeyConfig = server.apiKeyConfig ? JSON.parse(server.apiKeyConfig as string) : null;
 
       // Get OAuth token if available, mapping Prisma types to core OAuthToken
@@ -463,7 +511,8 @@ export class McpService {
         validationError = error instanceof Error ? error.message : 'Unknown error';
         if (validationError.includes('OAUTH_REQUIRED')) {
           oauthRequired = true;
-          validationDetails = 'OAuth authentication required. Click "Login with OAuth" to authorize.';
+          validationDetails =
+            'OAuth authentication required. Click "Login with OAuth" to authorize.';
         } else {
           validationDetails = `Connection failed: ${validationError}`;
         }
@@ -472,7 +521,10 @@ export class McpService {
 
     // For remote_sse servers, validate by connecting
     if (server.type === 'remote_sse' && status === 'unknown') {
-      const config = this.parseConfig(server.config) as { url: string; headers?: Record<string, string> };
+      const config = this.parseConfig(server.config) as {
+        url: string;
+        headers?: Record<string, string>;
+      };
       const apiKeyConfig = server.apiKeyConfig ? JSON.parse(server.apiKeyConfig as string) : null;
 
       // Get OAuth token if available, mapping Prisma types to core OAuthToken
@@ -506,7 +558,8 @@ export class McpService {
         validationError = error instanceof Error ? error.message : 'Unknown error';
         if (validationError.includes('OAUTH_REQUIRED')) {
           oauthRequired = true;
-          validationDetails = 'OAuth authentication required. Click "Login with OAuth" to authorize.';
+          validationDetails =
+            'OAuth authentication required. Click "Login with OAuth" to authorize.';
         } else {
           validationDetails = `Connection failed: ${validationError}`;
         }
@@ -622,35 +675,66 @@ export class McpService {
   }
 
   /**
-   * Add a preset MCP server to the user's organization
+   * Get unified presets: hardcoded external presets + discovered builtin packages
    */
-  async addPreset(presetId: string, userId: string, orgId: string) {
-    const preset = MCP_PRESETS.find((p) => p.id === presetId);
+  getUnifiedPresets() {
+    const externalPresets = MCP_PRESETS.map((p) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      type: p.type as string,
+      config: p.config,
+      source: 'preset' as const,
+      requiresApiKey: p.requiresApiKey,
+      icon: p.icon,
+      docsUrl: p.docsUrl,
+    }));
+
+    const builtinPresets = this.registry.getAllMetadata().map((m) => ({
+      id: m.id,
+      name: m.name,
+      description: m.description,
+      type: 'builtin' as const,
+      config: { builtinId: m.id },
+      source: 'builtin' as const,
+      requiresApiKey: m.requiresApiKey,
+      icon: m.icon,
+      docsUrl: m.docsUrl,
+    }));
+
+    return [...builtinPresets, ...externalPresets];
+  }
+
+  /**
+   * Add a preset MCP server to the user's servers
+   * Allows duplicate presets with different names/API keys.
+   */
+  async addPreset(
+    presetId: string,
+    userId: string,
+    _orgId?: string,
+    options?: {
+      name?: string;
+      apiKeyConfig?: { apiKey: string; headerName?: string; headerValueTemplate?: string };
+    }
+  ) {
+    if (this.isAnonymous(userId)) {
+      throw new ForbiddenException('Authentication required to add presets');
+    }
+
+    const preset = this.getUnifiedPresets().find((p) => p.id === presetId);
     if (!preset) {
       throw new NotFoundException(`Preset "${presetId}" not found`);
     }
 
-    // Check if a server with this name already exists in the org
-    const existing = await this.prisma.mcpServer.findFirst({
-      where: {
-        name: preset.name,
-        organizationId: orgId,
-      },
-    });
-
-    if (existing) {
-      throw new ConflictException(
-        `MCP server "${preset.name}" already exists in your organization`
-      );
-    }
-
     return this.prisma.mcpServer.create({
       data: {
-        name: preset.name,
+        name: options?.name || preset.name,
         type: preset.type,
         config: JSON.stringify(preset.config),
+        apiKeyConfig: options?.apiKeyConfig ? JSON.stringify(options.apiKeyConfig) : null,
         userId,
-        organizationId: orgId,
+        presetId,
       },
     });
   }

@@ -4,7 +4,6 @@ import { z } from 'zod';
 import { SortOrderSchema } from './SortOrderSchema';
 import { SortOrderInputSchema } from './SortOrderInputSchema';
 import { UserOrderByWithRelationInputSchema } from './UserOrderByWithRelationInputSchema';
-import { OrganizationOrderByWithRelationInputSchema } from './OrganizationOrderByWithRelationInputSchema';
 import { ProfileMcpServerOrderByRelationAggregateInputSchema } from './ProfileMcpServerOrderByRelationAggregateInputSchema';
 import { OAuthTokenOrderByWithRelationInputSchema } from './OAuthTokenOrderByWithRelationInputSchema';
 import { OAuthClientRegistrationOrderByRelationAggregateInputSchema } from './OAuthClientRegistrationOrderByRelationAggregateInputSchema';
@@ -18,12 +17,11 @@ export const McpServerOrderByWithRelationInputSchema: z.ZodType<Prisma.McpServer
   config: z.lazy(() => SortOrderSchema).optional(),
   oauthConfig: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
   apiKeyConfig: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
-  userId: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
-  organizationId: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
+  userId: z.lazy(() => SortOrderSchema).optional(),
+  presetId: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional(),
   user: z.lazy(() => UserOrderByWithRelationInputSchema).optional(),
-  organization: z.lazy(() => OrganizationOrderByWithRelationInputSchema).optional(),
   profiles: z.lazy(() => ProfileMcpServerOrderByRelationAggregateInputSchema).optional(),
   oauthToken: z.lazy(() => OAuthTokenOrderByWithRelationInputSchema).optional(),
   oauthClientRegistrations: z.lazy(() => OAuthClientRegistrationOrderByRelationAggregateInputSchema).optional(),

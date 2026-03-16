@@ -184,6 +184,42 @@ export class SharingService {
   }
 
   /**
+   * Get the permission level for a specific resource shared with a user.
+   * Returns the highest permission found (admin > use), or null if not shared.
+   */
+  async getPermission(
+    resourceType: string,
+    resourceId: string,
+    userId: string,
+    organizationIds: string[]
+  ): Promise<string | null> {
+    const shares = await this.prisma.sharedResource.findMany({
+      where: {
+        resourceType,
+        resourceId,
+        OR: [
+          { sharedWithType: 'user', sharedWithId: userId },
+          ...(organizationIds.length > 0
+            ? [
+                {
+                  sharedWithType: 'organization',
+                  sharedWithId: { in: organizationIds },
+                },
+              ]
+            : []),
+        ],
+      },
+      select: { permission: true },
+    });
+
+    if (shares.length === 0) return null;
+
+    // Return highest permission: admin > use
+    if (shares.some((s) => s.permission === 'admin')) return 'admin';
+    return shares[0].permission;
+  }
+
+  /**
    * Get IDs of resources shared with a user (directly or via orgs)
    */
   async getSharedResourceIds(
@@ -259,10 +295,7 @@ export class SharingService {
           (summary.outbound.byPermission[share.permission] || 0) + 1;
       }
 
-      if (
-        share.sharedWithId === userId ||
-        organizationIds.includes(share.sharedWithId)
-      ) {
+      if (share.sharedWithId === userId || organizationIds.includes(share.sharedWithId)) {
         // Inbound share
         summary.inbound = {
           permission: share.permission,
@@ -294,10 +327,10 @@ export class SharingService {
         where: { id: resourceId },
       });
       if (!server) throw new NotFoundException('MCP server not found');
-      if (server.userId && server.userId !== userId) {
+      if (server.userId !== userId) {
         throw new ForbiddenException('You do not own this MCP server');
       }
-      return server.organizationId;
+      return null;
     }
     return null;
   }

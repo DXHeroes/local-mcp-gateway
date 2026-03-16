@@ -85,7 +85,10 @@ function createMockEventEmitter() {
   };
 }
 
-function createMockRequest(headers: Record<string, string> = {}, query: Record<string, string> = {}) {
+function createMockRequest(
+  headers: Record<string, string> = {},
+  query: Record<string, string> = {}
+) {
   return {
     headers,
     query,
@@ -116,10 +119,7 @@ describe('McpOAuthGuard', () => {
   beforeEach(() => {
     authService = createMockAuthService();
     const configService = createMockConfigService();
-    guard = new McpOAuthGuard(
-      authService as unknown as AuthService,
-      configService as any
-    );
+    guard = new McpOAuthGuard(authService as unknown as AuthService, configService as any);
   });
 
   it('rejects request without Bearer token with 401', async () => {

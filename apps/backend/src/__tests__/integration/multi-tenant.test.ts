@@ -1,15 +1,14 @@
 /**
- * Integration Tests: Multi-tenant data isolation
+ * Integration Tests: Per-user MCP isolation with sharing
  *
- * Verifies that ProfilesService and McpService correctly isolate data
- * between organizations while allowing access to system records.
+ * Verifies that:
+ * - McpService returns only servers owned by the user + shared servers
+ * - ProfilesService still org-scopes profiles
+ * - Cross-user access is denied unless shared
  */
 
 import { ForbiddenException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-/** Sentinel value for unauthenticated MCP access */
-const UNAUTHENTICATED_ID = '__unauthenticated__';
 
 import type { PrismaService } from '../../modules/database/prisma.service.js';
 import type { DebugService } from '../../modules/debug/debug.service.js';
@@ -17,6 +16,10 @@ import { McpService } from '../../modules/mcp/mcp.service.js';
 import { McpRegistry } from '../../modules/mcp/mcp-registry.js';
 import { ProfilesService } from '../../modules/profiles/profiles.service.js';
 import type { ProxyService } from '../../modules/proxy/proxy.service.js';
+import type { SharingService } from '../../modules/sharing/sharing.service.js';
+
+/** Sentinel value for unauthenticated MCP access */
+const UNAUTHENTICATED_ID = '__unauthenticated__';
 
 // ────────────────────────────────────────────────
 // In-memory data store simulating Prisma
@@ -38,20 +41,14 @@ interface InMemoryMcpServer {
   config: string;
   apiKeyConfig: string | null;
   oauthConfig: string | null;
-  userId: string | null;
-  organizationId: string | null;
+  userId: string;
   profiles: unknown[];
   oauthToken: null;
   toolsCache: unknown[];
 }
 
 const PROFILES: InMemoryProfile[] = [];
-
 const SERVERS: InMemoryMcpServer[] = [];
-
-// ────────────────────────────────────────────────
-// Helper: build a mock PrismaService over in-memory data
-// ────────────────────────────────────────────────
 
 function buildMockPrisma() {
   return {
@@ -108,10 +105,8 @@ function buildMockPrisma() {
           const orConds = whereObj.OR as Record<string, unknown>[];
           result = result.filter((s) =>
             orConds.some((cond: Record<string, unknown>) => {
-              if ('organizationId' in cond) {
-                return cond.organizationId === null
-                  ? s.organizationId === null
-                  : s.organizationId === cond.organizationId;
+              if ('userId' in cond) {
+                return s.userId === cond.userId;
               }
               if ('id' in cond && (cond.id as Record<string, unknown>)?.in) {
                 return ((cond.id as Record<string, unknown>).in as string[]).includes(s.id);
@@ -136,8 +131,7 @@ function buildMockPrisma() {
           config: data.config as string,
           apiKeyConfig: (data.apiKeyConfig as string) ?? null,
           oauthConfig: (data.oauthConfig as string) ?? null,
-          userId: (data.userId as string) ?? null,
-          organizationId: (data.organizationId as string) ?? null,
+          userId: data.userId as string,
           profiles: [],
           oauthToken: null,
           toolsCache: [],
@@ -161,7 +155,7 @@ function buildMockPrisma() {
 }
 
 // ────────────────────────────────────────────────
-// Tests: ProfilesService data isolation
+// Tests: ProfilesService data isolation (unchanged — org-scoped)
 // ────────────────────────────────────────────────
 
 describe('Multi-tenant data isolation', () => {
@@ -171,7 +165,6 @@ describe('Multi-tenant data isolation', () => {
     let proxyService: Record<string, ReturnType<typeof vi.fn>>;
 
     beforeEach(() => {
-      // Reset in-memory data
       PROFILES.length = 0;
       PROFILES.push(
         {
@@ -213,7 +206,6 @@ describe('Multi-tenant data isolation', () => {
 
     it('Org A sees org A profiles + system profiles, not Org B profiles', async () => {
       const result = await profilesService.findAll('user-a', 'org-a');
-
       const ids = result.map((p: { id: string }) => p.id);
       expect(ids).toContain('sys-profile');
       expect(ids).toContain('org-a-profile');
@@ -222,7 +214,6 @@ describe('Multi-tenant data isolation', () => {
 
     it('Org B sees org B profiles + system profiles, not Org A profiles', async () => {
       const result = await profilesService.findAll('user-b', 'org-b');
-
       const ids = result.map((p: { id: string }) => p.id);
       expect(ids).toContain('sys-profile');
       expect(ids).toContain('org-b-profile');
@@ -232,7 +223,6 @@ describe('Multi-tenant data isolation', () => {
     it('system profiles (organizationId=null) are visible to all orgs', async () => {
       const resultA = await profilesService.findAll('user-a', 'org-a');
       const resultB = await profilesService.findAll('user-b', 'org-b');
-
       expect(resultA.some((p: { id: string }) => p.id === 'sys-profile')).toBe(true);
       expect(resultB.some((p: { id: string }) => p.id === 'sys-profile')).toBe(true);
     });
@@ -257,67 +247,49 @@ describe('Multi-tenant data isolation', () => {
 
     it('unauthenticated user sees all profiles', async () => {
       const result = await profilesService.findAll(UNAUTHENTICATED_ID);
-
-      // Unauthenticated findAll queries without WHERE filter
       expect(prisma.profile.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           orderBy: { name: 'asc' },
         })
       );
-      // The mock returns all profiles for filterless queries
       expect(result.length).toBeGreaterThanOrEqual(1);
     });
   });
 
   // ────────────────────────────────────────────────
-  // Tests: McpService data isolation
+  // Tests: McpService per-user isolation
   // ────────────────────────────────────────────────
 
-  describe('McpService', () => {
+  describe('McpService — per-user isolation', () => {
     let mcpService: McpService;
     let prisma: ReturnType<typeof buildMockPrisma>;
     let registry: McpRegistry;
     let debugService: Record<string, ReturnType<typeof vi.fn>>;
+    let sharingService: Record<string, ReturnType<typeof vi.fn>>;
 
     beforeEach(() => {
-      // Reset in-memory data
       SERVERS.length = 0;
       SERVERS.push(
         {
-          id: 'sys-server',
-          name: 'System Builtin',
-          type: 'builtin',
-          config: '{"builtinId":"fetch"}',
-          apiKeyConfig: null,
-          oauthConfig: null,
-          userId: null,
-          organizationId: null,
-          profiles: [],
-          oauthToken: null,
-          toolsCache: [],
-        },
-        {
-          id: 'org-a-server',
+          id: 'user-a-server',
           name: 'A Custom',
           type: 'external',
           config: '{"command":"node"}',
           apiKeyConfig: '{"apiKey":"a-key"}',
           oauthConfig: null,
           userId: 'user-a',
-          organizationId: 'org-a',
           profiles: [],
           oauthToken: null,
           toolsCache: [],
         },
         {
-          id: 'org-b-server',
+          id: 'user-b-server',
           name: 'B Custom',
           type: 'external',
           config: '{"command":"node"}',
           apiKeyConfig: '{"apiKey":"b-key"}',
           oauthConfig: null,
           userId: 'user-b',
-          organizationId: 'org-b',
           profiles: [],
           oauthToken: null,
           toolsCache: [],
@@ -330,53 +302,53 @@ describe('Multi-tenant data isolation', () => {
         createLog: vi.fn().mockResolvedValue({ id: 'log-1' }),
         updateLog: vi.fn().mockResolvedValue({}),
       };
+      sharingService = {
+        getSharedResourceIds: vi.fn().mockResolvedValue([]),
+        isSharedWith: vi.fn().mockResolvedValue(false),
+        getPermission: vi.fn().mockResolvedValue(null),
+      };
 
       mcpService = new McpService(
         prisma as unknown as PrismaService,
         registry,
-        debugService as unknown as DebugService
+        debugService as unknown as DebugService,
+        sharingService as unknown as SharingService
       );
     });
 
-    it('Org A sees org A servers + system servers, not Org B servers', async () => {
+    it('User A sees only own servers (no shared)', async () => {
       const result = await mcpService.findAll('user-a', 'org-a');
-
       const ids = result.map((s: { id: string }) => s.id);
-      expect(ids).toContain('sys-server');
-      expect(ids).toContain('org-a-server');
-      expect(ids).not.toContain('org-b-server');
+      expect(ids).toContain('user-a-server');
+      expect(ids).not.toContain('user-b-server');
     });
 
-    it('Org B sees org B servers + system servers, not Org A servers', async () => {
-      const result = await mcpService.findAll('user-b', 'org-b');
-
+    it('User A sees own + shared servers', async () => {
+      sharingService.getSharedResourceIds.mockResolvedValue(['user-b-server']);
+      const result = await mcpService.findAll('user-a', 'org-a');
       const ids = result.map((s: { id: string }) => s.id);
-      expect(ids).toContain('sys-server');
-      expect(ids).toContain('org-b-server');
-      expect(ids).not.toContain('org-a-server');
+      expect(ids).toContain('user-a-server');
+      expect(ids).toContain('user-b-server');
     });
 
-    it('builtin/system servers (organizationId=null) are visible to all orgs', async () => {
-      const resultA = await mcpService.findAll('user-a', 'org-a');
-      const resultB = await mcpService.findAll('user-b', 'org-b');
-
-      expect(resultA.some((s: { id: string }) => s.id === 'sys-server')).toBe(true);
-      expect(resultB.some((s: { id: string }) => s.id === 'sys-server')).toBe(true);
-    });
-
-    it('Org A cannot access Org B server by ID', async () => {
-      await expect(mcpService.findById('org-b-server', 'user-a', 'org-a')).rejects.toThrow(
+    it('User A cannot access User B server by ID without sharing', async () => {
+      sharingService.isSharedWith.mockResolvedValue(false);
+      await expect(mcpService.findById('user-b-server', 'user-a')).rejects.toThrow(
         ForbiddenException
       );
     });
 
-    it('Org A can access system server by ID', async () => {
-      const server = await mcpService.findById('sys-server', 'user-a', 'org-a');
-      expect(server).toBeDefined();
-      expect(server.id).toBe('sys-server');
+    it('User A can access User B server when shared', async () => {
+      prisma.mcpServer.findUnique
+        .mockResolvedValueOnce({ id: 'user-b-server', userId: 'user-b' }) // assertAccess
+        .mockResolvedValueOnce({ ...SERVERS[1], oauthToken: null, toolsCache: [] }); // findById
+      sharingService.isSharedWith.mockResolvedValue(true);
+
+      const result = await mcpService.findById('user-b-server', 'user-a');
+      expect(result).toBeDefined();
     });
 
-    it('Creating a server in Org A sets organizationId to org-a', async () => {
+    it('Creating a server sets userId only (no organizationId)', async () => {
       await mcpService.create(
         { name: 'New', type: 'external', config: { command: 'node' } },
         'user-a',
@@ -385,31 +357,28 @@ describe('Multi-tenant data isolation', () => {
 
       expect(prisma.mcpServer.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ userId: 'user-a', organizationId: 'org-a' }),
+          data: expect.objectContaining({ userId: 'user-a' }),
         })
       );
+      const callData = prisma.mcpServer.create.mock.calls[0][0].data;
+      expect(callData.organizationId).toBeUndefined();
     });
 
-    it('unauthenticated user sees all servers without filtering', async () => {
-      await mcpService.findAll(UNAUTHENTICATED_ID);
-
-      // Anonymous uses the unfiltered findMany path
-      expect(prisma.mcpServer.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          orderBy: { name: 'asc' },
-        })
-      );
+    it('unauthenticated user sees empty list', async () => {
+      const result = await mcpService.findAll(UNAUTHENTICATED_ID);
+      expect(result).toHaveLength(0);
     });
 
-    it('Org A cannot delete Org B server', async () => {
-      await expect(mcpService.delete('org-b-server', 'user-a', 'org-a')).rejects.toThrow(
+    it('User A cannot delete User B server', async () => {
+      sharingService.getPermission.mockResolvedValue(null);
+      await expect(mcpService.delete('user-b-server', 'user-a')).rejects.toThrow(
         ForbiddenException
       );
     });
 
-    it('Org A can delete own org server', async () => {
-      await mcpService.delete('org-a-server', 'user-a', 'org-a');
-      expect(prisma.mcpServer.delete).toHaveBeenCalledWith({ where: { id: 'org-a-server' } });
+    it('User A can delete own server', async () => {
+      await mcpService.delete('user-a-server', 'user-a');
+      expect(prisma.mcpServer.delete).toHaveBeenCalledWith({ where: { id: 'user-a-server' } });
     });
   });
 });

@@ -32,9 +32,7 @@ function createAuthServiceMock(): MockAuthService {
   };
 }
 
-async function startTestApp(options?: {
-  backendUrl?: string;
-}): Promise<{
+async function startTestApp(options?: { backendUrl?: string }): Promise<{
   close: () => Promise<void>;
   authService: MockAuthService;
   baseUrl: string;
@@ -131,7 +129,11 @@ async function startTestApp(options?: {
 
       if (req.method === 'GET' && url.pathname === '/.well-known/oauth-protected-resource') {
         res.setHeader('content-type', 'application/json');
-        res.end(JSON.stringify(createMcpProtectedResourceMetadata(configService as unknown as ConfigService)));
+        res.end(
+          JSON.stringify(
+            createMcpProtectedResourceMetadata(configService as unknown as ConfigService)
+          )
+        );
         return;
       }
 

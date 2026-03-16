@@ -2,7 +2,7 @@
  * MCP Controller
  *
  * REST API endpoints for MCP server management.
- * All routes scoped to the authenticated user's active organization.
+ * All routes scoped to the authenticated user (per-user ownership).
  */
 
 import {
@@ -22,45 +22,36 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import { SkipOrgCheck } from '../auth/decorators/skip-org-check.decorator.js';
 import { CreateMcpServerDto } from './dto/create-mcp-server.dto.js';
 import { UpdateMcpServerDto } from './dto/update-mcp-server.dto.js';
-import { MCP_PRESETS } from './mcp-presets.js';
 import { McpService } from './mcp.service.js';
-import { McpRegistry } from './mcp-registry.js';
 
 @Controller('mcp-servers')
 export class McpController {
-  constructor(
-    private readonly mcpService: McpService,
-    private readonly registry: McpRegistry
-  ) {}
+  constructor(private readonly mcpService: McpService) {}
 
   /**
-   * Get all available MCP packages (discovered)
-   */
-  @Get('available')
-  getAvailablePackages() {
-    return this.registry.getAllMetadata();
-  }
-
-  /**
-   * Get all available MCP presets (gallery)
+   * Get unified presets (external + builtin packages)
    */
   @Get('presets')
   @SkipOrgCheck()
   getPresets() {
-    return MCP_PRESETS;
+    return this.mcpService.getUnifiedPresets();
   }
 
   /**
-   * Add a preset to the user's active organization
+   * Add a preset to the user's servers
    */
   @Post('presets/:presetId/add')
   @HttpCode(HttpStatus.CREATED)
   async addPreset(
     @CurrentUser() user: AuthUser,
-    @ActiveOrgId() orgId: string,
-    @Param('presetId') presetId: string
+    @ActiveOrgId() orgId: string | null,
+    @Param('presetId') presetId: string,
+    @Body() body: {
+      name?: string;
+      apiKeyConfig?: { apiKey: string; headerName?: string; headerValueTemplate?: string };
+    }
   ) {
-    return this.mcpService.addPreset(presetId, user.id, orgId);
+    return this.mcpService.addPreset(presetId, user.id, orgId ?? undefined, body);
   }
 
   /**
@@ -153,5 +144,4 @@ export class McpController {
   ) {
     return this.mcpService.getStatus(id, user.id, orgId);
   }
-
 }

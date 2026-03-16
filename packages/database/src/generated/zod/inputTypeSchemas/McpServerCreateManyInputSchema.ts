@@ -9,8 +9,8 @@ export const McpServerCreateManyInputSchema: z.ZodType<Prisma.McpServerCreateMan
   config: z.string().optional(),
   oauthConfig: z.string().optional().nullable(),
   apiKeyConfig: z.string().optional().nullable(),
-  userId: z.string().optional().nullable(),
-  organizationId: z.string().optional().nullable(),
+  userId: z.string(),
+  presetId: z.string().optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
 });

@@ -279,6 +279,7 @@ export { ProfileMinOrderByAggregateInputSchema } from './ProfileMinOrderByAggreg
 export { StringWithAggregatesFilterSchema } from './StringWithAggregatesFilterSchema';
 export { StringNullableWithAggregatesFilterSchema } from './StringNullableWithAggregatesFilterSchema';
 export { DateTimeWithAggregatesFilterSchema } from './DateTimeWithAggregatesFilterSchema';
+export { UserScalarRelationFilterSchema } from './UserScalarRelationFilterSchema';
 export { OAuthTokenNullableScalarRelationFilterSchema } from './OAuthTokenNullableScalarRelationFilterSchema';
 export { OAuthClientRegistrationListRelationFilterSchema } from './OAuthClientRegistrationListRelationFilterSchema';
 export { McpServerToolsCacheListRelationFilterSchema } from './McpServerToolsCacheListRelationFilterSchema';
@@ -351,7 +352,6 @@ export { SharedResourceOrderByRelationAggregateInputSchema } from './SharedResou
 export { UserCountOrderByAggregateInputSchema } from './UserCountOrderByAggregateInputSchema';
 export { UserMaxOrderByAggregateInputSchema } from './UserMaxOrderByAggregateInputSchema';
 export { UserMinOrderByAggregateInputSchema } from './UserMinOrderByAggregateInputSchema';
-export { UserScalarRelationFilterSchema } from './UserScalarRelationFilterSchema';
 export { SessionCountOrderByAggregateInputSchema } from './SessionCountOrderByAggregateInputSchema';
 export { SessionMaxOrderByAggregateInputSchema } from './SessionMaxOrderByAggregateInputSchema';
 export { SessionMinOrderByAggregateInputSchema } from './SessionMinOrderByAggregateInputSchema';
@@ -406,7 +406,6 @@ export { DebugLogUpdateManyWithoutProfileNestedInputSchema } from './DebugLogUpd
 export { ProfileMcpServerUncheckedUpdateManyWithoutProfileNestedInputSchema } from './ProfileMcpServerUncheckedUpdateManyWithoutProfileNestedInputSchema';
 export { DebugLogUncheckedUpdateManyWithoutProfileNestedInputSchema } from './DebugLogUncheckedUpdateManyWithoutProfileNestedInputSchema';
 export { UserCreateNestedOneWithoutMcpServersInputSchema } from './UserCreateNestedOneWithoutMcpServersInputSchema';
-export { OrganizationCreateNestedOneWithoutMcpServersInputSchema } from './OrganizationCreateNestedOneWithoutMcpServersInputSchema';
 export { ProfileMcpServerCreateNestedManyWithoutMcpServerInputSchema } from './ProfileMcpServerCreateNestedManyWithoutMcpServerInputSchema';
 export { OAuthTokenCreateNestedOneWithoutMcpServerInputSchema } from './OAuthTokenCreateNestedOneWithoutMcpServerInputSchema';
 export { OAuthClientRegistrationCreateNestedManyWithoutMcpServerInputSchema } from './OAuthClientRegistrationCreateNestedManyWithoutMcpServerInputSchema';
@@ -417,8 +416,7 @@ export { OAuthTokenUncheckedCreateNestedOneWithoutMcpServerInputSchema } from '.
 export { OAuthClientRegistrationUncheckedCreateNestedManyWithoutMcpServerInputSchema } from './OAuthClientRegistrationUncheckedCreateNestedManyWithoutMcpServerInputSchema';
 export { McpServerToolsCacheUncheckedCreateNestedManyWithoutMcpServerInputSchema } from './McpServerToolsCacheUncheckedCreateNestedManyWithoutMcpServerInputSchema';
 export { DebugLogUncheckedCreateNestedManyWithoutMcpServerInputSchema } from './DebugLogUncheckedCreateNestedManyWithoutMcpServerInputSchema';
-export { UserUpdateOneWithoutMcpServersNestedInputSchema } from './UserUpdateOneWithoutMcpServersNestedInputSchema';
-export { OrganizationUpdateOneWithoutMcpServersNestedInputSchema } from './OrganizationUpdateOneWithoutMcpServersNestedInputSchema';
+export { UserUpdateOneRequiredWithoutMcpServersNestedInputSchema } from './UserUpdateOneRequiredWithoutMcpServersNestedInputSchema';
 export { ProfileMcpServerUpdateManyWithoutMcpServerNestedInputSchema } from './ProfileMcpServerUpdateManyWithoutMcpServerNestedInputSchema';
 export { OAuthTokenUpdateOneWithoutMcpServerNestedInputSchema } from './OAuthTokenUpdateOneWithoutMcpServerNestedInputSchema';
 export { OAuthClientRegistrationUpdateManyWithoutMcpServerNestedInputSchema } from './OAuthClientRegistrationUpdateManyWithoutMcpServerNestedInputSchema';
@@ -488,22 +486,18 @@ export { UserUpdateOneRequiredWithoutAccountsNestedInputSchema } from './UserUpd
 export { MemberCreateNestedManyWithoutOrganizationInputSchema } from './MemberCreateNestedManyWithoutOrganizationInputSchema';
 export { InvitationCreateNestedManyWithoutOrganizationInputSchema } from './InvitationCreateNestedManyWithoutOrganizationInputSchema';
 export { ProfileCreateNestedManyWithoutOrganizationInputSchema } from './ProfileCreateNestedManyWithoutOrganizationInputSchema';
-export { McpServerCreateNestedManyWithoutOrganizationInputSchema } from './McpServerCreateNestedManyWithoutOrganizationInputSchema';
 export { OrganizationDomainCreateNestedManyWithoutOrganizationInputSchema } from './OrganizationDomainCreateNestedManyWithoutOrganizationInputSchema';
 export { MemberUncheckedCreateNestedManyWithoutOrganizationInputSchema } from './MemberUncheckedCreateNestedManyWithoutOrganizationInputSchema';
 export { InvitationUncheckedCreateNestedManyWithoutOrganizationInputSchema } from './InvitationUncheckedCreateNestedManyWithoutOrganizationInputSchema';
 export { ProfileUncheckedCreateNestedManyWithoutOrganizationInputSchema } from './ProfileUncheckedCreateNestedManyWithoutOrganizationInputSchema';
-export { McpServerUncheckedCreateNestedManyWithoutOrganizationInputSchema } from './McpServerUncheckedCreateNestedManyWithoutOrganizationInputSchema';
 export { OrganizationDomainUncheckedCreateNestedManyWithoutOrganizationInputSchema } from './OrganizationDomainUncheckedCreateNestedManyWithoutOrganizationInputSchema';
 export { MemberUpdateManyWithoutOrganizationNestedInputSchema } from './MemberUpdateManyWithoutOrganizationNestedInputSchema';
 export { InvitationUpdateManyWithoutOrganizationNestedInputSchema } from './InvitationUpdateManyWithoutOrganizationNestedInputSchema';
 export { ProfileUpdateManyWithoutOrganizationNestedInputSchema } from './ProfileUpdateManyWithoutOrganizationNestedInputSchema';
-export { McpServerUpdateManyWithoutOrganizationNestedInputSchema } from './McpServerUpdateManyWithoutOrganizationNestedInputSchema';
 export { OrganizationDomainUpdateManyWithoutOrganizationNestedInputSchema } from './OrganizationDomainUpdateManyWithoutOrganizationNestedInputSchema';
 export { MemberUncheckedUpdateManyWithoutOrganizationNestedInputSchema } from './MemberUncheckedUpdateManyWithoutOrganizationNestedInputSchema';
 export { InvitationUncheckedUpdateManyWithoutOrganizationNestedInputSchema } from './InvitationUncheckedUpdateManyWithoutOrganizationNestedInputSchema';
 export { ProfileUncheckedUpdateManyWithoutOrganizationNestedInputSchema } from './ProfileUncheckedUpdateManyWithoutOrganizationNestedInputSchema';
-export { McpServerUncheckedUpdateManyWithoutOrganizationNestedInputSchema } from './McpServerUncheckedUpdateManyWithoutOrganizationNestedInputSchema';
 export { OrganizationDomainUncheckedUpdateManyWithoutOrganizationNestedInputSchema } from './OrganizationDomainUncheckedUpdateManyWithoutOrganizationNestedInputSchema';
 export { OrganizationCreateNestedOneWithoutDomainsInputSchema } from './OrganizationCreateNestedOneWithoutDomainsInputSchema';
 export { OrganizationUpdateOneRequiredWithoutDomainsNestedInputSchema } from './OrganizationUpdateOneRequiredWithoutDomainsNestedInputSchema';
@@ -566,9 +560,6 @@ export { DebugLogScalarWhereInputSchema } from './DebugLogScalarWhereInputSchema
 export { UserCreateWithoutMcpServersInputSchema } from './UserCreateWithoutMcpServersInputSchema';
 export { UserUncheckedCreateWithoutMcpServersInputSchema } from './UserUncheckedCreateWithoutMcpServersInputSchema';
 export { UserCreateOrConnectWithoutMcpServersInputSchema } from './UserCreateOrConnectWithoutMcpServersInputSchema';
-export { OrganizationCreateWithoutMcpServersInputSchema } from './OrganizationCreateWithoutMcpServersInputSchema';
-export { OrganizationUncheckedCreateWithoutMcpServersInputSchema } from './OrganizationUncheckedCreateWithoutMcpServersInputSchema';
-export { OrganizationCreateOrConnectWithoutMcpServersInputSchema } from './OrganizationCreateOrConnectWithoutMcpServersInputSchema';
 export { ProfileMcpServerCreateWithoutMcpServerInputSchema } from './ProfileMcpServerCreateWithoutMcpServerInputSchema';
 export { ProfileMcpServerUncheckedCreateWithoutMcpServerInputSchema } from './ProfileMcpServerUncheckedCreateWithoutMcpServerInputSchema';
 export { ProfileMcpServerCreateOrConnectWithoutMcpServerInputSchema } from './ProfileMcpServerCreateOrConnectWithoutMcpServerInputSchema';
@@ -592,10 +583,6 @@ export { UserUpsertWithoutMcpServersInputSchema } from './UserUpsertWithoutMcpSe
 export { UserUpdateToOneWithWhereWithoutMcpServersInputSchema } from './UserUpdateToOneWithWhereWithoutMcpServersInputSchema';
 export { UserUpdateWithoutMcpServersInputSchema } from './UserUpdateWithoutMcpServersInputSchema';
 export { UserUncheckedUpdateWithoutMcpServersInputSchema } from './UserUncheckedUpdateWithoutMcpServersInputSchema';
-export { OrganizationUpsertWithoutMcpServersInputSchema } from './OrganizationUpsertWithoutMcpServersInputSchema';
-export { OrganizationUpdateToOneWithWhereWithoutMcpServersInputSchema } from './OrganizationUpdateToOneWithWhereWithoutMcpServersInputSchema';
-export { OrganizationUpdateWithoutMcpServersInputSchema } from './OrganizationUpdateWithoutMcpServersInputSchema';
-export { OrganizationUncheckedUpdateWithoutMcpServersInputSchema } from './OrganizationUncheckedUpdateWithoutMcpServersInputSchema';
 export { ProfileMcpServerUpsertWithWhereUniqueWithoutMcpServerInputSchema } from './ProfileMcpServerUpsertWithWhereUniqueWithoutMcpServerInputSchema';
 export { ProfileMcpServerUpdateWithWhereUniqueWithoutMcpServerInputSchema } from './ProfileMcpServerUpdateWithWhereUniqueWithoutMcpServerInputSchema';
 export { ProfileMcpServerUpdateManyWithWhereWithoutMcpServerInputSchema } from './ProfileMcpServerUpdateManyWithWhereWithoutMcpServerInputSchema';
@@ -760,10 +747,6 @@ export { ProfileCreateWithoutOrganizationInputSchema } from './ProfileCreateWith
 export { ProfileUncheckedCreateWithoutOrganizationInputSchema } from './ProfileUncheckedCreateWithoutOrganizationInputSchema';
 export { ProfileCreateOrConnectWithoutOrganizationInputSchema } from './ProfileCreateOrConnectWithoutOrganizationInputSchema';
 export { ProfileCreateManyOrganizationInputEnvelopeSchema } from './ProfileCreateManyOrganizationInputEnvelopeSchema';
-export { McpServerCreateWithoutOrganizationInputSchema } from './McpServerCreateWithoutOrganizationInputSchema';
-export { McpServerUncheckedCreateWithoutOrganizationInputSchema } from './McpServerUncheckedCreateWithoutOrganizationInputSchema';
-export { McpServerCreateOrConnectWithoutOrganizationInputSchema } from './McpServerCreateOrConnectWithoutOrganizationInputSchema';
-export { McpServerCreateManyOrganizationInputEnvelopeSchema } from './McpServerCreateManyOrganizationInputEnvelopeSchema';
 export { OrganizationDomainCreateWithoutOrganizationInputSchema } from './OrganizationDomainCreateWithoutOrganizationInputSchema';
 export { OrganizationDomainUncheckedCreateWithoutOrganizationInputSchema } from './OrganizationDomainUncheckedCreateWithoutOrganizationInputSchema';
 export { OrganizationDomainCreateOrConnectWithoutOrganizationInputSchema } from './OrganizationDomainCreateOrConnectWithoutOrganizationInputSchema';
@@ -777,9 +760,6 @@ export { InvitationUpdateManyWithWhereWithoutOrganizationInputSchema } from './I
 export { ProfileUpsertWithWhereUniqueWithoutOrganizationInputSchema } from './ProfileUpsertWithWhereUniqueWithoutOrganizationInputSchema';
 export { ProfileUpdateWithWhereUniqueWithoutOrganizationInputSchema } from './ProfileUpdateWithWhereUniqueWithoutOrganizationInputSchema';
 export { ProfileUpdateManyWithWhereWithoutOrganizationInputSchema } from './ProfileUpdateManyWithWhereWithoutOrganizationInputSchema';
-export { McpServerUpsertWithWhereUniqueWithoutOrganizationInputSchema } from './McpServerUpsertWithWhereUniqueWithoutOrganizationInputSchema';
-export { McpServerUpdateWithWhereUniqueWithoutOrganizationInputSchema } from './McpServerUpdateWithWhereUniqueWithoutOrganizationInputSchema';
-export { McpServerUpdateManyWithWhereWithoutOrganizationInputSchema } from './McpServerUpdateManyWithWhereWithoutOrganizationInputSchema';
 export { OrganizationDomainUpsertWithWhereUniqueWithoutOrganizationInputSchema } from './OrganizationDomainUpsertWithWhereUniqueWithoutOrganizationInputSchema';
 export { OrganizationDomainUpdateWithWhereUniqueWithoutOrganizationInputSchema } from './OrganizationDomainUpdateWithWhereUniqueWithoutOrganizationInputSchema';
 export { OrganizationDomainUpdateManyWithWhereWithoutOrganizationInputSchema } from './OrganizationDomainUpdateManyWithWhereWithoutOrganizationInputSchema';
@@ -885,7 +865,6 @@ export { SharedResourceUncheckedUpdateManyWithoutSharedByInputSchema } from './S
 export { MemberCreateManyOrganizationInputSchema } from './MemberCreateManyOrganizationInputSchema';
 export { InvitationCreateManyOrganizationInputSchema } from './InvitationCreateManyOrganizationInputSchema';
 export { ProfileCreateManyOrganizationInputSchema } from './ProfileCreateManyOrganizationInputSchema';
-export { McpServerCreateManyOrganizationInputSchema } from './McpServerCreateManyOrganizationInputSchema';
 export { OrganizationDomainCreateManyOrganizationInputSchema } from './OrganizationDomainCreateManyOrganizationInputSchema';
 export { MemberUpdateWithoutOrganizationInputSchema } from './MemberUpdateWithoutOrganizationInputSchema';
 export { MemberUncheckedUpdateWithoutOrganizationInputSchema } from './MemberUncheckedUpdateWithoutOrganizationInputSchema';
@@ -896,9 +875,6 @@ export { InvitationUncheckedUpdateManyWithoutOrganizationInputSchema } from './I
 export { ProfileUpdateWithoutOrganizationInputSchema } from './ProfileUpdateWithoutOrganizationInputSchema';
 export { ProfileUncheckedUpdateWithoutOrganizationInputSchema } from './ProfileUncheckedUpdateWithoutOrganizationInputSchema';
 export { ProfileUncheckedUpdateManyWithoutOrganizationInputSchema } from './ProfileUncheckedUpdateManyWithoutOrganizationInputSchema';
-export { McpServerUpdateWithoutOrganizationInputSchema } from './McpServerUpdateWithoutOrganizationInputSchema';
-export { McpServerUncheckedUpdateWithoutOrganizationInputSchema } from './McpServerUncheckedUpdateWithoutOrganizationInputSchema';
-export { McpServerUncheckedUpdateManyWithoutOrganizationInputSchema } from './McpServerUncheckedUpdateManyWithoutOrganizationInputSchema';
 export { OrganizationDomainUpdateWithoutOrganizationInputSchema } from './OrganizationDomainUpdateWithoutOrganizationInputSchema';
 export { OrganizationDomainUncheckedUpdateWithoutOrganizationInputSchema } from './OrganizationDomainUncheckedUpdateWithoutOrganizationInputSchema';
 export { OrganizationDomainUncheckedUpdateManyWithoutOrganizationInputSchema } from './OrganizationDomainUncheckedUpdateManyWithoutOrganizationInputSchema';

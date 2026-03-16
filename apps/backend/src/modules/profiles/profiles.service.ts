@@ -332,10 +332,15 @@ export class ProfilesService {
       throw new NotFoundException(`Profile ${profileId} not found`);
     }
 
-    // Check server exists
+    // Check server exists and user has access to it
     const server = await this.prisma.mcpServer.findUnique({ where: { id: dto.mcpServerId } });
     if (!server) {
       throw new NotFoundException(`MCP server ${dto.mcpServerId} not found`);
+    }
+
+    // Verify the user owns or has been shared the server
+    if (!this.isAnonymous(userId) && server.userId !== userId) {
+      throw new ForbiddenException('You do not have access to this MCP server');
     }
 
     // Check if already linked

@@ -1,5 +1,5 @@
 /**
- * MCP Preset Gallery - Browse and add popular MCP server presets
+ * MCP Preset Gallery - Browse and add MCP server presets (external + builtin)
  */
 
 import {
@@ -18,16 +18,66 @@ interface McpPreset {
   id: string;
   name: string;
   description: string;
-  type: 'external' | 'remote_http';
+  type: string;
   config: Record<string, unknown>;
+  source: 'preset' | 'builtin';
+  requiresApiKey?: boolean;
+  icon?: string;
+  docsUrl?: string;
 }
 
 interface McpPresetGalleryProps {
-  existingServerNames: string[];
   onAdd: () => void;
 }
 
-export default function McpPresetGallery({ existingServerNames, onAdd }: McpPresetGalleryProps) {
+function PresetSection({
+  title,
+  presets,
+  adding,
+  onAdd,
+}: {
+  title: string;
+  presets: McpPreset[];
+  adding: string | null;
+  onAdd: (id: string) => void;
+}) {
+  if (presets.length === 0) return null;
+  return (
+    <div className="mb-6">
+      <h3 className="text-sm font-semibold mb-3">{title}</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {presets.map((preset) => (
+          <Card key={preset.id}>
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-start">
+                <div className="flex-1 min-w-0">
+                  <CardTitle className="text-base">{preset.name}</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">{preset.description}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge variant="secondary">{preset.type}</Badge>
+                    {preset.requiresApiKey && (
+                      <Badge variant="outline">API key required</Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                className="mt-3 w-full"
+                disabled={adding === preset.id}
+                onClick={() => onAdd(preset.id)}
+              >
+                {adding === preset.id ? 'Adding...' : 'Add to My Servers'}
+              </Button>
+            </CardHeader>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function McpPresetGallery({ onAdd }: McpPresetGalleryProps) {
   const [presets, setPresets] = useState<McpPreset[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState<string | null>(null);
@@ -60,6 +110,8 @@ export default function McpPresetGallery({ existingServerNames, onAdd }: McpPres
       setError(null);
       const response = await apiFetch(`/api/mcp-servers/presets/${presetId}/add`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
       });
       if (!response.ok) {
         const data = await response.json();
@@ -82,7 +134,8 @@ export default function McpPresetGallery({ existingServerNames, onAdd }: McpPres
       {isOpen && (
         <div>
           <p className="text-sm text-muted-foreground mb-4">
-            Add popular MCP servers to your organization with one click.
+            Add popular MCP servers to your account. You can add the same preset multiple times with
+            different configurations.
           </p>
 
           {error && (
@@ -94,40 +147,20 @@ export default function McpPresetGallery({ existingServerNames, onAdd }: McpPres
           {loading ? (
             <div className="text-center py-8 text-muted-foreground">Loading presets...</div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {presets.map((preset) => {
-                const isAdded = existingServerNames.includes(preset.name);
-                return (
-                  <Card key={preset.id}>
-                    <CardHeader className="pb-3">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="text-base">{preset.name}</CardTitle>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {preset.description}
-                          </p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <Badge variant="secondary">{preset.type}</Badge>
-                          </div>
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        className="mt-3 w-full"
-                        disabled={isAdded || adding === preset.id}
-                        onClick={() => handleAdd(preset.id)}
-                      >
-                        {isAdded
-                          ? 'Already Added'
-                          : adding === preset.id
-                            ? 'Adding...'
-                            : 'Add to Organization'}
-                      </Button>
-                    </CardHeader>
-                  </Card>
-                );
-              })}
-            </div>
+            <>
+              <PresetSection
+                title="Our MCP Servers"
+                presets={presets.filter((p) => p.source === 'builtin')}
+                adding={adding}
+                onAdd={handleAdd}
+              />
+              <PresetSection
+                title="Community Presets"
+                presets={presets.filter((p) => p.source === 'preset')}
+                adding={adding}
+                onAdd={handleAdd}
+              />
+            </>
           )}
         </div>
       )}
