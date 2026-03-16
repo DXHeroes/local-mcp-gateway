@@ -81,6 +81,7 @@ export class FakturoidClient {
       method: 'POST',
       headers: {
         Authorization: `Basic ${credentials}`,
+        Accept: 'application/json',
         'Content-Type': 'application/json',
         'User-Agent': this.userAgent,
       },
