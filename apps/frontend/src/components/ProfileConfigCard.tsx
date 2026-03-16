@@ -21,7 +21,12 @@ import {
 import { Check, Copy, FileJson, FileText } from 'lucide-react';
 import { useState } from 'react';
 import { getProfileUrl } from '../config/api';
-import { generateMarkdownPrompt, generateToonPrompt } from '../utils/promptGenerator';
+import {
+  generateMarkdownPrompt,
+  generateRecommendedPrompt,
+  generateToonPrompt,
+  generateXmlPrompt,
+} from '../utils/promptGenerator';
 
 interface Tool {
   name: string;
@@ -38,7 +43,9 @@ interface ProfileConfigCardProps {
 export function ProfileConfigCard({ profileName, tools, orgSlug }: ProfileConfigCardProps) {
   const { toast } = useToast();
   const [copyStates, setCopyStates] = useState<Record<string, boolean>>({});
-  const [activePromptTab, setActivePromptTab] = useState<'markdown' | 'toon'>('markdown');
+  const [activePromptTab, setActivePromptTab] = useState<
+    'recommended' | 'markdown' | 'xml' | 'toon'
+  >('recommended');
 
   const profileUrl = getProfileUrl(profileName, orgSlug);
 
@@ -67,6 +74,8 @@ export function ProfileConfigCard({ profileName, tools, orgSlug }: ProfileConfig
 
   const toonPrompt = generateToonPrompt(profileName, profileUrl, normalizedTools);
   const markdownPrompt = generateMarkdownPrompt(profileName, profileUrl, normalizedTools);
+  const xmlPrompt = generateXmlPrompt(profileName, profileUrl, normalizedTools);
+  const recommendedPrompt = generateRecommendedPrompt(profileName, profileUrl, normalizedTools);
 
   const handleCopy = async (key: string, content: string, description: string) => {
     try {
@@ -132,25 +141,35 @@ export function ProfileConfigCard({ profileName, tools, orgSlug }: ProfileConfig
             AI Prompt
           </Label>
           <Tabs
-            defaultValue="markdown"
+            defaultValue="recommended"
             className="w-full"
-            onValueChange={(value) => setActivePromptTab(value as 'markdown' | 'toon')}
+            onValueChange={(value) =>
+              setActivePromptTab(value as 'recommended' | 'markdown' | 'xml' | 'toon')
+            }
           >
             <div className="flex items-center justify-between">
               <TabsList>
+                <TabsTrigger value="recommended">Recommended</TabsTrigger>
                 <TabsTrigger value="markdown">Markdown</TabsTrigger>
+                <TabsTrigger value="xml">XML</TabsTrigger>
                 <TabsTrigger value="toon">Toon Format</TabsTrigger>
               </TabsList>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() =>
+                onClick={() => {
+                  const prompts = {
+                    recommended: recommendedPrompt,
+                    markdown: markdownPrompt,
+                    xml: xmlPrompt,
+                    toon: toonPrompt,
+                  } as const;
                   handleCopy(
                     'prompt',
-                    activePromptTab === 'markdown' ? markdownPrompt : toonPrompt,
+                    prompts[activePromptTab],
                     'AI prompt copied to clipboard'
-                  )
-                }
+                  );
+                }}
                 aria-label="Copy AI prompt"
               >
                 {copyStates.prompt ? (
@@ -161,9 +180,19 @@ export function ProfileConfigCard({ profileName, tools, orgSlug }: ProfileConfig
                 <span className="ml-1">{copyStates.prompt ? 'Copied' : 'Copy'}</span>
               </Button>
             </div>
+            <TabsContent value="recommended">
+              <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto max-h-40 font-mono whitespace-pre-wrap">
+                {recommendedPrompt}
+              </pre>
+            </TabsContent>
             <TabsContent value="markdown">
               <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto max-h-40 font-mono whitespace-pre-wrap">
                 {markdownPrompt}
+              </pre>
+            </TabsContent>
+            <TabsContent value="xml">
+              <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto max-h-40 font-mono whitespace-pre-wrap">
+                {xmlPrompt}
               </pre>
             </TabsContent>
             <TabsContent value="toon">

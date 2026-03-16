@@ -5,7 +5,7 @@
  * and Google sign-in button when Google OAuth is configured.
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { apiFetch } from '../lib/api-fetch';
 import { authClient } from '../lib/auth-client';
 import { hasMcpAuthQuery, isMcpLoginPath } from '../lib/mcp-auth';
@@ -20,26 +20,42 @@ export default function LoginPage() {
   const [googleEnabled, setGoogleEnabled] = useState(false);
   const [emailPasswordEnabled, setEmailPasswordEnabled] = useState(true);
   const [configLoaded, setConfigLoaded] = useState(false);
+  const [backendError, setBackendError] = useState(false);
 
-  useEffect(() => {
+  const fetchAuthConfig = useCallback(() => {
+    setBackendError(false);
+    setConfigLoaded(false);
     apiFetch('/api/health/auth-config')
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          setBackendError(true);
+          return;
+        }
+        return res.json();
+      })
       .then((config) => {
+        if (!config) return;
         setGoogleEnabled(config.google === true);
         setEmailPasswordEnabled(config.emailAndPassword !== false);
         setConfigLoaded(true);
       })
       .catch(() => {
-        setConfigLoaded(true);
+        setBackendError(true);
       });
   }, []);
+
+  useEffect(() => {
+    fetchAuthConfig();
+  }, [fetchAuthConfig]);
 
   const callbackPath =
     typeof window !== 'undefined' &&
     isMcpLoginPath(window.location.pathname) &&
     hasMcpAuthQuery(window.location.search)
       ? `${window.location.pathname}${window.location.search}`
-      : '/';
+      : typeof window !== 'undefined' && window.location.pathname.startsWith('/invite/')
+        ? window.location.pathname
+        : '/';
 
   const callbackURL =
     typeof window !== 'undefined' ? `${window.location.origin}${callbackPath}` : callbackPath;
@@ -82,6 +98,50 @@ export default function LoginPage() {
       callbackURL,
     });
   };
+
+  if (backendError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+        <div className="max-w-md w-full bg-white shadow-sm rounded-lg p-8 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+            <svg
+              className="h-6 w-6 text-red-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="1.5"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+              />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-semibold text-gray-900 mb-2">Server Unavailable</h1>
+          <p className="text-gray-500 mb-6">
+            The backend server is not responding. Please make sure it is running and try again.
+          </p>
+          <button
+            type="button"
+            onClick={fetchAuthConfig}
+            className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!configLoaded) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">

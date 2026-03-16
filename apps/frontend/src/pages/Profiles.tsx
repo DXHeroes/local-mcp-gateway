@@ -63,7 +63,25 @@ interface ProfileWithStatus extends Profile {
 export default function ProfilesPage() {
   const navigate = useNavigate();
   const orgSlug = useOrgSlug();
+  const { data: session } = authClient.useSession();
   const { summary: sharingSummary } = useSharingSummary('profile');
+
+  /** Check if the current user can mutate a profile (owner or admin share) */
+  const canMutate = useCallback(
+    (profile: Profile) => {
+      const currentUserId = session?.user?.id;
+      if (!currentUserId) return false;
+      // Owner can always mutate
+      if (profile.userId === currentUserId) return true;
+      // System profiles (no userId) can be mutated by anyone
+      if (!profile.userId) return true;
+      // Admin share can mutate
+      const info = sharingSummary[profile.id];
+      if (info?.inbound?.permission === 'admin') return true;
+      return false;
+    },
+    [session?.user?.id, sharingSummary]
+  );
   const [profiles, setProfiles] = useState<ProfileWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -193,13 +211,17 @@ export default function ProfilesPage() {
 
     if (data.serverIds && data.serverIds.length > 0) {
       await Promise.all(
-        data.serverIds.map((serverId, index) =>
-          apiFetch(`/api/profiles/${profile.id}/servers`, {
+        data.serverIds.map(async (serverId, index) => {
+          const addResponse = await apiFetch(`/api/profiles/${profile.id}/servers`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ mcpServerId: serverId, order: index }),
-          })
-        )
+          });
+          if (!addResponse.ok) {
+            const err = await addResponse.json().catch(() => ({}));
+            throw new Error(err.message || 'Failed to add server to profile');
+          }
+        })
       );
     }
 
@@ -240,23 +262,35 @@ export default function ProfilesPage() {
 
       for (const serverId of currentServerIds) {
         if (typeof serverId === 'string' && !newServerIds.has(serverId)) {
-          await apiFetch(`/api/profiles/${editingProfile.id}/servers/${serverId}`, {
-            method: 'DELETE',
-          });
+          const deleteResponse = await apiFetch(
+            `/api/profiles/${editingProfile.id}/servers/${serverId}`,
+            { method: 'DELETE' }
+          );
+          if (!deleteResponse.ok) {
+            const err = await deleteResponse.json().catch(() => ({}));
+            throw new Error(err.message || 'Failed to remove server from profile');
+          }
         }
       }
 
       if (data.serverIds) {
         for (const serverId of newServerIds) {
           if (!currentServerIds.has(serverId)) {
-            await apiFetch(`/api/profiles/${editingProfile.id}/servers`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                mcpServerId: serverId,
-                order: data.serverIds.indexOf(serverId),
-              }),
-            });
+            const addResponse = await apiFetch(
+              `/api/profiles/${editingProfile.id}/servers`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  mcpServerId: serverId,
+                  order: data.serverIds.indexOf(serverId),
+                }),
+              }
+            );
+            if (!addResponse.ok) {
+              const err = await addResponse.json().catch(() => ({}));
+              throw new Error(err.message || 'Failed to add server to profile');
+            }
           }
         }
       }
@@ -443,18 +477,22 @@ export default function ProfilesPage() {
                       <Eye className="h-4 w-4 mr-2" />
                       View
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={(e) => openEditForm(e, profile)}>
-                      <Pencil className="h-4 w-4 mr-2" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={(e) => handleDeleteClick(e, profile)}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
+                    {canMutate(profile) && (
+                      <>
+                        <DropdownMenuItem onClick={(e) => openEditForm(e, profile)}>
+                          <Pencil className="h-4 w-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={(e) => handleDeleteClick(e, profile)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>

@@ -17,6 +17,7 @@ import DocsPage from './pages/Docs.tsx';
 import LoginPage from './pages/Login.tsx';
 import McpServerDetailPage from './pages/McpServerDetail.tsx';
 import McpServersPage from './pages/McpServers.tsx';
+import InviteAcceptPage from './pages/InviteAccept.tsx';
 import OrganizationsPage from './pages/Organizations.tsx';
 import ProfileEditPage from './pages/ProfileEditPage.tsx';
 import ProfilesPage from './pages/Profiles.tsx';
@@ -100,6 +101,14 @@ function AuthenticatedApp() {
                 </ErrorBoundary>
               }
             />
+            <Route
+              path="/invite/:invitationId"
+              element={
+                <ErrorBoundary>
+                  <InviteAcceptPage />
+                </ErrorBoundary>
+              }
+            />
           </Routes>
         </ErrorBoundary>
       </Layout>
@@ -144,6 +153,19 @@ function App() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-gray-400 text-sm">Continuing sign-in...</div>
       </div>
+    );
+  }
+
+  // Invitation acceptance — bypass OrgGate (user may not have any org yet)
+  if (pathname.startsWith('/invite/')) {
+    return (
+      <ErrorBoundary>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/invite/:invitationId" element={<InviteAcceptPage />} />
+          </Routes>
+        </BrowserRouter>
+      </ErrorBoundary>
     );
   }
 

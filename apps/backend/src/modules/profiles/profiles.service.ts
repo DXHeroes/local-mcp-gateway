@@ -2,8 +2,9 @@
  * Profiles Service
  *
  * Business logic for profile management.
- * All queries are scoped to the user's active organization.
- * System records (organizationId=null) are visible to all orgs.
+ * All queries are scoped to the individual user (per-user ownership).
+ * Shared profiles are visible via the SharingService.
+ * System records (organizationId=null) are visible to all users.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -22,6 +23,7 @@ const UNAUTHENTICATED_ID = '__unauthenticated__';
 import { PrismaService } from '../database/prisma.service.js';
 import { ProxyService } from '../proxy/proxy.service.js';
 import { RESERVED_PROFILE_NAMES, SETTING_KEYS } from '../settings/settings.constants.js';
+import { SharingService } from '../sharing/sharing.service.js';
 
 interface CreateProfileDto {
   name: string;
@@ -57,11 +59,23 @@ export class ProfilesService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(forwardRef(() => ProxyService))
-    private readonly proxyService: ProxyService
+    private readonly proxyService: ProxyService,
+    private readonly sharingService: SharingService
   ) {}
 
   private isAnonymous(userId: string): boolean {
     return userId === UNAUTHENTICATED_ID;
+  }
+
+  /**
+   * Get the user's organization IDs for sharing lookups
+   */
+  private async getUserOrgIds(userId: string): Promise<string[]> {
+    const memberships = await this.prisma.member.findMany({
+      where: { userId },
+      select: { organizationId: true },
+    });
+    return memberships.map((m) => m.organizationId);
   }
 
   /**
@@ -75,9 +89,9 @@ export class ProfilesService {
   }
 
   /**
-   * Check that a user can access a profile within the active org
+   * Assert the user can read this profile (owner, shared, or system)
    */
-  private async assertAccess(profileId: string, userId: string, orgId: string): Promise<void> {
+  private async assertAccess(profileId: string, userId: string, _orgId: string): Promise<void> {
     if (this.isAnonymous(userId)) return;
 
     const profile = await this.prisma.profile.findUnique({
@@ -89,16 +103,20 @@ export class ProfilesService {
     // System record (no org) — accessible to all
     if (!profile.organizationId) return;
 
-    // Must belong to the active org
-    if (profile.organizationId !== orgId) {
-      throw new ForbiddenException('You do not have access to this profile');
-    }
+    // Owner — always allowed
+    if (profile.userId === userId) return;
+
+    // Check sharing
+    const shared = await this.sharingService.isSharedWith('profile', profileId, userId, []);
+    if (shared) return;
+
+    throw new ForbiddenException('You do not have access to this profile');
   }
 
   /**
-   * Check that a user can mutate a profile within the active org
+   * Assert the user can mutate this profile (owner or shared with "admin" permission)
    */
-  private async assertOwnership(profileId: string, userId: string, orgId: string): Promise<void> {
+  private async assertOwnership(profileId: string, userId: string, _orgId: string): Promise<void> {
     if (this.isAnonymous(userId)) return;
 
     const profile = await this.prisma.profile.findUnique({
@@ -110,14 +128,18 @@ export class ProfilesService {
     // System records (organizationId=null) can be modified by anyone
     if (!profile.organizationId) return;
 
-    // Must belong to the active org
-    if (profile.organizationId !== orgId) {
-      throw new ForbiddenException('You do not own this profile');
-    }
+    // Owner — always allowed
+    if (profile.userId === userId) return;
+
+    // Check for admin sharing permission
+    const permission = await this.sharingService.getPermission('profile', profileId, userId, []);
+    if (permission === 'admin') return;
+
+    throw new ForbiddenException('You do not own this profile');
   }
 
   /**
-   * Get all profiles visible in the active org (org profiles + system profiles)
+   * Get all profiles owned by or shared with the user, plus system profiles
    */
   async findAll(userId: string, orgId?: string) {
     const include = {
@@ -134,10 +156,14 @@ export class ProfilesService {
       });
     }
 
+    // Get shared profile IDs (direct user shares only — pass [] for orgIds)
+    const sharedIds = await this.sharingService.getSharedResourceIds('profile', userId, []);
+
     return this.prisma.profile.findMany({
       where: {
         OR: [
-          { organizationId: orgId }, // org profiles
+          { userId, organizationId: orgId }, // own org profiles
+          ...(sharedIds.length > 0 ? [{ id: { in: sharedIds } }] : []), // shared
           { organizationId: null }, // system profiles
         ],
       },
@@ -340,7 +366,12 @@ export class ProfilesService {
 
     // Verify the user owns or has been shared the server
     if (!this.isAnonymous(userId) && server.userId !== userId) {
-      throw new ForbiddenException('You do not have access to this MCP server');
+      const sharedIds = orgId
+        ? await this.sharingService.getSharedResourceIds('mcp_server', userId, [orgId])
+        : [];
+      if (!sharedIds.includes(server.id)) {
+        throw new ForbiddenException('You do not have access to this MCP server');
+      }
     }
 
     // Check if already linked

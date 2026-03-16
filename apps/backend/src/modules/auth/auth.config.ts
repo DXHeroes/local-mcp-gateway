@@ -13,7 +13,8 @@ import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { mcp } from 'better-auth/plugins';
 import { organization } from 'better-auth/plugins/organization';
-import { resolveMcpLoginPageUrl } from './mcp-oauth.utils.js';
+import { Resend } from 'resend';
+import { resolveFrontendOrigin, resolveMcpLoginPageUrl } from './mcp-oauth.utils.js';
 
 /**
  * Auth wrapper — simplified interface to avoid exporting Better Auth's deep generic types.
@@ -139,7 +140,36 @@ export function createAuth(prisma: PrismaClient): AuthInstance {
       },
     },
     plugins: [
-      organization(),
+      organization({
+        sendInvitationEmail: async (data) => {
+          const resendApiKey = process.env.RESEND_API_KEY;
+          if (!resendApiKey) {
+            console.warn('[auth] RESEND_API_KEY not set — skipping invitation email');
+            return;
+          }
+
+          const resend = new Resend(resendApiKey);
+          const frontendUrl = resolveFrontendOrigin(configService);
+          const inviteUrl = `${frontendUrl}/invite/${data.invitation.id}`;
+          const fromEmail = process.env.RESEND_FROM || 'Local MCP Gateway <noreply@example.com>';
+
+          await resend.emails.send({
+            from: fromEmail,
+            to: data.email,
+            subject: `You've been invited to join ${data.organization.name}`,
+            text: [
+              'Hi,',
+              '',
+              `${data.inviter.user.name} has invited you to join "${data.organization.name}" as a ${data.invitation.role}.`,
+              '',
+              'Accept the invitation:',
+              inviteUrl,
+              '',
+              "If you don't have an account yet, you'll be asked to create one first.",
+            ].join('\n'),
+          });
+        },
+      }),
       mcp({
         loginPage: resolveMcpLoginPageUrl(configService),
       }),

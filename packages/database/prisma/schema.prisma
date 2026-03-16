@@ -356,6 +356,7 @@ model Invitation {
   status         String
   inviterId      String   @map("inviter_id")
   expiresAt      DateTime @map("expires_at")
+  createdAt      DateTime @default(now()) @map("created_at")
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   inviter      User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)

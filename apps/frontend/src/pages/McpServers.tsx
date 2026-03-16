@@ -455,7 +455,12 @@ export default function McpServersPage() {
         </div>
       )}
 
-      <McpPresetGallery onAdd={() => fetchServers(true)} />
+      <McpPresetGallery
+        onAdd={async (server) => {
+          await fetchServers(true);
+          openEditForm(server as unknown as McpServer);
+        }}
+      />
 
       <McpServerForm
         server={editingServer}

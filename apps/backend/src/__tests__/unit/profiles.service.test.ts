@@ -7,11 +7,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PrismaService } from '../../modules/database/prisma.service.js';
 import { ProfilesService } from '../../modules/profiles/profiles.service.js';
 import type { ProxyService } from '../../modules/proxy/proxy.service.js';
+import type { SharingService } from '../../modules/sharing/sharing.service.js';
 
 describe('ProfilesService', () => {
   let service: ProfilesService;
   let prisma: Record<string, Record<string, ReturnType<typeof vi.fn>>>;
   let proxyService: Record<string, ReturnType<typeof vi.fn>>;
+  let sharingService: Record<string, ReturnType<typeof vi.fn>>;
 
   const orgId = 'org-1';
   const userId = 'user-1';
@@ -76,6 +78,9 @@ describe('ProfilesService', () => {
       mcpServer: {
         findUnique: vi.fn().mockResolvedValue(null),
       },
+      member: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
       gatewaySetting: {
         upsert: vi.fn().mockResolvedValue({}),
       },
@@ -86,9 +91,16 @@ describe('ProfilesService', () => {
       getToolsForServer: vi.fn().mockResolvedValue([]),
     };
 
+    sharingService = {
+      getSharedResourceIds: vi.fn().mockResolvedValue([]),
+      isSharedWith: vi.fn().mockResolvedValue(false),
+      getPermission: vi.fn().mockResolvedValue(null),
+    };
+
     service = new ProfilesService(
       prisma as unknown as PrismaService,
-      proxyService as unknown as ProxyService
+      proxyService as unknown as ProxyService,
+      sharingService as unknown as SharingService
     );
   });
 
@@ -96,15 +108,16 @@ describe('ProfilesService', () => {
   // findAll
   // ---------------------------------------------------------------------------
   describe('findAll', () => {
-    it('should return org-scoped + system profiles for authenticated user', async () => {
+    it('should return own + shared + system profiles for authenticated user', async () => {
       prisma.profile.findMany.mockResolvedValue([sampleProfile, systemProfile]);
 
       const result = await service.findAll(userId, orgId);
 
+      expect(sharingService.getSharedResourceIds).toHaveBeenCalledWith('profile', userId, []);
       expect(prisma.profile.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
-            OR: [{ organizationId: orgId }, { organizationId: null }],
+            OR: [{ userId, organizationId: orgId }, { organizationId: null }],
           },
         })
       );
@@ -148,8 +161,36 @@ describe('ProfilesService', () => {
 
       const call = prisma.profile.findMany.mock.calls[0][0];
       expect(call.where).toEqual({
-        OR: [{ organizationId: undefined }, { organizationId: null }],
+        OR: [{ userId, organizationId: undefined }, { organizationId: null }],
       });
+    });
+
+    it('should include shared profiles when sharing service returns IDs', async () => {
+      sharingService.getSharedResourceIds.mockResolvedValue(['shared-profile-1']);
+      prisma.profile.findMany.mockResolvedValue([]);
+
+      await service.findAll(userId, orgId);
+
+      const call = prisma.profile.findMany.mock.calls[0][0];
+      expect(call.where.OR).toEqual([
+        { userId, organizationId: orgId },
+        { id: { in: ['shared-profile-1'] } },
+        { organizationId: null },
+      ]);
+    });
+
+    it('should not see other users unshared profiles', async () => {
+      sharingService.getSharedResourceIds.mockResolvedValue([]);
+      prisma.profile.findMany.mockResolvedValue([]);
+
+      await service.findAll(userId, orgId);
+
+      const call = prisma.profile.findMany.mock.calls[0][0];
+      // Only own profiles + system — no org-wide query
+      expect(call.where.OR).toEqual([
+        { userId, organizationId: orgId },
+        { organizationId: null },
+      ]);
     });
   });
 
@@ -188,11 +229,12 @@ describe('ProfilesService', () => {
       );
     });
 
-    it('should throw ForbiddenException when profile belongs to different org', async () => {
+    it('should throw ForbiddenException when profile belongs to different user and not shared', async () => {
       prisma.profile.findUnique.mockResolvedValueOnce({
-        userId,
-        organizationId: 'other-org',
+        userId: 'other-user',
+        organizationId: orgId,
       });
+      sharingService.isSharedWith.mockResolvedValue(false);
 
       await expect(service.findById(profileId, userId, orgId)).rejects.toThrow(ForbiddenException);
     });
@@ -595,11 +637,12 @@ describe('ProfilesService', () => {
       expect(prisma.profile.findUnique).not.toHaveBeenCalled();
     });
 
-    it('should throw ForbiddenException when accessing other org profile', async () => {
+    it('should throw ForbiddenException when accessing other user unshared profile', async () => {
       prisma.profile.findUnique.mockResolvedValueOnce({
-        userId,
-        organizationId: 'other-org',
+        userId: 'other-user',
+        organizationId: orgId,
       });
+      sharingService.isSharedWith.mockResolvedValue(false);
 
       await expect(service.getServers(profileId, userId, orgId)).rejects.toThrow(
         ForbiddenException
@@ -687,17 +730,38 @@ describe('ProfilesService', () => {
       );
     });
 
-    it('should throw ForbiddenException when non-owner tries to add server', async () => {
+    it('should throw ForbiddenException when non-owner tries to add unshared server', async () => {
       const otherUserServer = { ...sampleServer, userId: 'user-other' };
 
       prisma.profile.findUnique
         .mockResolvedValueOnce({ userId, organizationId: orgId })
         .mockResolvedValueOnce({ ...sampleProfile });
       prisma.mcpServer.findUnique.mockResolvedValueOnce(otherUserServer);
+      sharingService.getSharedResourceIds.mockResolvedValueOnce([]);
 
       await expect(service.addServer(profileId, dto, userId, orgId)).rejects.toThrow(
         ForbiddenException
       );
+    });
+
+    it('should allow adding a shared server owned by another user', async () => {
+      const sharedServer = { ...sampleServer, userId: 'user-other' };
+
+      // assertOwnership for profile
+      prisma.profile.findUnique
+        .mockResolvedValueOnce({ userId, organizationId: orgId })
+        .mockResolvedValueOnce({ ...sampleProfile });
+      prisma.mcpServer.findUnique.mockResolvedValueOnce(sharedServer);
+      // Server is shared with the user via org
+      sharingService.getSharedResourceIds.mockResolvedValueOnce([sharedServer.id]);
+      prisma.profileMcpServer.findUnique.mockResolvedValueOnce(null);
+      prisma.profileMcpServer.create.mockResolvedValue({
+        ...sampleLink,
+        mcpServer: sharedServer,
+      });
+
+      await expect(service.addServer(profileId, dto, userId, orgId)).resolves.toBeDefined();
+      expect(prisma.profileMcpServer.create).toHaveBeenCalled();
     });
 
     it('should allow anonymous user to add any server', async () => {
@@ -1145,15 +1209,29 @@ describe('ProfilesService', () => {
       expect(prisma.profileMcpServer.findMany).toHaveBeenCalled();
     });
 
-    it('should throw ForbiddenException when profile belongs to different org', async () => {
+    it('should throw ForbiddenException when profile belongs to different user and not shared', async () => {
       prisma.profile.findUnique.mockResolvedValueOnce({
         userId: 'other-user',
-        organizationId: 'other-org',
+        organizationId: orgId,
       });
+      sharingService.isSharedWith.mockResolvedValue(false);
 
       await expect(service.getServers(profileId, userId, orgId)).rejects.toThrow(
         ForbiddenException
       );
+    });
+
+    it('should allow access when profile is shared with user', async () => {
+      prisma.profile.findUnique.mockResolvedValueOnce({
+        userId: 'other-user',
+        organizationId: orgId,
+      });
+      sharingService.isSharedWith.mockResolvedValue(true);
+      prisma.profileMcpServer.findMany.mockResolvedValue([]);
+
+      await service.getServers(profileId, userId, orgId);
+
+      expect(prisma.profileMcpServer.findMany).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException when profile does not exist', async () => {
@@ -1189,7 +1267,7 @@ describe('ProfilesService', () => {
       expect(prisma.profileMcpServer.delete).toHaveBeenCalled();
     });
 
-    it('should allow mutation when profile belongs to the same org', async () => {
+    it('should allow mutation when user owns the profile', async () => {
       prisma.profile.findUnique.mockResolvedValueOnce({
         userId,
         organizationId: orgId,
@@ -1201,11 +1279,37 @@ describe('ProfilesService', () => {
       expect(prisma.profileMcpServer.delete).toHaveBeenCalled();
     });
 
-    it('should throw ForbiddenException when profile belongs to different org', async () => {
+    it('should allow mutation when user has admin share permission', async () => {
       prisma.profile.findUnique.mockResolvedValueOnce({
         userId: 'other-user',
-        organizationId: 'other-org',
+        organizationId: orgId,
       });
+      sharingService.getPermission.mockResolvedValue('admin');
+      prisma.profileMcpServer.findUnique.mockResolvedValueOnce(sampleLink);
+
+      await service.removeServer(profileId, serverId, userId, orgId);
+
+      expect(prisma.profileMcpServer.delete).toHaveBeenCalled();
+    });
+
+    it('should throw ForbiddenException when user has use-only share permission', async () => {
+      prisma.profile.findUnique.mockResolvedValueOnce({
+        userId: 'other-user',
+        organizationId: orgId,
+      });
+      sharingService.getPermission.mockResolvedValue('use');
+
+      await expect(service.removeServer(profileId, serverId, userId, orgId)).rejects.toThrow(
+        ForbiddenException
+      );
+    });
+
+    it('should throw ForbiddenException when profile belongs to different user and not shared', async () => {
+      prisma.profile.findUnique.mockResolvedValueOnce({
+        userId: 'other-user',
+        organizationId: orgId,
+      });
+      sharingService.getPermission.mockResolvedValue(null);
 
       await expect(service.removeServer(profileId, serverId, userId, orgId)).rejects.toThrow(
         ForbiddenException

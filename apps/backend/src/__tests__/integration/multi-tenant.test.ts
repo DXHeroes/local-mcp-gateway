@@ -60,10 +60,17 @@ function buildMockPrisma() {
           const orConds = whereObj.OR as Record<string, unknown>[];
           result = result.filter((p) =>
             orConds.some((cond: Record<string, unknown>) => {
+              // Handle combined conditions like { userId, organizationId }
+              if ('userId' in cond && 'organizationId' in cond) {
+                return p.userId === cond.userId && p.organizationId === cond.organizationId;
+              }
               if ('organizationId' in cond) {
                 return cond.organizationId === null
                   ? p.organizationId === null
                   : p.organizationId === cond.organizationId;
+              }
+              if ('userId' in cond) {
+                return p.userId === cond.userId;
               }
               if ('id' in cond && (cond.id as Record<string, unknown>)?.in) {
                 return ((cond.id as Record<string, unknown>).in as string[]).includes(p.id);
@@ -163,6 +170,7 @@ describe('Multi-tenant data isolation', () => {
     let profilesService: ProfilesService;
     let prisma: ReturnType<typeof buildMockPrisma>;
     let proxyService: Record<string, ReturnType<typeof vi.fn>>;
+    let sharingService: Record<string, ReturnType<typeof vi.fn>>;
 
     beforeEach(() => {
       PROFILES.length = 0;
@@ -197,10 +205,16 @@ describe('Multi-tenant data isolation', () => {
       proxyService = {
         getToolsForServer: vi.fn().mockResolvedValue([]),
       };
+      sharingService = {
+        getSharedResourceIds: vi.fn().mockResolvedValue([]),
+        isSharedWith: vi.fn().mockResolvedValue(false),
+        getPermission: vi.fn().mockResolvedValue(null),
+      };
 
       profilesService = new ProfilesService(
         prisma as unknown as PrismaService,
-        proxyService as unknown as ProxyService
+        proxyService as unknown as ProxyService,
+        sharingService as unknown as SharingService
       );
     });
 

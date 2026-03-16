@@ -27,7 +27,7 @@ interface McpPreset {
 }
 
 interface McpPresetGalleryProps {
-  onAdd: () => void;
+  onAdd: (server: Record<string, unknown>) => void;
 }
 
 function PresetSection({
@@ -114,10 +114,11 @@ export default function McpPresetGallery({ onAdd }: McpPresetGalleryProps) {
         body: JSON.stringify({}),
       });
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to add preset');
+        const errData = await response.json();
+        throw new Error(errData.message || 'Failed to add preset');
       }
-      onAdd();
+      const createdServer = await response.json();
+      onAdd(createdServer);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
