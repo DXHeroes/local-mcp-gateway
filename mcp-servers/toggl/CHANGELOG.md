@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.7](https://github.com/DXHeroes/local-mcp-gateway/compare/mcp-toggl-v0.3.6...mcp-toggl-v0.3.7) (2026-03-16)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * peerDependencies
+    * @dxheroes/local-mcp-core bumped to 0.8.1
+
 ## [0.3.6](https://github.com/DXHeroes/local-mcp-gateway/compare/mcp-toggl-v0.3.5...mcp-toggl-v0.3.6) (2026-03-12)
 
 

@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.11.0](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.10.0...backend-v0.11.0) (2026-03-16)
+
+
+### Features
+
+* **auth:** enable toggle for email and password authentication ([a0c1dd0](https://github.com/DXHeroes/local-mcp-gateway/commit/a0c1dd0a192ffd4199af2bb00d9e83f1c526be5c))
+* **auth:** enhance MCP OAuth guard to support session cookies ([cc2f0d0](https://github.com/DXHeroes/local-mcp-gateway/commit/cc2f0d092150710691e8258c2fa3d891575e5a76))
+* **dependencies:** add new MCP packages to backend dependencies ([a29fdf4](https://github.com/DXHeroes/local-mcp-gateway/commit/a29fdf4c4af4db0b4df31a9b8a7d7f0fec5a5755))
+* **seo:** enhance SEO and session handling across frontend and backend ([2178043](https://github.com/DXHeroes/local-mcp-gateway/commit/21780436a9e93da63e3c6cec8318b4f8d1a6dbf6))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-core bumped to 0.8.1
+    * @dxheroes/local-mcp-database bumped to 0.5.4
+    * @dxheroes/mcp-abra-flexi bumped to 0.3.3
+    * @dxheroes/mcp-fakturoid bumped to 0.3.3
+    * @dxheroes/mcp-gemini-deep-research bumped to 0.5.7
+    * @dxheroes/mcp-merk bumped to 0.3.7
+    * @dxheroes/mcp-toggl bumped to 0.3.7
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.12
+
 ## [0.10.0](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.9.2...backend-v0.10.0) (2026-03-12)
 
 

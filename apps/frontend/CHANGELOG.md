@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.13.0](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.12.0...frontend-v0.13.0) (2026-03-16)
+
+
+### Features
+
+* **api:** implement apiFetch utility and refactor API calls across components ([e55d18d](https://github.com/DXHeroes/local-mcp-gateway/commit/e55d18df85ede8090584a5ef51b2e9544eb3bb65))
+* **auth:** enable toggle for email and password authentication ([a0c1dd0](https://github.com/DXHeroes/local-mcp-gateway/commit/a0c1dd0a192ffd4199af2bb00d9e83f1c526be5c))
+* **config:** add runtime API URL configuration and update frontend components ([66ca7e4](https://github.com/DXHeroes/local-mcp-gateway/commit/66ca7e48c5dd1dd71ad528df5a7f264d200bbc7e))
+* **docker:** enhance frontend configuration for production and local development ([86ab349](https://github.com/DXHeroes/local-mcp-gateway/commit/86ab349564ad8c90319d13540b041e74fffee566))
+* **seo:** enhance SEO and session handling across frontend and backend ([2178043](https://github.com/DXHeroes/local-mcp-gateway/commit/21780436a9e93da63e3c6cec8318b4f8d1a6dbf6))
+* **tests:** enhance E2E testing setup and add API integration tests ([1b6668e](https://github.com/DXHeroes/local-mcp-gateway/commit/1b6668e48bf18ae112c6dfa3b3edf8dddbecca7a))
+
+
+### Bug Fixes
+
+* **docker:** make frontend API calls relative for Coolify reverse proxy ([a4343db](https://github.com/DXHeroes/local-mcp-gateway/commit/a4343db7b1f50133d0a3779210d29d2c25c127d3))
+
+
+### Code Refactoring
+
+* **docker:** improve NGINX configuration handling in Dockerfile ([cf15589](https://github.com/DXHeroes/local-mcp-gateway/commit/cf155895c598147483e585e28d59e3ffa48aef56))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.12
+    * @dxheroes/local-mcp-ui bumped to 0.5.10
+
 ## [0.12.0](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.11.0...frontend-v0.12.0) (2026-03-12)
 
 
