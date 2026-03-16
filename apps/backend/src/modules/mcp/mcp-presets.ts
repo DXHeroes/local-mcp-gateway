@@ -65,11 +65,19 @@ export const MCP_PRESETS: McpPreset[] = [
   {
     id: 'github',
     name: 'GitHub MCP',
-    description: 'GitHub API access (repos, issues, PRs)',
-    type: 'external',
+    description: 'GitHub API access (repos, issues, PRs, actions, projects)',
+    type: 'remote_http',
     config: {
-      command: 'npx',
-      args: ['-y', '@modelcontextprotocol/server-github'],
+      url: 'https://api.githubcopilot.com/mcp/',
+      headers: {
+        'X-MCP-Toolsets': 'default,actions,projects',
+        'X-MCP-Lockdown': 'false',
+      },
+    },
+    requiresApiKey: true,
+    apiKeyDefaults: {
+      headerName: 'Authorization',
+      headerValueTemplate: 'Bearer {apiKey}',
     },
   },
   {
@@ -89,6 +97,33 @@ export const MCP_PRESETS: McpPreset[] = [
     type: 'remote_http',
     config: {
       url: 'https://mcp.context7.com/mcp',
+    },
+  },
+  {
+    id: 'sentry',
+    name: 'Sentry',
+    description: 'Error tracking, performance monitoring, and debugging',
+    type: 'remote_http',
+    config: {
+      url: 'https://mcp.sentry.dev/mcp',
+    },
+  },
+  {
+    id: 'posthog',
+    name: 'PostHog',
+    description: 'Product analytics, feature flags, and session replay',
+    type: 'remote_http',
+    config: {
+      url: 'https://mcp.posthog.com/mcp',
+    },
+  },
+  {
+    id: 'attio',
+    name: 'Attio',
+    description: 'CRM platform for managing contacts, companies, and deals',
+    type: 'remote_http',
+    config: {
+      url: 'https://mcp.attio.com/mcp',
     },
   },
 ];

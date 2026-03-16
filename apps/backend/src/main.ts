@@ -36,6 +36,10 @@ async function bootstrap() {
     logger: logLevels,
   });
 
+  // Trust reverse proxy headers (X-Forwarded-Proto, X-Forwarded-Host)
+  // so req.protocol returns 'https' behind Coolify/Traefik
+  app.getHttpAdapter().getInstance().set('trust proxy', true);
+
   const configService = app.get(ConfigService);
 
   // Security

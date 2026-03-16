@@ -46,7 +46,7 @@ export class OAuthDiscoveryService {
     const wellKnownUrls: string[] = [];
 
     // 1. At the path of the server's MCP endpoint (if path exists and is not just "/")
-    if (path && path !== '/' && path !== '/mcp' && path !== '/sse') {
+    if (path && path !== '/') {
       // Extract path component (e.g., "/public/mcp" -> "public/mcp")
       const pathComponent = path.startsWith('/') ? path.slice(1) : path;
       wellKnownUrls.push(`${baseUrl}/.well-known/oauth-protected-resource/${pathComponent}`);
@@ -181,6 +181,7 @@ export class OAuthDiscoveryService {
     scopes: string[]
   ): Promise<{ clientId: string; clientSecret?: string; registrationAccessToken?: string }> {
     const registrationRequest = {
+      client_name: 'Local MCP Gateway',
       redirect_uris: [redirectUri],
       grant_types: ['authorization_code', 'refresh_token'],
       response_types: ['code'],
