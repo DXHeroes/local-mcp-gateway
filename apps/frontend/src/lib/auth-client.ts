@@ -6,10 +6,10 @@
 
 import { organizationClient } from 'better-auth/client/plugins';
 import { createAuthClient } from 'better-auth/react';
-import { getAuthBaseUrl } from '../config/api';
+import { getFullMcpEndpointUrl } from '../config/api';
 
 export const authClient = createAuthClient({
-  baseURL: getAuthBaseUrl(),
+  baseURL: getFullMcpEndpointUrl() || 'http://localhost:3001',
   basePath: '/api/auth',
   plugins: [organizationClient()],
   fetchOptions: {

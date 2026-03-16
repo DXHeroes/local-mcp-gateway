@@ -110,24 +110,6 @@ export const getFullMcpEndpointUrl = (): string => {
 };
 
 /**
- * Get the base URL for auth requests.
- * Auth must target the frontend's own origin (cookies are origin-bound),
- * NOT the MCP endpoint URL which may be on a different subdomain.
- */
-export const getAuthBaseUrl = (): string => {
-  if (typeof window !== 'undefined') {
-    const { protocol, hostname, port } = window.location;
-    // Development: frontend on 3000, backend on 3001
-    if (port === '3000') return `${protocol}//${hostname}:3001`;
-    // Docker Hub: frontend on 9630, backend on 9631
-    if (port === '9630') return `${protocol}//${hostname}:9631`;
-    // Production: same origin (reverse proxy routes /api/auth to backend)
-    return `${protocol}//${hostname}${port ? `:${port}` : ''}`;
-  }
-  return 'http://localhost:3001';
-};
-
-/**
  * Get the main gateway URL for MCP connections (internal use).
  * This endpoint proxies requests to the configured default profile.
  * The active profile can be changed via the settings API.
