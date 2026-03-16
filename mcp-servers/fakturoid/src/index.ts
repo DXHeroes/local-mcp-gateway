@@ -18,11 +18,7 @@ export const mcpPackage: McpPackage = {
     license: 'MIT',
     requiresApiKey: true,
     apiKeyHint:
-      'Format: slug:personal_access_token. Get your token at Settings > API in your Fakturoid account. The slug is your account URL (e.g., "mycompany" from mycompany.fakturoid.cz).',
-    apiKeyDefaults: {
-      headerName: 'Authorization',
-      headerValueTemplate: 'Bearer {apiKey}',
-    },
+      'Format: slug:client_id:client_secret. Get your OAuth Client Credentials at Settings > User Account (Nastavení > Uživatelský účet) in your Fakturoid account. The slug is your account URL (e.g., "mycompany" from mycompany.fakturoid.cz).',
     tags: ['invoicing', 'fakturoid', 'czech', 'accounting', 'expenses'],
     icon: '🧾',
     docsUrl: 'https://www.fakturoid.cz/api/v3',

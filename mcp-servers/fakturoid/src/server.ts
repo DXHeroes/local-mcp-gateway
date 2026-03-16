@@ -70,7 +70,7 @@ export class FakturoidMcpServer extends McpServer {
   async initialize(): Promise<void> {
     if (!this.apiKeyConfig?.apiKey) {
       this.initError =
-        'Fakturoid API key is not configured. Please configure the API key in the MCP server settings. Format: slug:personal_access_token';
+        'Fakturoid API key is not configured. Please configure the API key in the MCP server settings. Format: slug:client_id:client_secret';
       console.warn('[Fakturoid] No API key configured');
       return;
     }
@@ -115,7 +115,7 @@ export class FakturoidMcpServer extends McpServer {
       return this.errorResponse(
         'API_KEY_REQUIRED',
         this.initError ||
-          'Fakturoid API key is not configured. Format: slug:personal_access_token'
+          'Fakturoid API key is not configured. Format: slug:client_id:client_secret'
       );
     }
 

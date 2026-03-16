@@ -1,7 +1,7 @@
 /**
  * Fakturoid API v3 client — thin HTTP wrapper around fetch
  *
- * Auth: Bearer token (Personal Access Token)
+ * Auth: OAuth 2.0 Client Credentials flow
  * API: https://app.fakturoid.cz/api/v3/accounts/{slug}/
  * Docs: https://www.fakturoid.cz/api/v3
  * Rate limit: tracked via X-RateLimit-* headers
@@ -9,6 +9,7 @@
 
 export type FakturoidErrorCode =
   | 'INVALID_API_KEY'
+  | 'TOKEN_EXCHANGE_FAILED'
   | 'NOT_FOUND'
   | 'RATE_LIMITED'
   | 'BAD_REQUEST'
@@ -27,35 +28,85 @@ export class FakturoidApiError extends Error {
 }
 
 export class FakturoidClient {
-  private readonly token: string;
   private readonly slug: string;
+  private readonly clientId: string;
+  private readonly clientSecret: string;
   private readonly baseUrl: string;
   private readonly userAgent: string;
+
+  private cachedToken: string | null = null;
+  private tokenExpiresAt: number = 0;
 
   constructor(
     apiKey: string,
     baseUrl = 'https://app.fakturoid.cz/api/v3',
     userAgent = 'LocalMcpGateway (support@dxheroes.io)'
   ) {
-    const separatorIndex = apiKey.indexOf(':');
-    if (separatorIndex === -1) {
+    const parts = apiKey.split(':');
+    if (parts.length < 3) {
       throw new Error(
-        'Invalid API key format. Expected "slug:personal_access_token". ' +
-          'Get your token at Settings > API in your Fakturoid account.'
+        'Invalid API key format. Expected "slug:client_id:client_secret". ' +
+          'Get your OAuth credentials at Settings > User Account in your Fakturoid account.'
       );
     }
-    this.slug = apiKey.substring(0, separatorIndex);
-    this.token = apiKey.substring(separatorIndex + 1);
+    const slug = parts[0];
+    const clientId = parts[1];
+    const clientSecret = parts.slice(2).join(':');
 
-    if (!this.slug || !this.token) {
+    if (!slug || !clientId || !clientSecret) {
       throw new Error(
-        'Invalid API key format. Both slug and token are required. ' +
-          'Format: "your-account-slug:your-personal-access-token"'
+        'Invalid API key format. Slug, client_id, and client_secret are all required. ' +
+          'Format: "your-account-slug:your-client-id:your-client-secret"'
       );
     }
 
+    this.slug = slug;
+    this.clientId = clientId;
+    this.clientSecret = clientSecret;
     this.baseUrl = baseUrl;
     this.userAgent = userAgent;
+  }
+
+  // ── OAuth Token Exchange ───────────────────────────────────────────
+
+  private async getAccessToken(): Promise<string> {
+    if (this.cachedToken && Date.now() < this.tokenExpiresAt - 60_000) {
+      return this.cachedToken;
+    }
+
+    const tokenUrl = `${this.baseUrl}/oauth/token`;
+    const credentials = btoa(`${this.clientId}:${this.clientSecret}`);
+
+    const response = await fetch(tokenUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${credentials}`,
+        'Content-Type': 'application/json',
+        'User-Agent': this.userAgent,
+      },
+      body: JSON.stringify({ grant_type: 'client_credentials' }),
+    });
+
+    if (!response.ok) {
+      let message: string;
+      try {
+        const errorBody = await response.text();
+        message = errorBody || response.statusText;
+      } catch {
+        message = response.statusText;
+      }
+      throw new FakturoidApiError(
+        `OAuth token exchange failed: ${message}`,
+        response.status,
+        'TOKEN_EXCHANGE_FAILED'
+      );
+    }
+
+    const data = (await response.json()) as { access_token: string; expires_in: number };
+    this.cachedToken = data.access_token;
+    this.tokenExpiresAt = Date.now() + data.expires_in * 1000;
+
+    return this.cachedToken;
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────
@@ -84,7 +135,7 @@ export class FakturoidClient {
   ): Promise<T> {
     const url = this.buildUrl(path, params);
     const headers: Record<string, string> = {
-      Authorization: `Bearer ${this.token}`,
+      Authorization: `Bearer ${await this.getAccessToken()}`,
       'User-Agent': this.userAgent,
     };
     const init: RequestInit = { method, headers };
@@ -135,7 +186,7 @@ export class FakturoidClient {
       return { valid: true };
     } catch (error) {
       if (error instanceof FakturoidApiError && error.code === 'INVALID_API_KEY') {
-        return { valid: false, error: 'Invalid API key or account slug' };
+        return { valid: false, error: 'Invalid OAuth credentials or account slug' };
       }
       const message = error instanceof Error ? error.message : String(error);
       return { valid: false, error: `Validation failed: ${message}` };
