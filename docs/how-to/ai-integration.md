@@ -50,18 +50,30 @@ Use this if you encounter SSL certificate errors or need a public URL. We use `l
   "mcpServers": {
     "My Profile": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sse", "--url", "https://blue-sky-42.loca.lt/api/mcp/my-profile/sse"]
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sse",
+        "--url",
+        "http://localhost:3001/api/mcp/my-profile/sse"
+      ]
     }
   }
 }
 ```
-*(Note: For Claude Desktop, using the SSE endpoint is often preferred).*
+
+> **Tip:** If you encounter SSL errors, use an HTTPS tunnel URL (from `pnpm dev:https`) instead of `localhost`.
 
 ## 2. Providing Context to AI (The "AI Prompt")
 
-Even when connected, the AI might not know *when* or *how* to use your specific tools. To solve this, the Local MCP Gateway provides generated **AI Prompts** in two formats.
+Even when connected, the AI might not know *when* or *how* to use your specific tools. To solve this, the Local MCP Gateway provides generated **AI Prompts** in four formats.
 
 ### Available Formats
+
+#### Recommended Format
+Best balance of clarity and token efficiency:
+- Good readability with compact representation
+- Default choice for most use cases
+- General-purpose AI integrations
 
 #### Markdown Format
 Human-readable format that's easy to review and understand:
@@ -69,17 +81,23 @@ Human-readable format that's easy to review and understand:
 - Standard Markdown formatting
 - Best for documentation, debugging, and sharing with team members
 
+#### XML Format
+Structured format for precise tool definitions:
+- Schema-like representation with XML tags
+- Works well with AI models that understand XML structure
+- Best for precise parameter definitions
+
 #### TOON Format
-**Token-Oriented Object Notation** - optimized for LLMs:
+**Token-Oriented Object Notation** - most compact format:
 - Reduces token usage by 30-50% compared to JSON
 - Minimizes hallucinations
-- Best for production AI integrations
+- Best for token-limited contexts and production AI integrations
 
 ### How to Use
 
 1.  Navigate to the **Profile** detail page in the frontend (`http://localhost:3000`).
 2.  Click the **"AI Prompt"** tab on the profile card.
-3.  Choose between **Markdown** or **TOON** format using the tabs.
+3.  Choose between **Recommended**, **Markdown**, **XML**, or **TOON** format using the tabs.
 4.  Click the **Copy** button.
 5.  **Paste** the copied text into your conversation with the AI.
 
@@ -116,12 +134,14 @@ data{profile,url,tools}:
 
 | Use Case | Recommended Format |
 |----------|-------------------|
+| General-purpose AI use | Recommended |
 | Reviewing tool configurations | Markdown |
 | Sharing with team members | Markdown |
 | Debugging tool issues | Markdown |
+| Precise schema definitions | XML |
+| AI models that prefer XML | XML |
 | Production AI integrations | TOON |
 | Token-limited contexts | TOON |
-| Claude/Cursor daily use | TOON |
 
 ### Benefits
 - **Reduced Hallucinations**: The AI knows exactly what arguments are required.

@@ -727,7 +727,7 @@ export class McpService {
       throw new NotFoundException(`Preset "${presetId}" not found`);
     }
 
-    return this.prisma.mcpServer.create({
+    const created = await this.prisma.mcpServer.create({
       data: {
         name: options?.name || preset.name,
         type: preset.type,
@@ -737,6 +737,12 @@ export class McpService {
         presetId,
       },
     });
+
+    // Enrich with metadata from registry for builtin servers
+    const builtinId = this.getBuiltinId(created.config);
+    const metadata = builtinId ? this.registry.get(builtinId)?.metadata : undefined;
+
+    return { ...created, metadata };
   }
 
   /**

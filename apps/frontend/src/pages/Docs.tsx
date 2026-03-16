@@ -608,14 +608,19 @@ pnpm dev`}
       "command": "npx",
       "args": [
         "-y",
-        "@anthropic-ai/claude-code-mcp",
+        "@modelcontextprotocol/server-sse",
         "--url",
-        "http://localhost:${apiPort}/api/mcp/gateway"
+        "http://localhost:${apiPort}/api/mcp/gateway/sse"
       ]
     }
   }
 }`}
           />
+          <p className="text-gray-600 text-sm mt-3">
+            If you encounter SSL errors, use an HTTPS tunnel URL instead of{' '}
+            <code className="bg-gray-100 px-1 rounded">localhost</code> (see{' '}
+            <code className="bg-gray-100 px-1 rounded">pnpm dev:https</code>).
+          </p>
         </section>
 
         {/* AI Integration - AI Prompts */}
@@ -623,10 +628,22 @@ pnpm dev`}
           <h2 className="text-xl font-semibold text-gray-900 mb-4">AI Prompts</h2>
           <p className="text-gray-700 mb-3">
             To help the AI understand your tools, use the <strong>AI Prompt</strong> feature. The
-            gateway provides two formats for different use cases:
+            gateway provides four formats for different use cases:
           </p>
 
           <div className="space-y-4">
+            <div className="border border-gray-200 rounded-lg p-4">
+              <h3 className="text-md font-semibold text-gray-800 mb-2">Recommended Format</h3>
+              <p className="text-gray-700 mb-2">
+                Best balance of clarity and token efficiency. Best for:
+              </p>
+              <ul className="list-disc list-inside text-gray-600 text-sm space-y-1">
+                <li>General-purpose AI integrations</li>
+                <li>Good readability with compact representation</li>
+                <li>Default choice for most use cases</li>
+              </ul>
+            </div>
+
             <div className="border border-gray-200 rounded-lg p-4">
               <h3 className="text-md font-semibold text-gray-800 mb-2">Markdown Format</h3>
               <p className="text-gray-700 mb-2">
@@ -641,14 +658,26 @@ pnpm dev`}
             </div>
 
             <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="text-md font-semibold text-gray-800 mb-2">TOON Format</h3>
+              <h3 className="text-md font-semibold text-gray-800 mb-2">XML Format</h3>
               <p className="text-gray-700 mb-2">
-                Token-Oriented Object Notation - optimized for LLMs. Best for:
+                Structured format for precise tool definitions. Best for:
               </p>
               <ul className="list-disc list-inside text-gray-600 text-sm space-y-1">
-                <li>Reducing token usage (more compact)</li>
+                <li>Structured, schema-like representation</li>
+                <li>AI models that work well with XML tags</li>
+                <li>Precise parameter definitions</li>
+              </ul>
+            </div>
+
+            <div className="border border-gray-200 rounded-lg p-4">
+              <h3 className="text-md font-semibold text-gray-800 mb-2">TOON Format</h3>
+              <p className="text-gray-700 mb-2">
+                Token-Oriented Object Notation - most compact format. Best for:
+              </p>
+              <ul className="list-disc list-inside text-gray-600 text-sm space-y-1">
+                <li>Reducing token usage (most compact)</li>
                 <li>Minimizing LLM hallucinations</li>
-                <li>Improving tool use reliability</li>
+                <li>Token-limited contexts</li>
                 <li>Production AI integrations</li>
               </ul>
             </div>
@@ -661,7 +690,7 @@ pnpm dev`}
               <li>
                 Click <strong>&quot;AI Prompt&quot;</strong> tab
               </li>
-              <li>Choose between Markdown or TOON format</li>
+              <li>Choose between Recommended, Markdown, XML, or TOON format</li>
               <li>
                 Click <strong>&quot;Copy&quot;</strong> to copy the prompt
               </li>

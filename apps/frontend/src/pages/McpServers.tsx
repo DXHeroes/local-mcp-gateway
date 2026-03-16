@@ -460,8 +460,16 @@ export default function McpServersPage() {
 
       <McpPresetGallery
         onAdd={async (server) => {
+          const created = server as { id: string } & Record<string, unknown>;
           await fetchServers(true);
-          openEditForm(server as unknown as McpServer);
+          // Re-fetch the individual server to get metadata-enriched version
+          const response = await apiFetch(`/api/mcp-servers/${created.id}`);
+          if (response.ok) {
+            const enriched = await response.json();
+            openEditForm(enriched as McpServer);
+          } else {
+            openEditForm(server as unknown as McpServer);
+          }
         }}
       />
 
