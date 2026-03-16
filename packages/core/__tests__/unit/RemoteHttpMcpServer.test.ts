@@ -757,4 +757,202 @@ describe('RemoteHttpMcpServer', () => {
       expect(requestCount).toBeGreaterThan(1);
     });
   });
+
+  describe('OAuth 401 handling', () => {
+    /**
+     * Helper: create a server that is initialized (skips the initialize HTTP call)
+     * by using a mock that routes initialize -> 200 and subsequent calls as configured.
+     */
+    function createInitializedServer(
+      opts: {
+        oauthToken?: OAuthToken | null;
+        makeRequestResponse: {
+          status: number;
+          headers: Record<string, string>;
+          body: unknown;
+        };
+      }
+    ): RemoteHttpMcpServer {
+      const { oauthToken = null, makeRequestResponse } = opts;
+
+      const initializeResponse: JsonRpcResponse = {
+        jsonrpc: '2.0',
+        id: 1,
+        result: {
+          protocolVersion: '2024-11-05',
+          capabilities: {},
+          serverInfo: { name: 'test-server', version: '1.0.0' },
+        },
+      };
+
+      const toolsListResponse: JsonRpcResponse = {
+        jsonrpc: '2.0',
+        id: 2,
+        result: { tools: [{ name: 'dummy-tool', description: 'dummy', inputSchema: {} }] },
+      };
+
+      const resourcesListResponse: JsonRpcResponse = {
+        jsonrpc: '2.0',
+        id: 3,
+        result: { resources: [] },
+      };
+
+      let callIndex = 0;
+      mockHttpClient.post = vi.fn().mockImplementation(async (_url, body, _headers) => {
+        const request = body as JsonRpcRequest;
+        callIndex++;
+
+        if (request.method === 'initialize') {
+          return {
+            status: 200,
+            headers: new Headers({ 'Mcp-Session-Id': 'session-test' }),
+            async json() { return initializeResponse; },
+          };
+        }
+
+        if (request.method === 'tools/list' && callIndex <= 4) {
+          // During initialize, return a normal tools list
+          return {
+            status: 200,
+            headers: new Headers(),
+            async json() { return toolsListResponse; },
+          };
+        }
+
+        if (request.method === 'resources/list') {
+          return {
+            status: 200,
+            headers: new Headers(),
+            async json() { return resourcesListResponse; },
+          };
+        }
+
+        // All subsequent requests get the configured response
+        return {
+          status: makeRequestResponse.status,
+          headers: new Headers(makeRequestResponse.headers),
+          async json() { return makeRequestResponse.body; },
+        };
+      });
+
+      return new RemoteHttpMcpServer(config, oauthToken, null, mockHttpClient);
+    }
+
+    it('should log warning on 401 during initialize', async () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      // Initialize call returns 401
+      mockHttpClient.post = vi.fn().mockResolvedValue({
+        status: 401,
+        headers: new Headers({ 'www-authenticate': 'Bearer realm="example"' }),
+        async json() {
+          return {
+            jsonrpc: '2.0',
+            id: 1,
+            error: { code: -32000, message: 'Unauthorized' },
+          };
+        },
+      });
+
+      const server = new RemoteHttpMcpServer(config, null, null, mockHttpClient);
+
+      // Initialize will warn about 401, then throw because of error response
+      await expect(server.initialize()).rejects.toThrow();
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[RemoteHttpMcpServer] Initialize got 401')
+      );
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('hasOAuthToken=false')
+      );
+
+      warnSpy.mockRestore();
+    });
+
+    it('should throw OAUTH_REQUIRED on 401 with WWW-Authenticate Bearer header', async () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const server = createInitializedServer({
+        makeRequestResponse: {
+          status: 401,
+          headers: { 'www-authenticate': 'Bearer realm="example"' },
+          body: { jsonrpc: '2.0', id: 99, error: { code: -32000, message: 'Unauthorized' } },
+        },
+      });
+
+      await server.initialize();
+
+      // Clear the tool cache so listTools makes a real request via makeRequest
+      server.clearToolsCache();
+
+      await expect(server.callTool('some-tool', {})).rejects.toThrow('OAUTH_REQUIRED');
+
+      warnSpy.mockRestore();
+    });
+
+    it('should throw OAUTH_REQUIRED with resource_metadata_uri extracted from WWW-Authenticate', async () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const resourceMetadataUri = 'https://auth.example.com/.well-known/oauth-authorization-server';
+
+      const server = createInitializedServer({
+        makeRequestResponse: {
+          status: 401,
+          headers: {
+            'www-authenticate': `Bearer realm="example", resource_metadata_uri="${resourceMetadataUri}"`,
+          },
+          body: { jsonrpc: '2.0', id: 99, error: { code: -32000, message: 'Unauthorized' } },
+        },
+      });
+
+      await server.initialize();
+      server.clearToolsCache();
+
+      await expect(server.callTool('some-tool', {})).rejects.toThrow(
+        `OAUTH_REQUIRED:${resourceMetadataUri}`
+      );
+
+      warnSpy.mockRestore();
+    });
+
+    it('should log 401 details including hasOAuthToken and tokenType', async () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const oauthToken: OAuthToken = {
+        id: 'token-id',
+        mcpServerId: 'server-id',
+        accessToken: 'expired-token',
+        tokenType: 'Bearer',
+        expiresAt: Date.now() - 1000, // expired
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+
+      const server = createInitializedServer({
+        oauthToken,
+        makeRequestResponse: {
+          status: 401,
+          headers: { 'www-authenticate': 'Bearer realm="example"' },
+          body: { jsonrpc: '2.0', id: 99, error: { code: -32000, message: 'Unauthorized' } },
+        },
+      });
+
+      await server.initialize();
+      server.clearToolsCache();
+
+      await expect(server.callTool('some-tool', {})).rejects.toThrow('OAUTH_REQUIRED');
+
+      // Find the warn call from makeRequest (not from initialize)
+      const makeRequestWarnCall = warnSpy.mock.calls.find(
+        (call) =>
+          typeof call[0] === 'string' &&
+          call[0].includes('401 from') &&
+          call[0].includes('hasOAuthToken=true')
+      );
+
+      expect(makeRequestWarnCall).toBeDefined();
+      expect(makeRequestWarnCall![0]).toContain('tokenType=Bearer');
+
+      warnSpy.mockRestore();
+    });
+  });
 });
