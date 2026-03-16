@@ -40,6 +40,10 @@ async function bootstrap() {
 
   // Security
   app.use(helmet());
+  app.use((_req: Request, res: Response, next: NextFunction) => {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    next();
+  });
   app.use(compression());
 
   // CORS
@@ -78,10 +82,29 @@ async function bootstrap() {
   const authService = app.get(AuthService);
   const expressApp = app.getHttpAdapter().getInstance();
 
-  const lazyAuthHandler = (req: Request, res: Response, next: NextFunction) => {
+  const lazyAuthHandler = async (req: Request, res: Response, next: NextFunction) => {
     const auth = authService.getAuth();
     if (!auth) return next();
-    toNodeHandler(auth)(req, res);
+    try {
+      await toNodeHandler(auth)(req, res);
+    } catch (error: unknown) {
+      const isPrismaNotFound =
+        error instanceof Error &&
+        'code' in error &&
+        (error as { code: string }).code === 'P2025';
+      if (isPrismaNotFound) {
+        // Stale session cookie — clear it and return 401
+        res.clearCookie('better-auth.session_token');
+        res.clearCookie('better-auth.session_token.sig');
+        if (!res.headersSent) {
+          res.status(401).json({ error: 'Session expired' });
+        }
+        return;
+      }
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    }
   };
 
   expressApp.get('/.well-known/oauth-protected-resource', (_req: Request, res: Response) => {

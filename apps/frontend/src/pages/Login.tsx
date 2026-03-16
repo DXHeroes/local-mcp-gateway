@@ -34,12 +34,15 @@ export default function LoginPage() {
       });
   }, []);
 
-  const callbackURL =
+  const callbackPath =
     typeof window !== 'undefined' &&
     isMcpLoginPath(window.location.pathname) &&
     hasMcpAuthQuery(window.location.search)
       ? `${window.location.pathname}${window.location.search}`
       : '/';
+
+  const callbackURL =
+    typeof window !== 'undefined' ? `${window.location.origin}${callbackPath}` : callbackPath;
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();

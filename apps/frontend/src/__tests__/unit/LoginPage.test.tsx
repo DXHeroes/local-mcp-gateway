@@ -50,7 +50,21 @@ describe('LoginPage', () => {
     expect(signInSocial).toHaveBeenCalledWith({
       provider: 'google',
       callbackURL:
-        '/sign-in?client_id=cursor&redirect_uri=https://cursor.sh/callback&response_type=code',
+        'http://localhost:3000/sign-in?client_id=cursor&redirect_uri=https://cursor.sh/callback&response_type=code',
+    });
+  });
+
+  it('uses the frontend origin for the default Google callback URL', async () => {
+    window.history.pushState({}, '', 'http://localhost:3000/sign-in');
+
+    render(<LoginPage />);
+
+    const googleButton = await screen.findByRole('button', { name: /sign in with google/i });
+    fireEvent.click(googleButton);
+
+    expect(signInSocial).toHaveBeenCalledWith({
+      provider: 'google',
+      callbackURL: 'http://localhost:3000/',
     });
   });
 
