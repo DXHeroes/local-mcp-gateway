@@ -121,41 +121,37 @@ export default function McpServersPage() {
       setError(null);
       setLoading(false);
 
-      // Stage 2: Fetch batch status in background
-      try {
-        const batchResponse = await apiFetch('/api/mcp-servers/batch-status');
-        if (batchResponse.ok) {
-          const batchData: Record<
-            string,
-            {
-              status?: string;
-              toolsCount?: number;
-              error?: string;
-              details?: string;
-              validatedAt?: string;
-              oauthRequired?: boolean;
-            }
-          > = await batchResponse.json();
+      // Stage 2: Fetch per-server status in parallel (each updates UI as it resolves)
+      const updateServerStatus = async (server: McpServer) => {
+        const statusRes = await apiFetch(`/api/mcp-servers/${server.id}/status`);
+        if (!statusRes.ok) return;
+        const status = (await statusRes.json()) as {
+          status?: string;
+          toolsCount?: number;
+          error?: string;
+          details?: string;
+          validatedAt?: string;
+          oauthRequired?: boolean;
+        };
+        setServers((prev) =>
+          prev.map((s) =>
+            s.id === server.id
+              ? {
+                  ...s,
+                  connectionStatus:
+                    (status.status as 'connected' | 'error' | 'unknown') || 'unknown',
+                  toolsCount: status.toolsCount,
+                  connectionError: status.error || undefined,
+                  validationDetails: status.details || undefined,
+                  validatedAt: status.validatedAt || undefined,
+                  oauthRequired: !!status.oauthRequired,
+                }
+              : s
+          )
+        );
+      };
 
-          setServers((prev) =>
-            prev.map((server) => {
-              const status = batchData[server.id];
-              if (!status) return server;
-              return {
-                ...server,
-                connectionStatus: (status.status as 'connected' | 'error' | 'unknown') || 'unknown',
-                toolsCount: status.toolsCount,
-                connectionError: status.error || undefined,
-                validationDetails: status.details || undefined,
-                validatedAt: status.validatedAt || undefined,
-                oauthRequired: !!status.oauthRequired,
-              };
-            })
-          );
-        }
-      } catch {
-        // Batch status fetch failed — servers still shown with unknown status
-      }
+      await Promise.allSettled(data.map((server) => updateServerStatus(server)));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       setLoading(false);
@@ -228,11 +224,34 @@ export default function McpServersPage() {
     window.open(`${API_URL}/api/oauth/authorize/${serverId}`, '_blank', 'width=600,height=700');
 
     // Listen for OAuth callback message
-    const handleMessage = (event: MessageEvent) => {
+    const handleMessage = async (event: MessageEvent) => {
       if (event.data.type === 'oauth-callback' && event.data.success) {
         window.removeEventListener('message', handleMessage);
-        fetchServers(); // Refresh servers list
-        alert('OAuth authorization successful!');
+        // Refresh only this server's status (bypasses batch cache)
+        try {
+          const statusRes = await apiFetch(`/api/mcp-servers/${serverId}/status`);
+          if (statusRes.ok) {
+            const status = await statusRes.json();
+            setServers((prev) =>
+              prev.map((s) =>
+                s.id === serverId
+                  ? {
+                      ...s,
+                      connectionStatus:
+                        (status.status as 'connected' | 'error' | 'unknown') || 'unknown',
+                      toolsCount: status.toolsCount,
+                      connectionError: status.error || undefined,
+                      validationDetails: status.details || undefined,
+                      oauthRequired: !!status.oauthRequired,
+                    }
+                  : s
+              )
+            );
+          }
+        } catch {
+          // Fallback: refresh all servers
+          await fetchServers(true);
+        }
       } else if (event.data.type === 'oauth-callback' && !event.data.success) {
         window.removeEventListener('message', handleMessage);
         setError(event.data.error || 'OAuth authorization failed');

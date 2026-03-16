@@ -16,7 +16,9 @@ import {
   Param,
   Post,
   Put,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import type { AuthUser } from '../auth/auth.service.js';
 import { ActiveOrgId } from '../auth/decorators/active-org-id.decorator.js';
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
@@ -68,7 +70,7 @@ export class McpController {
    * Get batch status for all MCP servers (parallel)
    */
   @Get('batch-status')
-  @Header('Cache-Control', 'private, max-age=30')
+  @Header('Cache-Control', 'private, max-age=60')
   async getBatchStatus(@CurrentUser() user: AuthUser, @ActiveOrgId() orgId: string) {
     return this.mcpService.getBatchStatus(user.id, orgId);
   }
@@ -143,8 +145,14 @@ export class McpController {
   async getStatus(
     @CurrentUser() user: AuthUser,
     @ActiveOrgId() orgId: string,
-    @Param('id') id: string
+    @Param('id') id: string,
+    @Res({ passthrough: true }) res: Response
   ) {
-    return this.mcpService.getStatus(id, user.id, orgId);
+    const result = await this.mcpService.getStatus(id, user.id, orgId);
+    res.setHeader(
+      'Cache-Control',
+      result.status === 'connected' ? 'private, max-age=60' : 'no-store'
+    );
+    return result;
   }
 }
