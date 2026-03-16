@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.13.0](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.12.0...backend-v0.13.0) (2026-03-16)
+
+
+### Features
+
+* **mcp:** implement server-level tool configuration management ([f8a1f58](https://github.com/DXHeroes/local-mcp-gateway/commit/f8a1f58d28c4da9a8a05034b1665ba2f58338d01))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-core bumped to 0.10.0
+    * @dxheroes/local-mcp-database bumped to 0.7.0
+    * @dxheroes/mcp-abra-flexi bumped to 0.4.1
+    * @dxheroes/mcp-fakturoid bumped to 0.4.1
+    * @dxheroes/mcp-gemini-deep-research bumped to 0.5.9
+    * @dxheroes/mcp-merk bumped to 0.3.9
+    * @dxheroes/mcp-toggl bumped to 0.3.9
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.14
+
 ## [0.12.0](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.11.0...backend-v0.12.0) (2026-03-16)
 
 
