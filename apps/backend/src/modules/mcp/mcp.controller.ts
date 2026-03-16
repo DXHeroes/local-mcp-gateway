@@ -10,6 +10,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   HttpCode,
   HttpStatus,
   Param,
@@ -58,6 +59,7 @@ export class McpController {
    * Get all configured MCP servers visible to user in the active org
    */
   @Get()
+  @Header('Cache-Control', 'private, max-age=5')
   async getAll(@CurrentUser() user: AuthUser, @ActiveOrgId() orgId: string) {
     return this.mcpService.findAll(user.id, orgId);
   }
@@ -66,6 +68,7 @@ export class McpController {
    * Get batch status for all MCP servers (parallel)
    */
   @Get('batch-status')
+  @Header('Cache-Control', 'private, max-age=30')
   async getBatchStatus(@CurrentUser() user: AuthUser, @ActiveOrgId() orgId: string) {
     return this.mcpService.getBatchStatus(user.id, orgId);
   }

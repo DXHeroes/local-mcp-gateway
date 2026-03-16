@@ -26,12 +26,35 @@ import { McpRegistry } from './mcp-registry.js';
 
 @Injectable()
 export class McpService {
+  private static readonly BATCH_CACHE_TTL = 30_000; // 30 seconds
+  private batchStatusCache = new Map<
+    string,
+    {
+      data: Record<
+        string,
+        {
+          status: string;
+          toolsCount?: number;
+          error?: string;
+          details?: string;
+          validatedAt?: string;
+          oauthRequired?: boolean;
+        }
+      >;
+      timestamp: number;
+    }
+  >();
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly registry: McpRegistry,
     private readonly debugService: DebugService,
     private readonly sharingService: SharingService
   ) {}
+
+  private invalidateBatchCache(userId: string, orgId?: string) {
+    this.batchStatusCache.delete(`${userId}:${orgId ?? ''}`);
+  }
 
   private isAnonymous(userId: string): boolean {
     return userId === UNAUTHENTICATED_ID;
@@ -175,7 +198,7 @@ export class McpService {
       throw new ForbiddenException('Authentication required to create MCP servers');
     }
 
-    return this.prisma.mcpServer.create({
+    const result = await this.prisma.mcpServer.create({
       data: {
         name: dto.name,
         type: dto.type,
@@ -185,6 +208,8 @@ export class McpService {
         userId,
       },
     });
+    this.invalidateBatchCache(userId, _orgId);
+    return result;
   }
 
   /**
@@ -198,7 +223,7 @@ export class McpService {
       throw new NotFoundException(`MCP server ${id} not found`);
     }
 
-    return this.prisma.mcpServer.update({
+    const result = await this.prisma.mcpServer.update({
       where: { id },
       data: {
         name: dto.name,
@@ -213,6 +238,8 @@ export class McpService {
         oauthConfig: dto.oauthConfig !== undefined ? JSON.stringify(dto.oauthConfig) : undefined,
       },
     });
+    this.invalidateBatchCache(userId, _orgId);
+    return result;
   }
 
   /**
@@ -227,6 +254,7 @@ export class McpService {
     }
 
     await this.prisma.mcpServer.delete({ where: { id } });
+    this.invalidateBatchCache(userId, _orgId);
   }
 
   /**
@@ -621,6 +649,12 @@ export class McpService {
    * Get batch status for all MCP servers (parallel)
    */
   async getBatchStatus(userId: string, orgId?: string) {
+    const cacheKey = `${userId}:${orgId ?? ''}`;
+    const cached = this.batchStatusCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < McpService.BATCH_CACHE_TTL) {
+      return cached.data;
+    }
+
     const servers = await this.findAll(userId, orgId);
 
     const results = await Promise.allSettled(
@@ -671,6 +705,7 @@ export class McpService {
       }
     });
 
+    this.batchStatusCache.set(cacheKey, { data: batchStatus, timestamp: Date.now() });
     return batchStatus;
   }
 
@@ -686,6 +721,7 @@ export class McpService {
       config: p.config,
       source: 'preset' as const,
       requiresApiKey: p.requiresApiKey,
+      apiKeyDefaults: p.apiKeyDefaults,
       icon: p.icon,
       docsUrl: p.docsUrl,
     }));
@@ -737,6 +773,7 @@ export class McpService {
         presetId,
       },
     });
+    this.invalidateBatchCache(userId, _orgId);
 
     // Enrich with metadata from registry for builtin servers
     const builtinId = this.getBuiltinId(created.config);

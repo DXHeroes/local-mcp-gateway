@@ -22,12 +22,29 @@ interface McpPreset {
   config: Record<string, unknown>;
   source: 'preset' | 'builtin';
   requiresApiKey?: boolean;
+  apiKeyDefaults?: {
+    headerName: string;
+    headerValueTemplate: string;
+  };
   icon?: string;
   docsUrl?: string;
 }
 
+export interface PresetData {
+  id: string;
+  name: string;
+  type: string;
+  config: Record<string, unknown>;
+  requiresApiKey?: boolean;
+  apiKeyDefaults?: {
+    headerName: string;
+    headerValueTemplate: string;
+  };
+}
+
 interface McpPresetGalleryProps {
   onAdd: (server: Record<string, unknown>) => void;
+  onConfigurePreset?: (preset: PresetData) => void;
 }
 
 function PresetSection({
@@ -77,7 +94,7 @@ function PresetSection({
   );
 }
 
-export default function McpPresetGallery({ onAdd }: McpPresetGalleryProps) {
+export default function McpPresetGallery({ onAdd, onConfigurePreset }: McpPresetGalleryProps) {
   const [presets, setPresets] = useState<McpPreset[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState<string | null>(null);
@@ -105,6 +122,21 @@ export default function McpPresetGallery({ onAdd }: McpPresetGalleryProps) {
   }, [isOpen, fetchPresets]);
 
   const handleAdd = async (presetId: string) => {
+    const preset = presets.find((p) => p.id === presetId);
+
+    // For presets requiring API key, open configure form instead of creating immediately
+    if (preset?.requiresApiKey && onConfigurePreset) {
+      onConfigurePreset({
+        id: preset.id,
+        name: preset.name,
+        type: preset.type,
+        config: preset.config,
+        requiresApiKey: preset.requiresApiKey,
+        apiKeyDefaults: (preset as PresetData).apiKeyDefaults,
+      });
+      return;
+    }
+
     try {
       setAdding(presetId);
       setError(null);

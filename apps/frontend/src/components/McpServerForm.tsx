@@ -150,8 +150,21 @@ const parseConfig = (config: unknown): Record<string, unknown> => {
   return config as Record<string, unknown>;
 };
 
+interface PresetData {
+  id: string;
+  name: string;
+  type: string;
+  config: Record<string, unknown>;
+  requiresApiKey?: boolean;
+  apiKeyDefaults?: {
+    headerName: string;
+    headerValueTemplate: string;
+  };
+}
+
 interface McpServerFormProps {
   server?: McpServer | null;
+  presetData?: PresetData | null;
   onSave: (data: McpServerFormData) => Promise<void>;
   onCancel: () => void;
   isOpen: boolean;
@@ -160,6 +173,7 @@ interface McpServerFormProps {
 
 export default function McpServerForm({
   server,
+  presetData,
   onSave,
   onCancel,
   isOpen,
@@ -296,6 +310,45 @@ export default function McpServerForm({
           setAuthType('none');
         }
       }
+    } else if (presetData) {
+      // Pre-fill from preset data (create mode with preset)
+      setName(presetData.name);
+      setType(
+        presetData.type === 'remote_http' || presetData.type === 'remote_sse'
+          ? presetData.type
+          : presetData.type === 'external'
+            ? 'external'
+            : 'remote_http'
+      );
+      const config = presetData.config as { url?: string; headers?: Record<string, string> };
+      setUrl(config.url || '');
+      if (config.headers && Object.keys(config.headers).length > 0) {
+        setCustomHeaders(
+          Object.entries(config.headers).map(([key, value]) => ({ key, value }))
+        );
+      } else {
+        setCustomHeaders([]);
+      }
+      if (presetData.requiresApiKey && presetData.apiKeyDefaults) {
+        setAuthType('api_key');
+        setApiKeyHeaderName(presetData.apiKeyDefaults.headerName);
+        setApiKeyHeaderValue(presetData.apiKeyDefaults.headerValueTemplate);
+      } else {
+        setAuthType('none');
+      }
+      setApiKey('');
+      setOauthAuthUrl('');
+      setOauthTokenEndpoint('');
+      setOauthResource('');
+      setOauthScopes('');
+      setOauthClientId('');
+      setOauthClientSecret('');
+      setOauthCallbackUrl('');
+      setCommand('');
+      setArgs('');
+      setEnvVars('');
+      setWorkingDirectory('');
+      setAutoRestart(true);
     } else {
       // Reset form
       setName('');
@@ -322,17 +375,20 @@ export default function McpServerForm({
     }
     setShowApiKey(false);
     setError(null);
-  }, [server, isOpen]);
+  }, [server, presetData, isOpen]);
 
-  // Focus API key input for builtin servers that require it
+  // Focus API key input for builtin servers that require it, or preset with requiresApiKey
   useEffect(() => {
-    if (isOpen && server?.type === 'builtin' && server.metadata?.requiresApiKey) {
+    const shouldFocus =
+      (isOpen && server?.type === 'builtin' && server.metadata?.requiresApiKey) ||
+      (isOpen && !server && presetData?.requiresApiKey);
+    if (shouldFocus) {
       // Small delay to ensure dialog is rendered
       setTimeout(() => {
         apiKeyInputRef.current?.focus();
       }, 0);
     }
-  }, [isOpen, server]);
+  }, [isOpen, server, presetData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -993,6 +1049,7 @@ export default function McpServerForm({
                       API Key <span className="text-red-500">*</span>
                     </Label>
                     <Input
+                      ref={apiKeyInputRef}
                       id="api-key"
                       type="password"
                       value={apiKey}

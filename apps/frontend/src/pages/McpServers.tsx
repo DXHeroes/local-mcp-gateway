@@ -13,7 +13,7 @@ import {
 } from '@dxheroes/local-mcp-ui';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import McpPresetGallery from '../components/McpPresetGallery';
+import McpPresetGallery, { type PresetData } from '../components/McpPresetGallery';
 import McpServerForm, { type McpServerFormData } from '../components/McpServerForm';
 
 interface McpServerMetadata {
@@ -101,6 +101,7 @@ export default function McpServersPage() {
   const [error, setError] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingServer, setEditingServer] = useState<McpServer | null>(null);
+  const [presetData, setPresetData] = useState<PresetData | null>(null);
 
   const fetchServers = useCallback(async (isRefresh = false) => {
     try {
@@ -180,6 +181,7 @@ export default function McpServersPage() {
     }
 
     setIsFormOpen(false);
+    setPresetData(null);
     await fetchServers(true);
   };
 
@@ -252,6 +254,7 @@ export default function McpServersPage() {
   const closeForm = () => {
     setIsFormOpen(false);
     setEditingServer(null);
+    setPresetData(null);
   };
 
   if (loading) {
@@ -471,10 +474,16 @@ export default function McpServersPage() {
             openEditForm(server as unknown as McpServer);
           }
         }}
+        onConfigurePreset={(preset) => {
+          setPresetData(preset);
+          setEditingServer(null);
+          setIsFormOpen(true);
+        }}
       />
 
       <McpServerForm
         server={editingServer}
+        presetData={presetData}
         onSave={editingServer ? handleUpdate : handleCreate}
         onCancel={closeForm}
         isOpen={isFormOpen}

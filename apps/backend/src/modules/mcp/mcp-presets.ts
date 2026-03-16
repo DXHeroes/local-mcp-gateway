@@ -43,26 +43,6 @@ export const MCP_PRESETS: McpPreset[] = [
     },
   },
   {
-    id: 'filesystem',
-    name: 'Filesystem MCP',
-    description: 'File system operations (read, write, search)',
-    type: 'external',
-    config: {
-      command: 'npx',
-      args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp'],
-    },
-  },
-  {
-    id: 'memory',
-    name: 'Memory MCP',
-    description: 'Persistent memory and knowledge graph',
-    type: 'external',
-    config: {
-      command: 'npx',
-      args: ['-y', '@modelcontextprotocol/server-memory'],
-    },
-  },
-  {
     id: 'github',
     name: 'GitHub MCP',
     description: 'GitHub API access (repos, issues, PRs, actions, projects)',
@@ -78,16 +58,6 @@ export const MCP_PRESETS: McpPreset[] = [
     apiKeyDefaults: {
       headerName: 'Authorization',
       headerValueTemplate: 'Bearer {apiKey}',
-    },
-  },
-  {
-    id: 'fetch',
-    name: 'Fetch MCP',
-    description: 'HTTP fetch and web content retrieval',
-    type: 'external',
-    config: {
-      command: 'uvx',
-      args: ['mcp-server-fetch'],
     },
   },
   {
