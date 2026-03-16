@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.7.0](https://github.com/DXHeroes/local-mcp-gateway/compare/database-v0.6.0...database-v0.7.0) (2026-03-16)
+
+
+### Features
+
+* **mcp:** implement server-level tool configuration management ([f8a1f58](https://github.com/DXHeroes/local-mcp-gateway/commit/f8a1f58d28c4da9a8a05034b1665ba2f58338d01))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.14
+
 ## [0.6.0](https://github.com/DXHeroes/local-mcp-gateway/compare/database-v0.5.4...database-v0.6.0) (2026-03-16)
 
 
