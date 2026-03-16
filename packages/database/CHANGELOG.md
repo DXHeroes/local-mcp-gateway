@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.6.0](https://github.com/DXHeroes/local-mcp-gateway/compare/database-v0.5.4...database-v0.6.0) (2026-03-16)
+
+
+### Features
+
+* **docs:** enhance documentation and user onboarding experience ([27adcf5](https://github.com/DXHeroes/local-mcp-gateway/commit/27adcf58b55926406fdc2a926a61ccfb92fad798))
+* **invitation:** implement organization invitation acceptance flow ([c3731c2](https://github.com/DXHeroes/local-mcp-gateway/commit/c3731c2e0ced853fa37868b9f560edb4bf0cff2f))
+* **organization-domains:** add auto-join domain management for organizations ([2e5071d](https://github.com/DXHeroes/local-mcp-gateway/commit/2e5071d82811725df5ef1729cc2f657d11fade14))
+* **tests:** enhance integration tests for MCP services and sharing functionality ([d4550ba](https://github.com/DXHeroes/local-mcp-gateway/commit/d4550baefb3e623500e444cb6cbcfd911b88fefb))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.13
+
 ## [0.5.4](https://github.com/DXHeroes/local-mcp-gateway/compare/database-v0.5.3...database-v0.5.4) (2026-03-16)
 
 

@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.12.0](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.11.0...backend-v0.12.0) (2026-03-16)
+
+
+### Features
+
+* **auth:** improve user organization handling during signup ([8447d08](https://github.com/DXHeroes/local-mcp-gateway/commit/8447d08e55274973e33d97fcc3b66a269b96be51))
+* **docs:** enhance documentation and user onboarding experience ([27adcf5](https://github.com/DXHeroes/local-mcp-gateway/commit/27adcf58b55926406fdc2a926a61ccfb92fad798))
+* **invitation:** implement organization invitation acceptance flow ([c3731c2](https://github.com/DXHeroes/local-mcp-gateway/commit/c3731c2e0ced853fa37868b9f560edb4bf0cff2f))
+* **mcp:** enhance MCP presets and server configuration ([d5ce8f3](https://github.com/DXHeroes/local-mcp-gateway/commit/d5ce8f3adb9513c03df2e97c2ba1236926350387))
+* **mcp:** enrich server creation with metadata and enhance documentation ([fb3d901](https://github.com/DXHeroes/local-mcp-gateway/commit/fb3d901d4ab97308732dbdb15218ec9968cf56c9))
+* **mcp:** streamline MCP presets and enhance server configuration ([9eb1f2c](https://github.com/DXHeroes/local-mcp-gateway/commit/9eb1f2c17ae8dea5d7d8035474adcfde9da56474))
+* **organization-domains:** add auto-join domain management for organizations ([2e5071d](https://github.com/DXHeroes/local-mcp-gateway/commit/2e5071d82811725df5ef1729cc2f657d11fade14))
+* **organization-domains:** implement blacklisted domains for auto-join prevention ([5226d48](https://github.com/DXHeroes/local-mcp-gateway/commit/5226d481b94b6fd192cfe46e385143b0f642a4d5))
+* **tests:** enhance integration tests for MCP services and sharing functionality ([d4550ba](https://github.com/DXHeroes/local-mcp-gateway/commit/d4550baefb3e623500e444cb6cbcfd911b88fefb))
+
+
+### Bug Fixes
+
+* **oauth:** standardize token type casing and enhance error logging ([47ef48b](https://github.com/DXHeroes/local-mcp-gateway/commit/47ef48ba45be779b059bf32faa062af2cea3eee4))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-core bumped to 0.9.0
+    * @dxheroes/local-mcp-database bumped to 0.6.0
+    * @dxheroes/mcp-abra-flexi bumped to 0.4.0
+    * @dxheroes/mcp-fakturoid bumped to 0.4.0
+    * @dxheroes/mcp-gemini-deep-research bumped to 0.5.8
+    * @dxheroes/mcp-merk bumped to 0.3.8
+    * @dxheroes/mcp-toggl bumped to 0.3.8
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.13
+
 ## [0.11.0](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.10.0...backend-v0.11.0) (2026-03-16)
 
 

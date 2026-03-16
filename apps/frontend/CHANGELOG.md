@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.14.0](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.13.0...frontend-v0.14.0) (2026-03-16)
+
+
+### Features
+
+* **auth:** improve user organization handling during signup ([8447d08](https://github.com/DXHeroes/local-mcp-gateway/commit/8447d08e55274973e33d97fcc3b66a269b96be51))
+* **docs:** enhance documentation and user onboarding experience ([27adcf5](https://github.com/DXHeroes/local-mcp-gateway/commit/27adcf58b55926406fdc2a926a61ccfb92fad798))
+* **invitation:** implement organization invitation acceptance flow ([c3731c2](https://github.com/DXHeroes/local-mcp-gateway/commit/c3731c2e0ced853fa37868b9f560edb4bf0cff2f))
+* **mcp:** enrich server creation with metadata and enhance documentation ([fb3d901](https://github.com/DXHeroes/local-mcp-gateway/commit/fb3d901d4ab97308732dbdb15218ec9968cf56c9))
+* **mcp:** streamline MCP presets and enhance server configuration ([9eb1f2c](https://github.com/DXHeroes/local-mcp-gateway/commit/9eb1f2c17ae8dea5d7d8035474adcfde9da56474))
+* **organization-domains:** add auto-join domain management for organizations ([2e5071d](https://github.com/DXHeroes/local-mcp-gateway/commit/2e5071d82811725df5ef1729cc2f657d11fade14))
+* **organization-domains:** implement blacklisted domains for auto-join prevention ([5226d48](https://github.com/DXHeroes/local-mcp-gateway/commit/5226d481b94b6fd192cfe46e385143b0f642a4d5))
+* **organizations:** add role management for organization members ([24d9337](https://github.com/DXHeroes/local-mcp-gateway/commit/24d9337f1a9a321706d8c7f66b9268b53d60e583))
+* **tests:** enhance integration tests for MCP services and sharing functionality ([d4550ba](https://github.com/DXHeroes/local-mcp-gateway/commit/d4550baefb3e623500e444cb6cbcfd911b88fefb))
+
+
+### Bug Fixes
+
+* **OrgGate:** improve organization handling by ensuring first organization is valid ([a811405](https://github.com/DXHeroes/local-mcp-gateway/commit/a811405b21ce2bc58fad95deae1e8d1d9fd00e89))
+
+
+### Code Refactoring
+
+* **api:** remove getAuthBaseUrl and update auth client to use getFullMcpEndpointUrl ([e4ab155](https://github.com/DXHeroes/local-mcp-gateway/commit/e4ab155531445ff4836813a98afa59ff314736ef))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.13
+    * @dxheroes/local-mcp-ui bumped to 0.5.11
+
 ## [0.13.0](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.12.0...frontend-v0.13.0) (2026-03-16)
 
 

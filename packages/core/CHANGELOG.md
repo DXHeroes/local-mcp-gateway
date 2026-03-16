@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.9.0](https://github.com/DXHeroes/local-mcp-gateway/compare/core-v0.8.1...core-v0.9.0) (2026-03-16)
+
+
+### Features
+
+* **mcp:** enhance MCP presets and server configuration ([d5ce8f3](https://github.com/DXHeroes/local-mcp-gateway/commit/d5ce8f3adb9513c03df2e97c2ba1236926350387))
+
+
+### Bug Fixes
+
+* **oauth:** standardize token type casing and enhance error logging ([47ef48b](https://github.com/DXHeroes/local-mcp-gateway/commit/47ef48ba45be779b059bf32faa062af2cea3eee4))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.13
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.13
+
 ## [0.8.1](https://github.com/DXHeroes/local-mcp-gateway/compare/core-v0.8.0...core-v0.8.1) (2026-03-16)
 
 
