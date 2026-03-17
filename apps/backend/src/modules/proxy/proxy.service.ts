@@ -342,9 +342,9 @@ export class ProxyService {
         }
 
         const toolName = customization?.toolName || params.name;
-        const hasTool = tools.some((t) => t.name === toolName);
+        const toolDef = tools.find((t) => t.name === toolName);
 
-        if (hasTool) {
+        if (toolDef) {
           // Update log with the server that handled this tool call
           if (logId) {
             try {
@@ -356,7 +356,13 @@ export class ProxyService {
             }
           }
 
-          const result = await instance.callTool(toolName, params.arguments || {});
+          // Coerce string arguments to expected types based on tool's input schema
+          const coercedArgs = this.coerceToolArguments(
+            params.arguments || {},
+            toolDef.inputSchema
+          );
+
+          const result = await instance.callTool(toolName, coercedArgs);
 
           return {
             jsonrpc: '2.0',
@@ -893,5 +899,148 @@ export class ProxyService {
         servers: serverStatus,
       },
     };
+  }
+
+  /**
+   * Coerce tool arguments from strings to their expected types based on the tool's input schema.
+   * MCP clients (e.g. Claude) sometimes send numbers as strings and arrays as stringified JSON.
+   */
+  private coerceToolArguments(
+    args: Record<string, unknown>,
+    schema: unknown
+  ): Record<string, unknown> {
+    const jsonSchema = this.extractJsonSchemaProperties(schema);
+    if (!jsonSchema) return args;
+
+    const result = { ...args };
+    for (const [key, propSchema] of Object.entries(jsonSchema)) {
+      if (result[key] === undefined) continue;
+      result[key] = this.coerceValue(result[key], propSchema as Record<string, unknown>);
+    }
+    return result;
+  }
+
+  /**
+   * Extract JSON Schema properties from either a Zod schema or a plain JSON Schema object.
+   */
+  private extractJsonSchemaProperties(
+    schema: unknown
+  ): Record<string, unknown> | null {
+    if (!schema || typeof schema !== 'object') return null;
+
+    const s = schema as Record<string, unknown>;
+
+    // Plain JSON Schema with properties
+    if (s.properties && typeof s.properties === 'object') {
+      return s.properties as Record<string, unknown>;
+    }
+
+    // Zod schema — extract shape from _def
+    if ('_def' in s) {
+      return this.extractZodProperties(s);
+    }
+
+    return null;
+  }
+
+  /**
+   * Extract property type info from a Zod schema's internal structure.
+   */
+  private extractZodProperties(schema: Record<string, unknown>): Record<string, unknown> | null {
+    const def = schema._def as Record<string, unknown> | undefined;
+    if (!def) return null;
+
+    // ZodObject has shape() or _def.shape
+    const shape =
+      typeof (schema as Record<string, (...a: unknown[]) => unknown>).shape === 'function'
+        ? (schema as Record<string, () => Record<string, unknown>>).shape()
+        : (def.shape as Record<string, unknown> | undefined);
+
+    if (!shape || typeof shape !== 'object') return null;
+
+    const properties: Record<string, unknown> = {};
+    for (const [key, zodField] of Object.entries(shape)) {
+      properties[key] = this.zodFieldToJsonSchemaType(zodField);
+    }
+    return properties;
+  }
+
+  /**
+   * Convert a Zod field to a simplified JSON Schema type descriptor.
+   */
+  private zodFieldToJsonSchemaType(field: unknown): Record<string, unknown> {
+    if (!field || typeof field !== 'object') return {};
+
+    let current = field as Record<string, unknown>;
+
+    // Unwrap ZodOptional, ZodNullable, ZodDefault, ZodEffects
+    while (current._def && typeof current._def === 'object') {
+      const def = current._def as Record<string, unknown>;
+      const typeName = def.typeName as string | undefined;
+
+      if (
+        typeName === 'ZodOptional' ||
+        typeName === 'ZodNullable' ||
+        typeName === 'ZodDefault'
+      ) {
+        current = def.innerType as Record<string, unknown>;
+        continue;
+      }
+      if (typeName === 'ZodEffects') {
+        current = def.schema as Record<string, unknown>;
+        continue;
+      }
+      break;
+    }
+
+    const def = current._def as Record<string, unknown> | undefined;
+    const typeName = def?.typeName as string | undefined;
+
+    switch (typeName) {
+      case 'ZodNumber':
+        return { type: 'number' };
+      case 'ZodBoolean':
+        return { type: 'boolean' };
+      case 'ZodArray':
+        return { type: 'array' };
+      case 'ZodObject':
+        return { type: 'object' };
+      case 'ZodEnum':
+      case 'ZodString':
+        return { type: 'string' };
+      default:
+        return {};
+    }
+  }
+
+  /**
+   * Coerce a single value from string to its expected type based on JSON Schema.
+   */
+  private coerceValue(value: unknown, schema: Record<string, unknown>): unknown {
+    if (typeof value !== 'string') return value;
+
+    const type = schema.type as string | undefined;
+    if (!type) return value;
+
+    switch (type) {
+      case 'number':
+      case 'integer': {
+        const num = Number(value);
+        return Number.isNaN(num) ? value : num;
+      }
+      case 'boolean':
+        if (value === 'true') return true;
+        if (value === 'false') return false;
+        return value;
+      case 'array':
+      case 'object':
+        try {
+          return JSON.parse(value);
+        } catch {
+          return value;
+        }
+      default:
+        return value;
+    }
   }
 }
