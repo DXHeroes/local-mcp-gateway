@@ -400,31 +400,22 @@ describe('MerkClient', () => {
   });
 
   describe('relationsCompany', () => {
-    it('should call GET /relations/company/ with company_id', async () => {
+    it('should call GET /relations/company/ with company_id and relation_type', async () => {
       mockFetch.mockResolvedValue(mockResponse({ results: [] }));
-      await client.relationsCompany({ company_id: '42' });
+      await client.relationsCompany({ company_id: '42', relation_type: 'current' });
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.merk.cz/relations/company/?company_id=42',
-        expect.any(Object)
-      );
-    });
-
-    it('should support relation_type param', async () => {
-      mockFetch.mockResolvedValue(mockResponse({ results: [] }));
-      await client.relationsCompany({ company_id: '42', relation_type: 'owner' });
-      expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.merk.cz/relations/company/?company_id=42&relation_type=owner',
+        'https://api.merk.cz/relations/company/?company_id=42&relation_type=current',
         expect.any(Object)
       );
     });
   });
 
   describe('relationsPerson', () => {
-    it('should call GET /relations/person/ with person_id', async () => {
+    it('should call GET /relations/person/ with person_id and relation_type', async () => {
       mockFetch.mockResolvedValue(mockResponse({ results: [] }));
-      await client.relationsPerson({ person_id: '99' });
+      await client.relationsPerson({ person_id: '99', relation_type: 'current' });
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.merk.cz/relations/person/?person_id=99',
+        'https://api.merk.cz/relations/person/?person_id=99&relation_type=current',
         expect.any(Object)
       );
     });
@@ -451,13 +442,14 @@ describe('MerkClient', () => {
   });
 
   describe('relationsShortestPath', () => {
-    it('should call GET /relations/shortest-path/ with all params', async () => {
+    it('should call GET /relations/shortest-path/ with all required params', async () => {
       mockFetch.mockResolvedValue(mockResponse({ path: [] }));
       await client.relationsShortestPath({
         node1_id: '1',
         node1_label: 'company',
         node2_id: '2',
         node2_label: 'person',
+        relation_type: 'current',
       });
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/relations/shortest-path/'),
@@ -471,19 +463,8 @@ describe('MerkClient', () => {
         expect.stringContaining('node2_label=person'),
         expect.any(Object)
       );
-    });
-
-    it('should support relation_type param', async () => {
-      mockFetch.mockResolvedValue(mockResponse({ path: [] }));
-      await client.relationsShortestPath({
-        node1_id: '1',
-        node1_label: 'company',
-        node2_id: '2',
-        node2_label: 'person',
-        relation_type: 'owner',
-      });
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('relation_type=owner'),
+        expect.stringContaining('relation_type=current'),
         expect.any(Object)
       );
     });
@@ -610,6 +591,182 @@ describe('MerkClient', () => {
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('page_size=25'),
         expect.any(Object)
+      );
+    });
+  });
+
+  describe('204 No Content handling', () => {
+    it('should return null on 204 response', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 204,
+        statusText: 'No Content',
+        json: () => Promise.reject(new Error('no body')),
+        text: () => Promise.resolve(''),
+      });
+      const result = await client.companyLookup({ regno: '99999999' });
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('suggest - additional params', () => {
+    it('should pass country_code param', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ results: [] }));
+      await client.suggest({ name: 'Test', country_code: 'cz' });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('country_code=cz'),
+        expect.any(Object)
+      );
+    });
+
+    it('should pass sort_by param', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ results: [] }));
+      await client.suggest({ name: 'Test', sort_by: 'turnover' });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('sort_by=turnover'),
+        expect.any(Object)
+      );
+    });
+
+    it('should pass expand_regno param', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ results: [] }));
+      await client.suggest({ regno: '123', expand_regno: true });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('expand_regno=true'),
+        expect.any(Object)
+      );
+    });
+
+    it('should pass include_historic param', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ results: [] }));
+      await client.suggest({ name: 'Test', include_historic: true });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('include_historic=true'),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe('searchCompanies - query param', () => {
+    it('should pass query as URL query param', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ results: [] }));
+      await client.searchCompanies({ country: 'cz', query: 'strojírenství', filters: {} });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('query=stroj'),
+        expect.objectContaining({ method: 'POST' })
+      );
+    });
+
+    it('should pass ordering as URL query param', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ results: [] }));
+      await client.searchCompanies({
+        country: 'cz',
+        ordering: ['-turnover_id', 'name'],
+        filters: {},
+      });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('ordering=-turnover_id'),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe('country_code on regno endpoints', () => {
+    it('should pass country_code to financialStatements', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ results: [] }));
+      await client.financialStatements({ regno: '123', country_code: 'sk' });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('country_code=sk'),
+        expect.any(Object)
+      );
+    });
+
+    it('should pass country_code to companyFleet', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ results: [] }));
+      await client.companyFleet({ regno: '123', country_code: 'cz' });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('country_code=cz'),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe('companyEvents - required dates and filters', () => {
+    it('should pass action_id and event_id', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ results: [] }));
+      await client.companyEvents({
+        regno: '123',
+        from_date: '2024-01-01',
+        to_date: '2024-12-31',
+        action_id: 5,
+        event_id: 10,
+      });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('action_id=5'),
+        expect.any(Object)
+      );
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('event_id=10'),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe('relationsCompany - additional params', () => {
+    it('should pass hops param', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ nodes: [], edges: [] }));
+      await client.relationsCompany({
+        company_id: 'cz-12345678',
+        relation_type: 'current',
+        hops: 2,
+      });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('hops=2'),
+        expect.any(Object)
+      );
+    });
+
+    it('should pass share_gte param', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ nodes: [], edges: [] }));
+      await client.relationsCompany({
+        company_id: 'cz-12345678',
+        relation_type: 'any',
+        share_gte: 50,
+      });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('share_gte=50'),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe('relationsShortestPath - hops param', () => {
+    it('should pass hops param', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ path: [] }));
+      await client.relationsShortestPath({
+        node1_id: '1',
+        node1_label: 'company',
+        node2_id: '2',
+        node2_label: 'person',
+        relation_type: 'current',
+        hops: 3,
+      });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('hops=3'),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe('companyBatch - country_code', () => {
+    it('should pass country_code in body', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ results: [] }));
+      await client.companyBatch({ regnos: ['1'], country_code: 'sk' });
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.merk.cz/company/mget/',
+        expect.objectContaining({
+          body: JSON.stringify({ regnos: ['1'], country_code: 'sk' }),
+        })
       );
     });
   });

@@ -286,6 +286,7 @@ describe('MerkMcpServer', () => {
         node1_label: 'company',
         node2_id: '2',
         node2_label: 'person',
+        relation_type: 'current',
       })) as { content: Array<{ text: string }> };
 
       const data = JSON.parse(result.content[0].text);

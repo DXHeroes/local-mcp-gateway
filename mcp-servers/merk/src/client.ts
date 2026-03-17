@@ -81,6 +81,9 @@ export class MerkClient {
       throw new MerkApiError(message, response.status, code);
     }
 
+    if (response.status === 204) {
+      return null as T;
+    }
     return response.json() as Promise<T>;
   }
 
@@ -117,11 +120,13 @@ export class MerkClient {
     return this.request('GET', '/company/', params);
   }
 
-  async companyBatch(params: { regnos: string[] }): Promise<unknown> {
+  async companyBatch(params: { regnos: string[]; country_code?: string }): Promise<unknown> {
     if (params.regnos.length > 500) {
       throw new MerkApiError('Maximum 500 regnos per batch request', 400, 'BAD_REQUEST');
     }
-    return this.request('POST', '/company/mget/', undefined, { regnos: params.regnos });
+    const body: Record<string, unknown> = { regnos: params.regnos };
+    if (params.country_code) body.country_code = params.country_code;
+    return this.request('POST', '/company/mget/', undefined, body);
   }
 
   async suggest(params: {
@@ -129,37 +134,51 @@ export class MerkClient {
     email?: string;
     bank_account?: string;
     only_active?: boolean;
+    country_code?: string;
+    regno?: string;
+    sort_by?: string;
+    birth_date?: string;
+    expand_regno?: boolean;
+    include_historic?: boolean;
   }): Promise<unknown> {
     return this.request('GET', '/suggest/', params as Record<string, string | boolean | undefined>);
   }
 
   async searchCompanies(params: {
     country: 'cz' | 'sk';
+    query?: string;
+    ordering?: string[];
     filters: Record<string, unknown>;
     page?: number;
     page_size?: number;
   }): Promise<unknown> {
-    const queryParams: Record<string, number | undefined> = {};
+    const queryParams: Record<string, string | number | undefined> = {};
+    if (params.query) queryParams.query = params.query;
+    if (params.ordering) queryParams.ordering = params.ordering.join(',');
     if (params.page !== undefined) queryParams.page = params.page;
     if (params.page_size !== undefined) queryParams.page_size = params.page_size;
+    return this.request('POST', `/search/${params.country}/`, queryParams, params.filters);
+  }
+
+  async financialStatements(params: { regno: string; country_code?: string }): Promise<unknown> {
     return this.request(
-      'POST',
-      `/search/${params.country}/`,
-      queryParams as Record<string, string | number | undefined>,
-      params.filters
+      'GET',
+      '/company/financial-statements/',
+      params as Record<string, string | undefined>
     );
   }
 
-  async financialStatements(params: { regno: string }): Promise<unknown> {
-    return this.request('GET', '/company/financial-statements/', params);
-  }
-
-  async financialIndicators(params: { regno: string }): Promise<unknown> {
-    return this.request('GET', '/company/financial-indicators/', params);
+  async financialIndicators(params: { regno: string; country_code?: string }): Promise<unknown> {
+    return this.request(
+      'GET',
+      '/company/financial-indicators/',
+      params as Record<string, string | undefined>
+    );
   }
 
   async companyEmployees(params: {
     regno: string;
+    country_code?: string;
     page?: number;
     page_size?: number;
   }): Promise<unknown> {
@@ -170,28 +189,46 @@ export class MerkClient {
     );
   }
 
-  async companyFleet(params: { regno: string }): Promise<unknown> {
-    return this.request('GET', '/company/fleet/', params);
+  async companyFleet(params: { regno: string; country_code?: string }): Promise<unknown> {
+    return this.request('GET', '/company/fleet/', params as Record<string, string | undefined>);
   }
 
-  async companyFleetStats(params: { regno: string }): Promise<unknown> {
-    return this.request('GET', '/company/fleet-stats/', params);
+  async companyFleetStats(params: { regno: string; country_code?: string }): Promise<unknown> {
+    return this.request(
+      'GET',
+      '/company/fleet-stats/',
+      params as Record<string, string | undefined>
+    );
   }
 
-  async companyBusinessPremises(params: { regno: string }): Promise<unknown> {
-    return this.request('GET', '/company/business-premises/', params);
+  async companyBusinessPremises(params: {
+    regno: string;
+    country_code?: string;
+  }): Promise<unknown> {
+    return this.request(
+      'GET',
+      '/company/business-premises/',
+      params as Record<string, string | undefined>
+    );
   }
 
-  async companyLicenses(params: { regno: string }): Promise<unknown> {
-    return this.request('GET', '/company/licenses/', params);
+  async companyLicenses(params: { regno: string; country_code?: string }): Promise<unknown> {
+    return this.request('GET', '/company/licenses/', params as Record<string, string | undefined>);
   }
 
   async companyEvents(params: {
     regno: string;
-    from_date?: string;
-    to_date?: string;
+    from_date: string;
+    to_date: string;
+    country_code?: string;
+    action_id?: number;
+    event_id?: number;
   }): Promise<unknown> {
-    return this.request('GET', '/company/events/', params as Record<string, string | undefined>);
+    return this.request(
+      'GET',
+      '/company/events/',
+      params as Record<string, string | number | undefined>
+    );
   }
 
   async newCompanies(params: {
@@ -222,25 +259,59 @@ export class MerkClient {
     );
   }
 
-  async companyJobAds(params: { regno: string }): Promise<unknown> {
-    return this.request('GET', '/company/job-ads/', params);
+  async companyJobAds(params: { regno: string; country_code?: string }): Promise<unknown> {
+    return this.request('GET', '/company/job-ads/', params as Record<string, string | undefined>);
   }
 
-  async companyGovContracts(params: { regno: string }): Promise<unknown> {
-    return this.request('GET', '/company/gov-contracts/', params);
+  async companyGovContracts(params: { regno: string; country_code?: string }): Promise<unknown> {
+    return this.request(
+      'GET',
+      '/company/gov-contracts/',
+      params as Record<string, string | undefined>
+    );
   }
 
   // ── Relations endpoints ──────────────────────────────────────────────
 
-  async relationsCompany(params: { company_id: string; relation_type?: string }): Promise<unknown> {
-    return this.request('GET', '/relations/company/', params as Record<string, string | undefined>);
+  async relationsCompany(params: {
+    company_id: string;
+    relation_type: string;
+    country_code?: string;
+    hops?: number;
+    from_date_gte?: string;
+    to_date_lte?: string;
+    share_gte?: number;
+    company_role_id?: number;
+  }): Promise<unknown> {
+    return this.request(
+      'GET',
+      '/relations/company/',
+      params as Record<string, string | number | undefined>
+    );
   }
 
-  async relationsPerson(params: { person_id: string; relation_type?: string }): Promise<unknown> {
-    return this.request('GET', '/relations/person/', params as Record<string, string | undefined>);
+  async relationsPerson(params: {
+    person_id: string;
+    relation_type: string;
+    country_code?: string;
+    hops?: number;
+    from_date_gte?: string;
+    to_date_lte?: string;
+    share_gte?: number;
+    company_role_id?: number;
+  }): Promise<unknown> {
+    return this.request(
+      'GET',
+      '/relations/person/',
+      params as Record<string, string | number | undefined>
+    );
   }
 
-  async relationsSearchPerson(params: { name: string; birth_date?: string }): Promise<unknown> {
+  async relationsSearchPerson(params: {
+    name: string;
+    birth_date?: string;
+    country_code?: string;
+  }): Promise<unknown> {
     return this.request(
       'GET',
       '/relations/search/person/',
@@ -253,27 +324,31 @@ export class MerkClient {
     node1_label: string;
     node2_id: string;
     node2_label: string;
-    relation_type?: string;
+    relation_type: string;
+    country_code?: string;
+    hops?: number;
   }): Promise<unknown> {
     return this.request(
       'GET',
       '/relations/shortest-path/',
-      params as Record<string, string | undefined>
+      params as Record<string, string | number | undefined>
     );
   }
 
   // ── Utility endpoints ────────────────────────────────────────────────
 
-  async enums(params: { enum_id?: string }): Promise<unknown> {
+  async enums(params: { enum_id?: string; country_code?: string }): Promise<unknown> {
     const path = params.enum_id ? `/enums/${params.enum_id}/` : '/enums/';
-    return this.request('GET', path);
+    const queryParams: Record<string, string | undefined> = {};
+    if (params.country_code) queryParams.country_code = params.country_code;
+    return this.request('GET', path, queryParams);
   }
 
   async subscriptionInfo(): Promise<unknown> {
     return this.request('GET', '/subscriptions/');
   }
 
-  async vokativ(params: { first_name: string; last_name: string }): Promise<unknown> {
-    return this.request('GET', '/vokativ/', params);
+  async vokativ(params: { first_name?: string; last_name?: string }): Promise<unknown> {
+    return this.request('GET', '/vokativ/', params as Record<string, string | undefined>);
   }
 }
