@@ -125,6 +125,15 @@ describe('MerkClient', () => {
       );
     });
 
+    it('should support src_app param', async () => {
+      mockFetch.mockResolvedValue(mockResponse({}));
+      await client.companyLookup({ regno: '123', src_app: 'local-mcp-ui' });
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.merk.cz/company/?regno=123&src_app=local-mcp-ui',
+        expect.any(Object)
+      );
+    });
+
     it('should throw MerkApiError on 404', async () => {
       mockFetch.mockResolvedValue(mockResponse({ detail: 'Not found' }, 404));
       await expect(client.companyLookup({ regno: '99999999' })).rejects.toThrow(MerkApiError);
@@ -152,6 +161,26 @@ describe('MerkClient', () => {
     it('should throw if regnos exceeds 500', async () => {
       const regnos = Array.from({ length: 501 }, (_, i) => String(i));
       await expect(client.companyBatch({ regnos })).rejects.toThrow(/500/);
+    });
+
+    it('should include country_code and src_app in the request body', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ results: [] }));
+      await client.companyBatch({
+        regnos: ['1', '2'],
+        country_code: 'cz',
+        src_app: 'local-mcp-ui',
+      });
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.merk.cz/company/mget/',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({
+            regnos: ['1', '2'],
+            country_code: 'cz',
+            src_app: 'local-mcp-ui',
+          }),
+        })
+      );
     });
   });
 
@@ -188,6 +217,33 @@ describe('MerkClient', () => {
       await client.suggest({ name: 'Test', only_active: true });
       expect(mockFetch).toHaveBeenCalledWith(
         'https://api.merk.cz/suggest/?name=Test&only_active=true',
+        expect.any(Object)
+      );
+    });
+
+    it('should normalize query and country aliases from the screenshot regression', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ results: [] }));
+      await client.suggest({ query: 'Test', country: 'cz' });
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.merk.cz/suggest/?name=Test&country_code=cz',
+        expect.any(Object)
+      );
+    });
+
+    it('should support regno and expand_regno params', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ results: [] }));
+      await client.suggest({ regno: '12345678', expand_regno: true });
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.merk.cz/suggest/?regno=12345678&expand_regno=true',
+        expect.any(Object)
+      );
+    });
+
+    it('should support include_historic and sort_by params', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ results: [] }));
+      await client.suggest({ name: 'Test', include_historic: true, sort_by: 'name' });
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.merk.cz/suggest/?name=Test&sort_by=name&include_historic=true',
         expect.any(Object)
       );
     });
@@ -228,6 +284,59 @@ describe('MerkClient', () => {
         expect.any(Object)
       );
     });
+
+    it('should send docs-native query params and top-level body fields', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ results: [] }));
+      await client.searchCompanies({
+        country: 'cz',
+        query: 'strojirenstvi',
+        ordering: ['name'],
+        magnitude_from: 'small',
+        magnitude_to: 'medium',
+      });
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.merk.cz/search/cz/?query=strojirenstvi&ordering=name',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({
+            magnitude_from: 'small',
+            magnitude_to: 'medium',
+          }),
+        })
+      );
+    });
+
+    it('should merge legacy filters into the top-level request body', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ results: [] }));
+      await client.searchCompanies({
+        country: 'cz',
+        query: 'test',
+        filters: { turnover_from: 'small' },
+        magnitude_to: 'medium',
+      });
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.merk.cz/search/cz/?query=test',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({
+            turnover_from: 'small',
+            magnitude_to: 'medium',
+          }),
+        })
+      );
+    });
+
+    it('should default search country to cz and map limit to page_size', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ results: [] }));
+      await client.searchCompanies({
+        query: 'vyroba',
+        limit: 10,
+      });
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.merk.cz/search/cz/?query=vyroba&page_size=10',
+        expect.any(Object)
+      );
+    });
   });
 
   describe('financialStatements', () => {
@@ -236,6 +345,15 @@ describe('MerkClient', () => {
       await client.financialStatements({ regno: '12345678' });
       expect(mockFetch).toHaveBeenCalledWith(
         'https://api.merk.cz/company/financial-statements/?regno=12345678',
+        expect.any(Object)
+      );
+    });
+
+    it('should support country_code', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ results: [] }));
+      await client.financialStatements({ regno: '12345678', country_code: 'sk' });
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.merk.cz/company/financial-statements/?regno=12345678&country_code=sk',
         expect.any(Object)
       );
     });
@@ -308,11 +426,15 @@ describe('MerkClient', () => {
   });
 
   describe('companyEvents', () => {
-    it('should call GET /company/events/ with regno', async () => {
+    it('should call GET /company/events/ with regno and required dates', async () => {
       mockFetch.mockResolvedValue(mockResponse({ results: [] }));
-      await client.companyEvents({ regno: '12345678' });
+      await client.companyEvents({
+        regno: '12345678',
+        from_date: '2024-01-01',
+        to_date: '2024-12-31',
+      });
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.merk.cz/company/events/?regno=12345678',
+        'https://api.merk.cz/company/events/?regno=12345678&from_date=2024-01-01&to_date=2024-12-31',
         expect.any(Object)
       );
     });
@@ -326,6 +448,21 @@ describe('MerkClient', () => {
       });
       expect(mockFetch).toHaveBeenCalledWith(
         'https://api.merk.cz/company/events/?regno=12345678&from_date=2024-01-01&to_date=2024-12-31',
+        expect.any(Object)
+      );
+    });
+
+    it('should support company-wide date filters without regno', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ results: [] }));
+      await client.companyEvents({
+        from_date: '2024-01-01',
+        to_date: '2024-12-31',
+        event_id: 1,
+        action_id: 2,
+        country_code: 'cz',
+      });
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.merk.cz/company/events/?from_date=2024-01-01&to_date=2024-12-31&event_id=1&action_id=2&country_code=cz',
         expect.any(Object)
       );
     });
@@ -408,6 +545,19 @@ describe('MerkClient', () => {
         expect.any(Object)
       );
     });
+
+    it('should build company_id from regno and country_code aliases', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ results: [] }));
+      await client.relationsCompany({
+        regno: '12345678',
+        country_code: 'cz',
+        relation_type: 'current',
+      });
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.merk.cz/relations/company/?company_id=cz-12345678&relation_type=current&country_code=cz',
+        expect.any(Object)
+      );
+    });
   });
 
   describe('relationsPerson', () => {
@@ -468,6 +618,23 @@ describe('MerkClient', () => {
         expect.any(Object)
       );
     });
+
+    it('should support country_code and hops params', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ path: [] }));
+      await client.relationsShortestPath({
+        node1_id: '1',
+        node1_label: 'company',
+        node2_id: '2',
+        node2_label: 'person',
+        relation_type: 'current',
+        country_code: 'cz',
+        hops: 2,
+      });
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.merk.cz/relations/shortest-path/?node1_id=1&node1_label=company&node2_id=2&node2_label=person&relation_type=current&country_code=cz&hops=2',
+        expect.any(Object)
+      );
+    });
   });
 
   describe('enums', () => {
@@ -482,6 +649,15 @@ describe('MerkClient', () => {
       await client.enums({ enum_id: 'legal_form' });
       expect(mockFetch).toHaveBeenCalledWith(
         'https://api.merk.cz/enums/legal_form/',
+        expect.any(Object)
+      );
+    });
+
+    it('should support id alias and country_code', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ id: 'company_status', values: [] }));
+      await client.enums({ id: 'company_status', country_code: 'cz' });
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.merk.cz/enums/company_status/?country_code=cz',
         expect.any(Object)
       );
     });
@@ -509,6 +685,15 @@ describe('MerkClient', () => {
       );
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('last_name=Nov'),
+        expect.any(Object)
+      );
+    });
+
+    it('should allow only first_name', async () => {
+      mockFetch.mockResolvedValue(mockResponse({ first_name: 'Jene' }));
+      await client.vokativ({ first_name: 'Jan' });
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.merk.cz/vokativ/?first_name=Jan',
         expect.any(Object)
       );
     });

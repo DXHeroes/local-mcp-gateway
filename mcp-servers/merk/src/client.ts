@@ -116,20 +116,28 @@ export class MerkClient {
     regno?: string;
     vatno?: string;
     country_code?: string;
+    src_app?: string;
   }): Promise<unknown> {
     return this.request('GET', '/company/', params);
   }
 
-  async companyBatch(params: { regnos: string[]; country_code?: string }): Promise<unknown> {
+  async companyBatch(params: {
+    regnos: string[];
+    country_code?: string;
+    src_app?: string;
+  }): Promise<unknown> {
     if (params.regnos.length > 500) {
       throw new MerkApiError('Maximum 500 regnos per batch request', 400, 'BAD_REQUEST');
     }
     const body: Record<string, unknown> = { regnos: params.regnos };
     if (params.country_code) body.country_code = params.country_code;
+    if (params.src_app) body.src_app = params.src_app;
     return this.request('POST', '/company/mget/', undefined, body);
   }
 
   async suggest(params: {
+    query?: string;
+    country?: string;
     name?: string;
     email?: string;
     bank_account?: string;
@@ -141,23 +149,63 @@ export class MerkClient {
     expand_regno?: boolean;
     include_historic?: boolean;
   }): Promise<unknown> {
-    return this.request('GET', '/suggest/', params as Record<string, string | boolean | undefined>);
+    const queryParams: Record<string, string | boolean | undefined> = {
+      name: params.name ?? params.query,
+      email: params.email,
+      bank_account: params.bank_account,
+      regno: params.regno,
+      country_code: params.country_code ?? params.country,
+      only_active: params.only_active,
+      sort_by: params.sort_by,
+      birth_date: params.birth_date,
+      expand_regno: params.expand_regno,
+      include_historic: params.include_historic,
+    };
+
+    return this.request('GET', '/suggest/', queryParams);
   }
 
   async searchCompanies(params: {
-    country: 'cz' | 'sk';
+    country?: 'cz' | 'sk';
+    country_code?: 'cz' | 'sk';
     query?: string;
-    ordering?: string[];
-    filters: Record<string, unknown>;
+    ordering?: string[] | string;
+    filters?: Record<string, unknown>;
     page?: number;
     page_size?: number;
+    limit?: number;
+    [key: string]: unknown;
   }): Promise<unknown> {
+    const {
+      country,
+      country_code,
+      query,
+      ordering,
+      filters = {},
+      page,
+      page_size,
+      limit,
+      ...bodyFields
+    } = params;
+    const resolvedCountry = country ?? country_code ?? 'cz';
+    const resolvedPageSize = page_size ?? limit;
     const queryParams: Record<string, string | number | undefined> = {};
-    if (params.query) queryParams.query = params.query;
-    if (params.ordering) queryParams.ordering = params.ordering.join(',');
-    if (params.page !== undefined) queryParams.page = params.page;
-    if (params.page_size !== undefined) queryParams.page_size = params.page_size;
-    return this.request('POST', `/search/${params.country}/`, queryParams, params.filters);
+    if (query) queryParams.query = query;
+    if (ordering) queryParams.ordering = Array.isArray(ordering) ? ordering.join(',') : ordering;
+    if (page !== undefined) queryParams.page = page;
+    if (resolvedPageSize !== undefined) queryParams.page_size = resolvedPageSize;
+
+    const body = {
+      ...filters,
+      ...bodyFields,
+    };
+
+    return this.request(
+      'POST',
+      `/search/${resolvedCountry}/`,
+      queryParams,
+      Object.keys(body).length > 0 ? body : undefined
+    );
   }
 
   async financialStatements(params: { regno: string; country_code?: string }): Promise<unknown> {
@@ -217,7 +265,7 @@ export class MerkClient {
   }
 
   async companyEvents(params: {
-    regno: string;
+    regno?: string;
     from_date: string;
     to_date: string;
     country_code?: string;
@@ -274,7 +322,8 @@ export class MerkClient {
   // ── Relations endpoints ──────────────────────────────────────────────
 
   async relationsCompany(params: {
-    company_id: string;
+    company_id?: string;
+    regno?: string;
     relation_type: string;
     country_code?: string;
     hops?: number;
@@ -283,10 +332,25 @@ export class MerkClient {
     share_gte?: number;
     company_role_id?: number;
   }): Promise<unknown> {
+    const companyId =
+      params.company_id ??
+      (params.regno ? `${params.country_code ?? 'cz'}-${params.regno}` : undefined);
+
+    const queryParams: Record<string, string | number | undefined> = {
+      company_id: companyId,
+      relation_type: params.relation_type,
+      country_code: params.country_code,
+      hops: params.hops,
+      from_date_gte: params.from_date_gte,
+      to_date_lte: params.to_date_lte,
+      share_gte: params.share_gte,
+      company_role_id: params.company_role_id,
+    };
+
     return this.request(
       'GET',
       '/relations/company/',
-      params as Record<string, string | number | undefined>
+      queryParams
     );
   }
 
@@ -337,8 +401,9 @@ export class MerkClient {
 
   // ── Utility endpoints ────────────────────────────────────────────────
 
-  async enums(params: { enum_id?: string; country_code?: string }): Promise<unknown> {
-    const path = params.enum_id ? `/enums/${params.enum_id}/` : '/enums/';
+  async enums(params: { id?: string; enum_id?: string; country_code?: string }): Promise<unknown> {
+    const enumId = params.id ?? params.enum_id;
+    const path = enumId ? `/enums/${enumId}/` : '/enums/';
     const queryParams: Record<string, string | undefined> = {};
     if (params.country_code) queryParams.country_code = params.country_code;
     return this.request('GET', path, queryParams);
