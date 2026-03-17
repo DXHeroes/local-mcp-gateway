@@ -2,7 +2,7 @@
  * Fakturoid MCP Server
  *
  * Wraps the Fakturoid API v3.
- * Provides 14 tools covering invoices, subjects, expenses, and account info.
+ * Provides tools covering invoices, subjects, expenses, inventory, and account info.
  */
 
 import type { ApiKeyConfig, McpResource, McpTool } from '@dxheroes/local-mcp-core';
@@ -10,8 +10,8 @@ import { McpServer } from '@dxheroes/local-mcp-core';
 import { z } from 'zod';
 import { FakturoidApiError, FakturoidClient } from './client.js';
 import {
-  CreateExpenseSchema,
   CreateExpensePaymentSchema,
+  CreateExpenseSchema,
   CreateGeneratorSchema,
   CreateInventoryItemSchema,
   CreateInventoryMoveSchema,
@@ -19,10 +19,12 @@ import {
   CreatePaymentSchema,
   CreateSubjectSchema,
   DeleteExpensePaymentSchema,
+  DeleteExpenseSchema,
   DeleteInvoiceSchema,
   DeletePaymentSchema,
   DeleteSubjectSchema,
   EmptySchema,
+  ExpenseActionSchema,
   GetExpenseSchema,
   GetGeneratorSchema,
   GetInventoryItemSchema,
@@ -222,7 +224,7 @@ export class FakturoidMcpServer extends McpServer {
       {
         name: 'fakturoid_list_invoices',
         description:
-          'List invoices with optional filtering by status, subject, date, or invoice number. Returns 20 items per page.',
+          'List invoices with optional filtering by status, subject, date, or invoice number. Returns 40 items per page.',
         inputSchema: ListInvoicesSchema,
         handler: (args) => c.listInvoices(args as z.infer<typeof ListInvoicesSchema>),
       },
@@ -287,14 +289,13 @@ export class FakturoidMcpServer extends McpServer {
         name: 'fakturoid_send_invoice_message',
         description: 'Send an invoice by email to a recipient.',
         inputSchema: SendInvoiceMessageSchema,
-        handler: (args) =>
-          c.sendInvoiceMessage(args as z.infer<typeof SendInvoiceMessageSchema>),
+        handler: (args) => c.sendInvoiceMessage(args as z.infer<typeof SendInvoiceMessageSchema>),
       },
 
       // ── Subjects (Contacts) ─────────────────────────────────────
       {
         name: 'fakturoid_list_subjects',
-        description: 'List subjects (contacts/companies). Returns 20 items per page.',
+        description: 'List subjects (contacts/companies). Returns 40 items per page.',
         inputSchema: ListSubjectsSchema,
         handler: (args) => c.listSubjects(args as z.infer<typeof ListSubjectsSchema>),
       },
@@ -337,7 +338,7 @@ export class FakturoidMcpServer extends McpServer {
       {
         name: 'fakturoid_list_expenses',
         description:
-          'List expenses with optional filtering by status, subject, or date. Returns 20 items per page.',
+          'List expenses with optional filtering by status, subject, or date. Returns 40 items per page.',
         inputSchema: ListExpensesSchema,
         handler: (args) => c.listExpenses(args as z.infer<typeof ListExpensesSchema>),
       },
@@ -368,6 +369,18 @@ export class FakturoidMcpServer extends McpServer {
         inputSchema: SearchExpensesSchema,
         handler: (args) => c.searchExpenses(args as z.infer<typeof SearchExpensesSchema>),
       },
+      {
+        name: 'fakturoid_delete_expense',
+        description: 'Delete an expense by ID.',
+        inputSchema: DeleteExpenseSchema,
+        handler: (args) => c.deleteExpense(args as z.infer<typeof DeleteExpenseSchema>),
+      },
+      {
+        name: 'fakturoid_expense_action',
+        description: 'Fire an action on an expense: lock or unlock.',
+        inputSchema: ExpenseActionSchema,
+        handler: (args) => c.expenseAction(args as z.infer<typeof ExpenseActionSchema>),
+      },
 
       // ── Expense Payments ──────────────────────────────────────────
       {
@@ -388,10 +401,9 @@ export class FakturoidMcpServer extends McpServer {
       // ── Inventory Items ───────────────────────────────────────────
       {
         name: 'fakturoid_list_inventory_items',
-        description: 'List inventory items. Returns 20 items per page.',
+        description: 'List inventory items. Returns 40 items per page.',
         inputSchema: ListInventoryItemsSchema,
-        handler: (args) =>
-          c.listInventoryItems(args as z.infer<typeof ListInventoryItemsSchema>),
+        handler: (args) => c.listInventoryItems(args as z.infer<typeof ListInventoryItemsSchema>),
       },
       {
         name: 'fakturoid_get_inventory_item',
@@ -401,8 +413,7 @@ export class FakturoidMcpServer extends McpServer {
       },
       {
         name: 'fakturoid_create_inventory_item',
-        description:
-          'Create a new inventory item with name, SKU, prices, and VAT rate.',
+        description: 'Create a new inventory item with name, SKU, prices, and VAT rate.',
         inputSchema: CreateInventoryItemSchema,
         handler: (args) => c.createInventoryItem(args as Record<string, unknown>),
       },
@@ -427,24 +438,21 @@ export class FakturoidMcpServer extends McpServer {
       {
         name: 'fakturoid_list_inventory_moves',
         description:
-          'List inventory moves with optional filtering by item or date. Returns 20 items per page.',
+          'List inventory moves with optional filtering by item or date. Returns 40 items per page.',
         inputSchema: ListInventoryMovesSchema,
-        handler: (args) =>
-          c.listInventoryMoves(args as z.infer<typeof ListInventoryMovesSchema>),
+        handler: (args) => c.listInventoryMoves(args as z.infer<typeof ListInventoryMovesSchema>),
       },
       {
         name: 'fakturoid_create_inventory_move',
-        description:
-          'Create an inventory move (stock in or out) for a specific inventory item.',
+        description: 'Create an inventory move (stock in or out) for a specific inventory item.',
         inputSchema: CreateInventoryMoveSchema,
-        handler: (args) =>
-          c.createInventoryMove(args as z.infer<typeof CreateInventoryMoveSchema>),
+        handler: (args) => c.createInventoryMove(args as z.infer<typeof CreateInventoryMoveSchema>),
       },
 
       // ── Generators (Invoice Templates) ────────────────────────────
       {
         name: 'fakturoid_list_generators',
-        description: 'List invoice generators/templates. Returns 20 items per page.',
+        description: 'List invoice generators/templates. Returns 40 items per page.',
         inputSchema: ListGeneratorsSchema,
         handler: (args) => c.listGenerators(args as z.infer<typeof ListGeneratorsSchema>),
       },
@@ -464,7 +472,7 @@ export class FakturoidMcpServer extends McpServer {
       // ── Recurring Generators ──────────────────────────────────────
       {
         name: 'fakturoid_list_recurring_generators',
-        description: 'List recurring invoice generators. Returns 20 items per page.',
+        description: 'List recurring invoice generators. Returns 40 items per page.',
         inputSchema: ListRecurringGeneratorsSchema,
         handler: (args) =>
           c.listRecurringGenerators(args as z.infer<typeof ListRecurringGeneratorsSchema>),
@@ -481,7 +489,7 @@ export class FakturoidMcpServer extends McpServer {
       {
         name: 'fakturoid_list_events',
         description:
-          'List account events/audit log. Filter by date or subject. Returns 20 items per page.',
+          'List account events/audit log. Filter by date or subject. Returns 40 items per page.',
         inputSchema: ListEventsSchema,
         handler: (args) => c.listEvents(args as z.infer<typeof ListEventsSchema>),
       },
@@ -489,7 +497,7 @@ export class FakturoidMcpServer extends McpServer {
       // ── Todos ─────────────────────────────────────────────────────
       {
         name: 'fakturoid_list_todos',
-        description: 'List todos/tasks. Returns 20 items per page.',
+        description: 'List todos/tasks. Returns 40 items per page.',
         inputSchema: ListTodosSchema,
         handler: (args) => c.listTodos(args as z.infer<typeof ListTodosSchema>),
       },
@@ -498,6 +506,14 @@ export class FakturoidMcpServer extends McpServer {
         description: 'Toggle the completion status of a todo.',
         inputSchema: ToggleTodoSchema,
         handler: (args) => c.toggleTodo(args as z.infer<typeof ToggleTodoSchema>),
+      },
+
+      // ── Number Formats ────────────────────────────────────────────
+      {
+        name: 'fakturoid_list_number_formats',
+        description: 'List all available number formats for invoices and expenses.',
+        inputSchema: EmptySchema,
+        handler: () => c.listNumberFormats(),
       },
 
       // ── Tags ─────────────────────────────────────────────────────

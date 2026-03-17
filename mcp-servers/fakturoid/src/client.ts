@@ -82,10 +82,10 @@ export class FakturoidClient {
       headers: {
         Authorization: `Basic ${credentials}`,
         Accept: 'application/json',
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
         'User-Agent': this.userAgent,
       },
-      body: JSON.stringify({ grant_type: 'client_credentials' }),
+      body: 'grant_type=client_credentials',
     });
 
     if (!response.ok) {
@@ -137,6 +137,7 @@ export class FakturoidClient {
     const url = this.buildUrl(path, params);
     const headers: Record<string, string> = {
       Authorization: `Bearer ${await this.getAccessToken()}`,
+      Accept: 'application/json',
       'User-Agent': this.userAgent,
     };
     const init: RequestInit = { method, headers };
@@ -148,8 +149,8 @@ export class FakturoidClient {
 
     const response = await fetch(url, init);
 
-    // DELETE returns 204 No Content
-    if (method === 'DELETE' && response.ok) {
+    // Handle 204 No Content (DELETE, fire.json POST, etc.)
+    if (response.status === 204) {
       return undefined as T;
     }
 
@@ -216,9 +217,13 @@ export class FakturoidClient {
     page?: number;
     since?: string;
     updated_since?: string;
+    until?: string;
+    updated_until?: string;
     number?: string;
     status?: string;
     subject_id?: number;
+    custom_id?: string;
+    document_type?: string;
   }): Promise<unknown> {
     return this.request(
       'GET',
@@ -274,10 +279,7 @@ export class FakturoidClient {
     return this.request('POST', `invoices/${id}/payments.json`, undefined, body);
   }
 
-  async deletePayment(params: {
-    invoice_id: number;
-    payment_id: number;
-  }): Promise<unknown> {
+  async deletePayment(params: { invoice_id: number; payment_id: number }): Promise<unknown> {
     return this.request(
       'DELETE',
       `invoices/${params.invoice_id}/payments/${params.payment_id}.json`
@@ -302,6 +304,7 @@ export class FakturoidClient {
     page?: number;
     since?: string;
     updated_since?: string;
+    custom_id?: string;
   }): Promise<unknown> {
     return this.request(
       'GET',
@@ -335,8 +338,12 @@ export class FakturoidClient {
   async listExpenses(params: {
     page?: number;
     since?: string;
+    updated_since?: string;
     status?: string;
     subject_id?: number;
+    number?: string;
+    variable_symbol?: string;
+    custom_id?: string;
   }): Promise<unknown> {
     return this.request(
       'GET',
@@ -361,6 +368,15 @@ export class FakturoidClient {
     return this.request('GET', 'expenses/search.json', params as Record<string, string | number>);
   }
 
+  async deleteExpense(params: { id: number }): Promise<unknown> {
+    return this.request('DELETE', `expenses/${params.id}.json`);
+  }
+
+  async expenseAction(params: { id: number; event: string }): Promise<unknown> {
+    const { id, event } = params;
+    return this.request('POST', `expenses/${id}/fire.json`, { event });
+  }
+
   // ── Expense Payments ───────────────────────────────────────────────
 
   async createExpensePayment(params: {
@@ -373,10 +389,7 @@ export class FakturoidClient {
     return this.request('POST', `expenses/${id}/payments.json`, undefined, body);
   }
 
-  async deleteExpensePayment(params: {
-    expense_id: number;
-    payment_id: number;
-  }): Promise<unknown> {
+  async deleteExpensePayment(params: { expense_id: number; payment_id: number }): Promise<unknown> {
     return this.request(
       'DELETE',
       `expenses/${params.expense_id}/payments/${params.payment_id}.json`
@@ -495,15 +508,17 @@ export class FakturoidClient {
   // ── Todos ──────────────────────────────────────────────────────────
 
   async listTodos(params: { page?: number; since?: string }): Promise<unknown> {
-    return this.request(
-      'GET',
-      'todos.json',
-      params as Record<string, string | number | undefined>
-    );
+    return this.request('GET', 'todos.json', params as Record<string, string | number | undefined>);
   }
 
   async toggleTodo(params: { id: number }): Promise<unknown> {
     return this.request('POST', `todos/${params.id}/toggle_completion.json`);
+  }
+
+  // ── Number Formats ──────────────────────────────────────────────────
+
+  async listNumberFormats(): Promise<unknown> {
+    return this.request('GET', 'number_formats.json');
   }
 
   // ── Tags ─────────────────────────────────────────────────────────────
