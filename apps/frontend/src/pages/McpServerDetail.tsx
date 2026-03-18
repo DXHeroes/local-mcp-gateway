@@ -200,10 +200,9 @@ export default function McpServerDetailPage() {
 
       // Fetch debug logs filtered by server ID
       try {
-        const logsResponse = await apiFetch(`/api/debug/logs?mcpServerId=${id}&limit=50`);
+        const logsResponse = await apiFetch(`/api/debug/logs?mcpServerId=${id}&page=1&limit=50`);
         if (logsResponse.ok) {
           const logsData = await logsResponse.json();
-          // API returns { logs: [...], total: ... }
           const logs = Array.isArray(logsData.logs) ? logsData.logs : [];
           setDebugLogs(logs);
         }

@@ -69,10 +69,10 @@ export const handlers = [
 
   // Debug Logs API - support both relative and absolute URLs
   http.get(`${API_URL}/api/debug/logs`, () => {
-    return HttpResponse.json({ logs: [], total: 0, limit: 100, offset: 0 });
+    return HttpResponse.json({ logs: [], total: 0, page: 1, limit: 100, totalPages: 1, offset: 0 });
   }),
   http.get('/api/debug/logs', () => {
-    return HttpResponse.json({ logs: [], total: 0, limit: 100, offset: 0 });
+    return HttpResponse.json({ logs: [], total: 0, page: 1, limit: 100, totalPages: 1, offset: 0 });
   }),
 
   // Sharing summary API

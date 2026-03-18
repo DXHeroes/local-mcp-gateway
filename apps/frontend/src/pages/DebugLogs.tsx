@@ -3,18 +3,21 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { apiFetch } from '../lib/api-fetch';
 
 interface DebugLog {
   id: string;
-  profileId: string;
-  mcpServerId?: string;
+  profileId: string | null;
+  mcpServerId?: string | null;
   requestType: string;
   requestPayload: string;
   responsePayload?: string;
   status: 'pending' | 'success' | 'error';
   errorMessage?: string;
   durationMs?: number;
-  createdAt: number;
+  createdAt: number | string;
+  profile?: Profile | null;
+  mcpServer?: McpServer | null;
 }
 
 interface Profile {
@@ -27,7 +30,13 @@ interface McpServer {
   name: string;
 }
 
-import { apiFetch } from '../lib/api-fetch';
+interface DebugLogsResponse {
+  logs: DebugLog[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
 
 export default function DebugLogsPage() {
   const [logs, setLogs] = useState<DebugLog[]>([]);
@@ -36,14 +45,18 @@ export default function DebugLogsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(100);
+  const [totalPages, setTotalPages] = useState(1);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [clearing, setClearing] = useState(false);
 
-  // Filters
   const [selectedProfileId, setSelectedProfileId] = useState<string>('');
   const [selectedMcpServerId, setSelectedMcpServerId] = useState<string>('');
   const [selectedRequestType, setSelectedRequestType] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [selectedSince, setSelectedSince] = useState<string>('');
+  const [selectedUntil, setSelectedUntil] = useState<string>('');
 
   const fetchProfiles = useCallback(async () => {
     try {
@@ -73,26 +86,51 @@ export default function DebugLogsPage() {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      if (selectedProfileId) params.append('profileId', selectedProfileId);
-      if (selectedMcpServerId) params.append('mcpServerId', selectedMcpServerId);
-      if (selectedRequestType) params.append('requestType', selectedRequestType);
-      if (selectedStatus) params.append('status', selectedStatus);
-      params.append('limit', '100');
+      if (selectedProfileId) {
+        params.append('profileId', selectedProfileId);
+      }
+      if (selectedMcpServerId) {
+        params.append('mcpServerId', selectedMcpServerId);
+      }
+      if (selectedRequestType) {
+        params.append('requestType', selectedRequestType);
+      }
+      if (selectedStatus) {
+        params.append('status', selectedStatus);
+      }
+      if (selectedSince) {
+        params.append('since', new Date(selectedSince).toISOString());
+      }
+      if (selectedUntil) {
+        params.append('until', new Date(selectedUntil).toISOString());
+      }
+      params.append('page', String(page));
+      params.append('limit', String(limit));
 
       const response = await apiFetch(`/api/debug/logs?${params.toString()}`);
       if (!response.ok) {
         throw new Error('Failed to fetch debug logs');
       }
-      const data = await response.json();
-      setLogs(data.logs || []);
-      setTotal(data.total || 0);
+      const data = (await response.json()) as DebugLogsResponse;
+      setLogs(Array.isArray(data.logs) ? data.logs : []);
+      setTotal(data.total ?? 0);
+      setTotalPages(Math.max(1, data.totalPages ?? 1));
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
-  }, [selectedProfileId, selectedMcpServerId, selectedRequestType, selectedStatus]);
+  }, [
+    limit,
+    page,
+    selectedMcpServerId,
+    selectedProfileId,
+    selectedRequestType,
+    selectedSince,
+    selectedStatus,
+    selectedUntil,
+  ]);
 
   const clearLogs = useCallback(async () => {
     if (!confirm('Are you sure you want to clear all debug logs?')) {
@@ -107,17 +145,23 @@ export default function DebugLogsPage() {
       await apiFetch(`/api/debug/logs?${params.toString()}`, {
         method: 'DELETE',
       });
-      await fetchLogs();
+      if (page !== 1) {
+        setPage(1);
+      } else {
+        await fetchLogs();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to clear logs');
     } finally {
       setClearing(false);
     }
-  }, [selectedProfileId, selectedMcpServerId, fetchLogs]);
+  }, [fetchLogs, page, selectedMcpServerId, selectedProfileId]);
 
-  // Auto-refresh effect
   useEffect(() => {
-    if (!autoRefresh) return;
+    if (!autoRefresh) {
+      return;
+    }
+
     const interval = setInterval(fetchLogs, 3000);
     return () => clearInterval(interval);
   }, [autoRefresh, fetchLogs]);
@@ -131,19 +175,28 @@ export default function DebugLogsPage() {
     fetchLogs();
   }, [fetchLogs]);
 
-  const formatDate = (timestamp: number) => {
+  const formatDate = (timestamp: number | string) => {
     return new Date(timestamp).toLocaleString();
   };
 
   const formatDuration = (ms?: number) => {
-    if (!ms) return 'N/A';
+    if (ms === undefined || ms === null) {
+      return 'N/A';
+    }
+
     return `${ms}ms`;
   };
 
   const getDurationColor = (ms?: number) => {
-    if (!ms) return 'text-gray-500';
-    if (ms < 100) return 'text-green-600';
-    if (ms < 500) return 'text-yellow-600';
+    if (ms === undefined || ms === null) {
+      return 'text-gray-500';
+    }
+    if (ms < 100) {
+      return 'text-green-600';
+    }
+    if (ms < 500) {
+      return 'text-yellow-600';
+    }
     return 'text-red-600';
   };
 
@@ -182,13 +235,13 @@ export default function DebugLogsPage() {
       {/* Controls */}
       <div className="bg-white rounded-lg shadow p-4 mb-4">
         <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <h3 className="text-sm font-medium text-gray-700">Filters</h3>
             <span className="text-sm text-gray-500">
               {total} log{total !== 1 ? 's' : ''} total
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
               <input
                 type="checkbox"
@@ -208,7 +261,7 @@ export default function DebugLogsPage() {
             </button>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="flex flex-wrap gap-4">
           <div>
             <label
               htmlFor="filter-profile"
@@ -219,7 +272,10 @@ export default function DebugLogsPage() {
             <select
               id="filter-profile"
               value={selectedProfileId}
-              onChange={(e) => setSelectedProfileId(e.target.value)}
+              onChange={(e) => {
+                setPage(1);
+                setSelectedProfileId(e.target.value);
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
             >
               <option value="">All Profiles</option>
@@ -238,7 +294,10 @@ export default function DebugLogsPage() {
             <select
               id="filter-server"
               value={selectedMcpServerId}
-              onChange={(e) => setSelectedMcpServerId(e.target.value)}
+              onChange={(e) => {
+                setPage(1);
+                setSelectedMcpServerId(e.target.value);
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
             >
               <option value="">All Servers</option>
@@ -260,7 +319,10 @@ export default function DebugLogsPage() {
             <select
               id="filter-request-type"
               value={selectedRequestType}
-              onChange={(e) => setSelectedRequestType(e.target.value)}
+              onChange={(e) => {
+                setPage(1);
+                setSelectedRequestType(e.target.value);
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
             >
               <option value="">All Types</option>
@@ -278,7 +340,10 @@ export default function DebugLogsPage() {
             <select
               id="filter-status"
               value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
+              onChange={(e) => {
+                setPage(1);
+                setSelectedStatus(e.target.value);
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
             >
               <option value="">All Statuses</option>
@@ -287,6 +352,78 @@ export default function DebugLogsPage() {
               <option value="error">Error</option>
             </select>
           </div>
+
+          <div>
+            <label htmlFor="filter-since" className="block text-xs font-medium text-gray-600 mb-1">
+              Since
+            </label>
+            <input
+              id="filter-since"
+              type="datetime-local"
+              value={selectedSince}
+              onChange={(e) => {
+                setPage(1);
+                setSelectedSince(e.target.value);
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="filter-until" className="block text-xs font-medium text-gray-600 mb-1">
+              Until
+            </label>
+            <input
+              id="filter-until"
+              type="datetime-local"
+              value={selectedUntil}
+              onChange={(e) => {
+                setPage(1);
+                setSelectedUntil(e.target.value);
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="filter-limit" className="block text-xs font-medium text-gray-600 mb-1">
+              Page Size
+            </label>
+            <select
+              id="filter-limit"
+              value={limit}
+              onChange={(e) => {
+                setPage(1);
+                setLimit(Number(e.target.value));
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+            >
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
+        </div>
+        <div className="flex items-center justify-between gap-4 mt-4">
+          <button
+            type="button"
+            onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
+            disabled={page <= 1}
+            className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-gray-500">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => setPage((currentPage) => Math.min(totalPages, currentPage + 1))}
+            disabled={page >= totalPages}
+            className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
         </div>
       </div>
 
@@ -300,8 +437,14 @@ export default function DebugLogsPage() {
       ) : (
         <div className="space-y-3">
           {logs.map((log) => {
-            const profile = profiles.find((p) => p.id === log.profileId);
-            const server = log.mcpServerId ? servers.find((s) => s.id === log.mcpServerId) : null;
+            const profile =
+              log.profile ??
+              (log.profileId ? profiles.find((item) => item.id === log.profileId) : undefined);
+            const server =
+              log.mcpServer ??
+              (log.mcpServerId
+                ? servers.find((item) => item.id === log.mcpServerId)
+                : undefined);
 
             return (
               <div key={log.id} className="bg-white rounded-lg shadow p-4">
@@ -324,7 +467,7 @@ export default function DebugLogsPage() {
                       )}
                     </div>
                     <div className="text-xs text-gray-500">
-                      Profile: {profile?.name || log.profileId}
+                      Profile: {profile?.name || log.profileId || 'N/A'}
                       {server && ` • Server: ${server.name}`}
                       {` • ${formatDate(log.createdAt)}`}
                     </div>

@@ -24,23 +24,21 @@ export class DebugController {
     @Query('status') status?: 'pending' | 'success' | 'error',
     @Query('since') since?: string,
     @Query('until') until?: string,
+    @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string
   ) {
-    const filter = {
+    return this.debugService.getLogs({
       profileId,
       mcpServerId,
       requestType,
       status,
-      since: since ? new Date(since) : undefined,
-      until: until ? new Date(until) : undefined,
-    };
-
-    return this.debugService.getLogs(
-      filter,
-      limit ? Number.parseInt(limit, 10) : 100,
-      offset ? Number.parseInt(offset, 10) : 0
-    );
+      since,
+      until,
+      page,
+      limit,
+      offset,
+    });
   }
 
   /**

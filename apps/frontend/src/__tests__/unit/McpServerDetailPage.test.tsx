@@ -29,6 +29,8 @@ describe('McpServerDetailPage', () => {
   });
 
   it('explains that aggregated profile logs may appear outside the server detail view', async () => {
+    let debugLogsQuery: Record<string, string> | null = null;
+
     server.use(
       http.get(`${API_URL}/api/mcp-servers/server-1`, () => {
         return HttpResponse.json({
@@ -68,20 +70,16 @@ describe('McpServerDetailPage', () => {
       http.get('/api/mcp-servers/server-1/status', () => {
         return HttpResponse.json({ status: 'connected', error: null, oauthRequired: false });
       }),
-      http.get(`${API_URL}/api/debug/logs`, () => {
+      http.get(/.*\/api\/debug\/logs.*/, ({ request }) => {
+        const url = new URL(request.url);
+        debugLogsQuery = Object.fromEntries(url.searchParams.entries());
+
         return HttpResponse.json({
           logs: [],
           total: 0,
+          page: 1,
           limit: 50,
-          offset: 0,
-        });
-      }),
-      http.get('/api/debug/logs', () => {
-        return HttpResponse.json({
-          logs: [],
-          total: 0,
-          limit: 50,
-          offset: 0,
+          totalPages: 1,
         });
       })
     );
@@ -103,5 +101,10 @@ describe('McpServerDetailPage', () => {
         /aggregated profile requests such as tools\/list appear in the debug logs page/i
       )
     ).toBeInTheDocument();
+    expect(debugLogsQuery).toMatchObject({
+      mcpServerId: 'server-1',
+      page: '1',
+      limit: '50',
+    });
   });
 });

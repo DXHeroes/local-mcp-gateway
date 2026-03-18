@@ -32,17 +32,20 @@ describe('DebugService', () => {
     service = new DebugService(prisma as unknown as PrismaService);
   });
 
-  it('includes requestType in the Prisma where filter', async () => {
-    await service.getLogs(
-      {
-        profileId: 'profile-1',
-        mcpServerId: 'server-1',
-        requestType: 'tools/call',
-        status: 'success',
-      },
-      25,
-      10
-    );
+  it('applies combined filters to the Prisma where clause', async () => {
+    const since = '2026-03-18T08:00:00.000Z';
+    const until = '2026-03-18T12:00:00.000Z';
+
+    await service.getLogs({
+      profileId: 'profile-1',
+      mcpServerId: 'server-1',
+      requestType: 'tools/call',
+      status: 'success',
+      since,
+      until,
+      page: '2',
+      limit: '25',
+    });
 
     expect(prisma.debugLog.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -51,9 +54,13 @@ describe('DebugService', () => {
           mcpServerId: 'server-1',
           requestType: 'tools/call',
           status: 'success',
+          createdAt: {
+            gte: new Date(since),
+            lte: new Date(until),
+          },
         },
         take: 25,
-        skip: 10,
+        skip: 25,
       })
     );
     expect(prisma.debugLog.count).toHaveBeenCalledWith({
@@ -62,7 +69,44 @@ describe('DebugService', () => {
         mcpServerId: 'server-1',
         requestType: 'tools/call',
         status: 'success',
+        createdAt: {
+          gte: new Date(since),
+          lte: new Date(until),
+        },
       },
     });
+  });
+
+  it('returns stable pagination metadata for page-based queries', async () => {
+    prisma.debugLog.count.mockResolvedValueOnce(55);
+
+    const result = await service.getLogs({
+      page: '3',
+      limit: '20',
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        logs: [],
+        total: 55,
+        page: 3,
+        limit: 20,
+        totalPages: 3,
+      })
+    );
+  });
+
+  it('supports offset as a compatibility shim when page is omitted', async () => {
+    await service.getLogs({
+      offset: '40',
+      limit: '20',
+    });
+
+    expect(prisma.debugLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        take: 20,
+        skip: 40,
+      })
+    );
   });
 });
