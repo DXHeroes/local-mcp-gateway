@@ -69,4 +69,40 @@ describe('DebugLogsPage', () => {
       )
     ).toBeInTheDocument();
   });
+
+  it('distinguishes profile-level logs from server-attributed logs', async () => {
+    server.use(
+      http.get(`${API_URL}/api/profiles`, () => {
+        return HttpResponse.json([]);
+      }),
+      http.get(`${API_URL}/api/mcp-servers`, () => {
+        return HttpResponse.json([]);
+      }),
+      http.get(`${API_URL}/api/debug/logs`, () => {
+        return HttpResponse.json({
+          logs: [
+            {
+              id: 'log-1',
+              profileId: 'profile-1',
+              requestType: 'tools/list',
+              requestPayload: '{}',
+              status: 'success',
+              createdAt: Date.now(),
+            },
+          ],
+          total: 1,
+          limit: 100,
+          offset: 0,
+        });
+      })
+    );
+
+    render(<DebugLogsPage />);
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading debug logs...')).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Profile')).toBeInTheDocument();
+  });
 });

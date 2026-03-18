@@ -482,6 +482,10 @@ export default function McpServerDetailPage() {
           <CardTitle>Debug Logs ({debugLogs.length})</CardTitle>
         </CardHeader>
         <CardContent>
+          <p className="mb-3 text-xs text-muted-foreground">
+            This list shows logs directly attributed to this server. Aggregated profile requests
+            such as tools/list appear in the Debug Logs page.
+          </p>
           {debugLogs.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               No debug logs found for this server. Logs will appear here when the server is used in

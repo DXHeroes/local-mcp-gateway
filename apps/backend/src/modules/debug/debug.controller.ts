@@ -20,6 +20,7 @@ export class DebugController {
   async getLogs(
     @Query('profileId') profileId?: string,
     @Query('mcpServerId') mcpServerId?: string,
+    @Query('requestType') requestType?: string,
     @Query('status') status?: 'pending' | 'success' | 'error',
     @Query('since') since?: string,
     @Query('until') until?: string,
@@ -29,6 +30,7 @@ export class DebugController {
     const filter = {
       profileId,
       mcpServerId,
+      requestType,
       status,
       since: since ? new Date(since) : undefined,
       until: until ? new Date(until) : undefined,

@@ -10,7 +10,9 @@ import {
   RemoteHttpMcpServer,
   RemoteSseMcpServer,
 } from '@dxheroes/local-mcp-core';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { appLogger } from '../../common/logging/app-logger.js';
+import { stringifyRedacted } from '../../common/logging/redact-sensitive-fields.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { DebugService } from '../debug/debug.service.js';
 import { McpRegistry } from '../mcp/mcp-registry.js';
@@ -59,9 +61,43 @@ interface StoredApiKeyConfig {
   headerValueTemplate?: string;
 }
 
+interface ProfileToolCustomization {
+  toolName: string;
+  isEnabled: boolean;
+  customName: string | null;
+  customDescription?: string | null;
+}
+
+interface ProfileServerEntry {
+  mcpServer: {
+    id: string;
+    name: string;
+    type: string;
+    config: unknown;
+    apiKeyConfig: unknown;
+    toolConfigs?: Array<{ toolName: string; isEnabled: boolean }>;
+  };
+  tools: ProfileToolCustomization[];
+}
+
+interface ResolvedProfile {
+  id: string;
+  name: string;
+  mcpServers: ProfileServerEntry[];
+}
+
+interface RequestExecutionResult {
+  response: McpResponse;
+  event: string;
+  status: 'success' | 'error';
+  mcpServerId?: string;
+  toolName?: string;
+  toolCount?: number;
+  serverCount?: number;
+}
+
 @Injectable()
 export class ProxyService {
-  private readonly logger = new Logger(ProxyService.name);
   private readonly serverInstances = new Map<string, McpServer>();
 
   constructor(
@@ -78,123 +114,252 @@ export class ProxyService {
     request: McpRequest,
     userId: string
   ): Promise<McpResponse> {
-    const requestId = request.id;
-    const startTime = Date.now();
-
-    // Get profile with servers
     const profile = await this.findProfileByName(profileName, userId);
 
     if (!profile) {
       throw new NotFoundException(`Profile "${profileName}" not found`);
     }
 
-    // Skip logging for initialize (just handshaking)
-    const shouldLog = request.method !== 'initialize';
+    return this.executeRequest(profile as ResolvedProfile, request);
+  }
 
-    // Create debug log entry
-    let logId: string | null = null;
-    if (shouldLog) {
-      try {
-        const log = await this.debugService.createLog({
-          profileId: profile.id,
-          requestType: request.method,
-          requestPayload: JSON.stringify(request),
-          status: 'pending',
-        });
-        logId = log.id;
-      } catch (logError) {
-        this.logger.warn(`Failed to create debug log: ${logError}`);
-      }
+  private async createDebugLog(profileId: string, request: McpRequest) {
+    try {
+      const log = await this.debugService.createLog({
+        profileId,
+        requestType: request.method,
+        requestPayload: stringifyRedacted(request),
+        status: 'pending',
+      });
+
+      return log.id;
+    } catch (error) {
+      appLogger.warn(
+        {
+          event: 'mcp.audit.create.failed',
+          profileId,
+          method: request.method,
+          mcpRequestId: String(request.id),
+          error: error instanceof Error ? error.message : String(error),
+        },
+        'Failed to create MCP debug audit log'
+      );
+      return null;
+    }
+  }
+
+  private async updateDebugLog(
+    logId: string | null,
+    data: {
+      responsePayload?: unknown;
+      status?: 'pending' | 'success' | 'error';
+      errorMessage?: string;
+      durationMs?: number;
+      mcpServerId?: string;
+    }
+  ) {
+    if (!logId) {
+      return;
     }
 
     try {
-      // Handle different MCP methods
-      let response: McpResponse;
-
-      switch (request.method) {
-        case 'initialize':
-          response = await this.handleInitialize(requestId, profile);
-          break;
-
-        case 'tools/list':
-          response = await this.handleToolsList(requestId, profile);
-          break;
-
-        case 'tools/call':
-          response = await this.handleToolsCall(
-            requestId,
-            profile,
-            request.params as McpToolCall,
-            logId
-          );
-          break;
-
-        case 'resources/list':
-          response = await this.handleResourcesList(requestId, profile);
-          break;
-
-        case 'resources/read':
-          response = await this.handleResourcesRead(
-            requestId,
-            profile,
-            request.params as { uri: string }
-          );
-          break;
-
-        default:
-          response = {
-            jsonrpc: '2.0',
-            id: requestId,
-            error: {
-              code: -32601,
-              message: `Method not found: ${request.method}`,
-            },
-          };
-      }
-
-      // Update debug log with success
-      if (logId) {
-        const durationMs = Date.now() - startTime;
-        try {
-          await this.debugService.updateLog(logId, {
-            responsePayload: JSON.stringify(response),
-            status: response.error ? 'error' : 'success',
-            errorMessage: response.error?.message,
-            durationMs,
-          });
-        } catch (logError) {
-          this.logger.warn(`Failed to update debug log: ${logError}`);
-        }
-      }
-
-      return response;
+      await this.debugService.updateLog(logId, {
+        responsePayload:
+          data.responsePayload === undefined ? undefined : stringifyRedacted(data.responsePayload),
+        status: data.status,
+        errorMessage: data.errorMessage,
+        durationMs: data.durationMs,
+        mcpServerId: data.mcpServerId,
+      });
     } catch (error) {
-      this.logger.error(`MCP request error: ${error}`);
+      appLogger.warn(
+        {
+          event: 'mcp.audit.update.failed',
+          logId,
+          status: data.status,
+          mcpServerId: data.mcpServerId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        'Failed to update MCP debug audit log'
+      );
+    }
+  }
 
+  private async executeRequest(
+    profile: ResolvedProfile,
+    request: McpRequest
+  ): Promise<McpResponse> {
+    const mcpRequestId = String(request.id);
+    const startTime = Date.now();
+    const shouldLog = request.method !== 'initialize';
+    const requestedToolName =
+      request.method === 'tools/call'
+        ? ((request.params as McpToolCall | undefined)?.name ?? undefined)
+        : undefined;
+
+    let logId: string | null = null;
+    if (shouldLog) {
+      appLogger.info(
+        {
+          event: 'mcp.request.started',
+          mcpRequestId,
+          method: request.method,
+          profileId: profile.id,
+        },
+        'MCP request started'
+      );
+
+      if (requestedToolName) {
+        appLogger.info(
+          {
+            event: 'mcp.tool.call.started',
+            mcpRequestId,
+            method: request.method,
+            profileId: profile.id,
+            toolName: requestedToolName,
+          },
+          'MCP tool call started'
+        );
+      }
+
+      logId = await this.createDebugLog(profile.id, request);
+    }
+
+    try {
+      const executionResult = await this.dispatchRequest(profile, request, logId);
+      const durationMs = Date.now() - startTime;
+
+      if (shouldLog) {
+        await this.updateDebugLog(logId, {
+          responsePayload: executionResult.response,
+          status: executionResult.status,
+          errorMessage: executionResult.response.error?.message,
+          durationMs,
+          mcpServerId: executionResult.mcpServerId,
+        });
+
+        appLogger.info(
+          {
+            event: 'mcp.request.completed',
+            mcpRequestId,
+            method: request.method,
+            profileId: profile.id,
+            mcpServerId: executionResult.mcpServerId,
+            toolName: executionResult.toolName,
+            durationMs,
+            status: executionResult.status,
+          },
+          'MCP request completed'
+        );
+
+        appLogger.info(
+          {
+            event: executionResult.event,
+            mcpRequestId,
+            method: request.method,
+            profileId: profile.id,
+            mcpServerId: executionResult.mcpServerId,
+            toolName: executionResult.toolName,
+            toolCount: executionResult.toolCount,
+            serverCount: executionResult.serverCount,
+            durationMs,
+            status: executionResult.status,
+          },
+          executionResult.event === 'mcp.tool.call.completed'
+            ? 'MCP tool call completed'
+            : executionResult.event === 'mcp.tools.list.completed'
+              ? 'MCP tools list completed'
+              : 'MCP request method completed'
+        );
+      }
+
+      return executionResult.response;
+    } catch (error) {
+      const durationMs = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : 'Internal error';
 
-      // Update debug log with error
-      if (logId) {
-        const durationMs = Date.now() - startTime;
-        try {
-          await this.debugService.updateLog(logId, {
-            status: 'error',
-            errorMessage,
+      if (shouldLog) {
+        await this.updateDebugLog(logId, {
+          status: 'error',
+          errorMessage,
+          durationMs,
+        });
+
+        appLogger.error(
+          {
+            event: 'mcp.request.failed',
+            mcpRequestId,
+            method: request.method,
+            profileId: profile.id,
+            toolName: requestedToolName,
             durationMs,
-          });
-        } catch (logError) {
-          this.logger.warn(`Failed to update debug log: ${logError}`);
-        }
+            error: errorMessage,
+          },
+          'MCP request failed'
+        );
       }
 
       return {
         jsonrpc: '2.0',
-        id: requestId,
+        id: request.id,
         error: {
           code: -32603,
           message: errorMessage,
         },
       };
+    }
+  }
+
+  private async dispatchRequest(
+    profile: ResolvedProfile,
+    request: McpRequest,
+    logId: string | null
+  ): Promise<RequestExecutionResult> {
+    const requestId = request.id;
+
+    switch (request.method) {
+      case 'initialize':
+        return {
+          response: await this.handleInitialize(requestId, profile),
+          event: 'mcp.initialize.completed',
+          status: 'success',
+        };
+      case 'tools/list':
+        return this.handleToolsList(requestId, profile);
+      case 'tools/call':
+        return this.handleToolsCall(requestId, profile, request.params as McpToolCall, logId);
+      case 'resources/list':
+        return {
+          response: await this.handleResourcesList(requestId, profile),
+          event: 'mcp.resources.list.completed',
+          status: 'success',
+        };
+      case 'resources/read':
+        return {
+          response: await this.handleResourcesRead(
+            requestId,
+            profile,
+            request.params as { uri: string }
+          ),
+          event: 'mcp.resources.read.completed',
+          status: 'success',
+        };
+      default: {
+        const response = {
+          jsonrpc: '2.0' as const,
+          id: requestId,
+          error: {
+            code: -32601,
+            message: `Method not found: ${request.method}`,
+          },
+        };
+
+        return {
+          response,
+          event: 'mcp.request.method_not_found',
+          status: 'error',
+        };
+      }
     }
   }
 
@@ -235,25 +400,8 @@ export class ProxyService {
 
   private async handleToolsList(
     requestId: string | number,
-    profile: {
-      mcpServers: Array<{
-        mcpServer: {
-          id: string;
-          name: string;
-          type: string;
-          config: unknown;
-          apiKeyConfig: unknown;
-          toolConfigs?: Array<{ toolName: string; isEnabled: boolean }>;
-        };
-        tools: Array<{
-          toolName: string;
-          isEnabled: boolean;
-          customName: string | null;
-          customDescription: string | null;
-        }>;
-      }>;
-    }
-  ): Promise<McpResponse> {
+    profile: ResolvedProfile
+  ): Promise<RequestExecutionResult> {
     const allTools: Array<{
       name: string;
       description: string;
@@ -287,36 +435,26 @@ export class ProxyService {
     }
 
     return {
-      jsonrpc: '2.0',
-      id: requestId,
-      result: {
-        tools: allTools,
+      response: {
+        jsonrpc: '2.0',
+        id: requestId,
+        result: {
+          tools: allTools,
+        },
       },
+      event: 'mcp.tools.list.completed',
+      status: 'success',
+      toolCount: allTools.length,
+      serverCount: profile.mcpServers.length,
     };
   }
 
   private async handleToolsCall(
     requestId: string | number,
-    profile: {
-      mcpServers: Array<{
-        mcpServer: {
-          id: string;
-          name: string;
-          type: string;
-          config: unknown;
-          apiKeyConfig: unknown;
-          toolConfigs?: Array<{ toolName: string; isEnabled: boolean }>;
-        };
-        tools: Array<{
-          toolName: string;
-          isEnabled: boolean;
-          customName: string | null;
-        }>;
-      }>;
-    },
+    profile: ResolvedProfile,
     params: McpToolCall,
     logId: string | null
-  ): Promise<McpResponse> {
+  ): Promise<RequestExecutionResult> {
     // Find which server has this tool
     for (const profileServer of profile.mcpServers) {
       const server = profileServer.mcpServer;
@@ -346,15 +484,9 @@ export class ProxyService {
 
         if (toolDef) {
           // Update log with the server that handled this tool call
-          if (logId) {
-            try {
-              await this.debugService.updateLog(logId, {
-                mcpServerId: server.id,
-              });
-            } catch (logError) {
-              this.logger.warn(`Failed to update debug log with server info: ${logError}`);
-            }
-          }
+          await this.updateDebugLog(logId, {
+            mcpServerId: server.id,
+          });
 
           // Coerce string arguments to expected types based on tool's input schema
           const coercedArgs = this.coerceToolArguments(params.arguments || {}, toolDef.inputSchema);
@@ -362,21 +494,32 @@ export class ProxyService {
           const result = await instance.callTool(toolName, coercedArgs);
 
           return {
-            jsonrpc: '2.0',
-            id: requestId,
-            result,
+            response: {
+              jsonrpc: '2.0',
+              id: requestId,
+              result,
+            },
+            event: 'mcp.tool.call.completed',
+            status: 'success',
+            mcpServerId: server.id,
+            toolName,
           };
         }
       }
     }
 
     return {
-      jsonrpc: '2.0',
-      id: requestId,
-      error: {
-        code: -32602,
-        message: `Tool not found: ${params.name}`,
+      response: {
+        jsonrpc: '2.0',
+        id: requestId,
+        error: {
+          code: -32602,
+          message: `Tool not found: ${params.name}`,
+        },
       },
+      event: 'mcp.tool.call.completed',
+      status: 'error',
+      toolName: params.name,
     };
   }
 
@@ -716,96 +859,7 @@ export class ProxyService {
     userId: string
   ): Promise<McpResponse> {
     const profile = await this.resolveOrgScopedProfile(profileName, orgSlug, userId);
-
-    const requestId = request.id;
-    const startTime = Date.now();
-
-    const shouldLog = request.method !== 'initialize';
-    let logId: string | null = null;
-    if (shouldLog) {
-      try {
-        const log = await this.debugService.createLog({
-          profileId: profile.id,
-          requestType: request.method,
-          requestPayload: JSON.stringify(request),
-          status: 'pending',
-        });
-        logId = log.id;
-      } catch (logError) {
-        this.logger.warn(`Failed to create debug log: ${logError}`);
-      }
-    }
-
-    try {
-      let response: McpResponse;
-
-      switch (request.method) {
-        case 'initialize':
-          response = await this.handleInitialize(requestId, profile);
-          break;
-        case 'tools/list':
-          response = await this.handleToolsList(requestId, profile);
-          break;
-        case 'tools/call':
-          response = await this.handleToolsCall(
-            requestId,
-            profile,
-            request.params as McpToolCall,
-            logId
-          );
-          break;
-        case 'resources/list':
-          response = await this.handleResourcesList(requestId, profile);
-          break;
-        case 'resources/read':
-          response = await this.handleResourcesRead(
-            requestId,
-            profile,
-            request.params as { uri: string }
-          );
-          break;
-        default:
-          response = {
-            jsonrpc: '2.0',
-            id: requestId,
-            error: { code: -32601, message: `Method not found: ${request.method}` },
-          };
-      }
-
-      if (logId) {
-        try {
-          await this.debugService.updateLog(logId, {
-            responsePayload: JSON.stringify(response),
-            status: response.error ? 'error' : 'success',
-            errorMessage: response.error?.message,
-            durationMs: Date.now() - startTime,
-          });
-        } catch (logError) {
-          this.logger.warn(`Failed to update debug log: ${logError}`);
-        }
-      }
-
-      return response;
-    } catch (error) {
-      this.logger.error(`MCP request error: ${error}`);
-      const errorMessage = error instanceof Error ? error.message : 'Internal error';
-      if (logId) {
-        try {
-          await this.debugService.updateLog(logId, {
-            status: 'error',
-            errorMessage,
-            durationMs: Date.now() - startTime,
-          });
-        } catch (logError) {
-          this.logger.warn(`Failed to update debug log: ${logError}`);
-        }
-      }
-      return {
-        jsonrpc: '2.0',
-        id: requestId,
-        error: { code: -32603, message: errorMessage },
-      };
-    }
+    return this.executeRequest(profile as ResolvedProfile, request);
   }
 
   /**

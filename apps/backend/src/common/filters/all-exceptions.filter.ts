@@ -4,15 +4,9 @@
  * Catches all exceptions and formats them consistently.
  */
 
-import {
-  ArgumentsHost,
-  Catch,
-  ExceptionFilter,
-  HttpException,
-  HttpStatus,
-  Logger,
-} from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { appLogger } from '../logging/app-logger.js';
 
 interface ErrorResponse {
   statusCode: number;
@@ -29,8 +23,6 @@ type McpHttpException = HttpException & {
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  private readonly logger = new Logger(AllExceptionsFilter.name);
-
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -56,11 +48,18 @@ export class AllExceptionsFilter implements ExceptionFilter {
       error = exception.name;
     }
 
-    // Log error
-    this.logger.error(`${request.method} ${request.url} - ${status} - ${message}`, {
-      exception: exception instanceof Error ? exception.stack : String(exception),
-      requestId: request.headers['x-request-id'],
-    });
+    appLogger.error(
+      {
+        event: 'http.exception',
+        method: request.method,
+        path: request.url,
+        statusCode: status,
+        errorName: error,
+        errorMessage: message,
+        exception: exception instanceof Error ? exception.stack : String(exception),
+      },
+      'HTTP exception'
+    );
 
     const errorResponse: ErrorResponse = {
       statusCode: status,
@@ -77,7 +76,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     // Set WWW-Authenticate header for MCP OAuth errors (RFC 9728)
-    const mcpException = exception instanceof HttpException ? (exception as McpHttpException) : null;
+    const mcpException =
+      exception instanceof HttpException ? (exception as McpHttpException) : null;
     if (mcpException?.wwwAuthenticate) {
       response.setHeader('WWW-Authenticate', mcpException.wwwAuthenticate);
       response.setHeader('Access-Control-Expose-Headers', 'WWW-Authenticate');

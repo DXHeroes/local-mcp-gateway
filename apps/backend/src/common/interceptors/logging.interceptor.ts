@@ -5,15 +5,15 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common';
+import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { appLogger } from '../logging/app-logger.js';
+import { requestContext } from '../logging/request-context.js';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
-  private readonly logger = new Logger('HTTP');
-
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const ctx = context.switchToHttp();
     const request = ctx.getRequest<Request>();
@@ -25,6 +25,7 @@ export class LoggingInterceptor implements NestInterceptor {
     }
     const requestId = request.headers['x-request-id'];
     response.setHeader('x-request-id', requestId);
+    requestContext.enterWith({ requestId: String(requestId) });
 
     const { method, url } = request;
     const startTime = Date.now();
@@ -33,11 +34,29 @@ export class LoggingInterceptor implements NestInterceptor {
       tap({
         next: () => {
           const duration = Date.now() - startTime;
-          this.logger.log(`${method} ${url} ${response.statusCode} - ${duration}ms`);
+          appLogger.info(
+            {
+              event: 'http.request.completed',
+              method,
+              url,
+              statusCode: response.statusCode,
+              durationMs: duration,
+            },
+            'HTTP request completed'
+          );
         },
         error: () => {
           const duration = Date.now() - startTime;
-          this.logger.warn(`${method} ${url} ERROR - ${duration}ms`);
+          appLogger.warn(
+            {
+              event: 'http.request.failed',
+              method,
+              url,
+              statusCode: response.statusCode,
+              durationMs: duration,
+            },
+            'HTTP request failed'
+          );
         },
       })
     );

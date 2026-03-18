@@ -22,6 +22,7 @@ interface CreateLogDto {
 interface LogFilter {
   profileId?: string;
   mcpServerId?: string;
+  requestType?: string;
   status?: 'pending' | 'success' | 'error';
   since?: Date;
   until?: Date;
@@ -80,6 +81,10 @@ export class DebugService {
 
     if (filter?.mcpServerId) {
       where.mcpServerId = filter.mcpServerId;
+    }
+
+    if (filter?.requestType) {
+      where.requestType = filter.requestType;
     }
 
     if (filter?.status) {

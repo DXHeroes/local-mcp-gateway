@@ -313,6 +313,9 @@ export default function DebugLogsPage() {
                       >
                         {log.status}
                       </span>
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                        {server ? 'Server' : 'Profile'}
+                      </span>
                       <span className="text-sm text-gray-600">{log.requestType}</span>
                       {log.durationMs !== undefined && (
                         <span className={`text-xs font-medium ${getDurationColor(log.durationMs)}`}>
