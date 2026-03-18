@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.15.1](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.15.0...frontend-v0.15.1) (2026-03-18)
+
+
+### Bug Fixes
+
+* **mcp:** refine preset handling for API key configuration ([fae955e](https://github.com/DXHeroes/local-mcp-gateway/commit/fae955ec6ee846d095cf8508611ea0dbbf54b302))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.15
+    * @dxheroes/local-mcp-ui bumped to 0.5.13
+
 ## [0.15.0](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.14.0...frontend-v0.15.0) (2026-03-16)
 
 

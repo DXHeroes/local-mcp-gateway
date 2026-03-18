@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.4.0](https://github.com/DXHeroes/local-mcp-gateway/compare/mcp-merk-v0.3.9...mcp-merk-v0.4.0) (2026-03-18)
+
+
+### Features
+
+* **client:** enhance API client with additional parameters and response handling ([4f63693](https://github.com/DXHeroes/local-mcp-gateway/commit/4f636930633282d5900ace38aa08e6ded08c0cd1))
+* **tests:** enhance unit tests for MerkClient and schemas ([66d2f02](https://github.com/DXHeroes/local-mcp-gateway/commit/66d2f020587e5e299f53134d5e6bcd3f0bf58aef))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * peerDependencies
+    * @dxheroes/local-mcp-core bumped to 0.10.1
+
 ## [0.3.9](https://github.com/DXHeroes/local-mcp-gateway/compare/mcp-merk-v0.3.8...mcp-merk-v0.3.9) (2026-03-16)
 
 

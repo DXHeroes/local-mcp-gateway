@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.0](https://github.com/DXHeroes/local-mcp-gateway/compare/mcp-fakturoid-v0.4.1...mcp-fakturoid-v0.5.0) (2026-03-18)
+
+
+### Features
+
+* **tests:** add unit tests for FakturoidClient and FakturoidMcpServer ([1f94e18](https://github.com/DXHeroes/local-mcp-gateway/commit/1f94e186f36ab35b0d66a5244686e4a7015c0440))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * peerDependencies
+    * @dxheroes/local-mcp-core bumped to 0.10.1
+
 ## [0.4.1](https://github.com/DXHeroes/local-mcp-gateway/compare/mcp-fakturoid-v0.4.0...mcp-fakturoid-v0.4.1) (2026-03-16)
 
 
