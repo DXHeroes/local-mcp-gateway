@@ -690,7 +690,7 @@ export class ProxyService {
     profileName: string,
     orgSlug: string,
     request: McpRequest,
-    userId?: string
+    _userId?: string
   ): Promise<McpResponse> {
     const orgId = await this.resolveOrgBySlug(orgSlug);
     const profile = await this.findProfileByNameAndOrg(profileName, orgId);
@@ -973,21 +973,25 @@ export class ProxyService {
 
     let current = field as Record<string, unknown>;
 
-    // Unwrap ZodOptional, ZodNullable, ZodDefault, ZodEffects
+    // Unwrap Zod 3/4 wrappers such as optional/default/effects.
     while (current._def && typeof current._def === 'object') {
       const def = current._def as Record<string, unknown>;
       const typeName = def.typeName as string | undefined;
+      const type = def.type as string | undefined;
 
       if (
         typeName === 'ZodOptional' ||
         typeName === 'ZodNullable' ||
-        typeName === 'ZodDefault'
+        typeName === 'ZodDefault' ||
+        type === 'optional' ||
+        type === 'nullable' ||
+        type === 'default'
       ) {
         current = def.innerType as Record<string, unknown>;
         continue;
       }
-      if (typeName === 'ZodEffects') {
-        current = def.schema as Record<string, unknown>;
+      if (typeName === 'ZodEffects' || type === 'pipe' || type === 'transform') {
+        current = (def.schema ?? def.innerType) as Record<string, unknown>;
         continue;
       }
       break;
@@ -995,18 +999,25 @@ export class ProxyService {
 
     const def = current._def as Record<string, unknown> | undefined;
     const typeName = def?.typeName as string | undefined;
+    const type = def?.type as string | undefined;
 
-    switch (typeName) {
+    switch (typeName ?? type) {
       case 'ZodNumber':
+      case 'number':
         return { type: 'number' };
       case 'ZodBoolean':
+      case 'boolean':
         return { type: 'boolean' };
       case 'ZodArray':
+      case 'array':
         return { type: 'array' };
       case 'ZodObject':
+      case 'object':
         return { type: 'object' };
       case 'ZodEnum':
       case 'ZodString':
+      case 'enum':
+      case 'string':
         return { type: 'string' };
       default:
         return {};

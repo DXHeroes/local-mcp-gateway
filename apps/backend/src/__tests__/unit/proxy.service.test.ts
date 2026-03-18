@@ -9,6 +9,7 @@ import type { DebugService } from '../../modules/debug/debug.service.js';
 import { McpRegistry } from '../../modules/mcp/mcp-registry.js';
 import { ProxyService } from '../../modules/proxy/proxy.service.js';
 import type { McpRequest } from '../../modules/proxy/proxy.service.js';
+import { SearchCompaniesSchema } from '../../../../../mcp-servers/merk/src/schemas.js';
 
 // ---- Mock @dxheroes/local-mcp-core server classes ----
 const mockInitialize = vi.fn().mockResolvedValue(undefined);
@@ -817,6 +818,50 @@ describe('ProxyService', () => {
       );
 
       expect(mockCallTool).toHaveBeenCalledWith('myTool', {});
+    });
+
+    it('should coerce Merk search arrays and numbers from MCP strings', async () => {
+      const ps = makeProfileServer(
+        { id: 'srv-merk-1', type: 'external', config: '{"command":"node"}' },
+        [{ toolName: 'merk_search_companies', isEnabled: true, customName: null }],
+      );
+      const profile = makeProfile({ mcpServers: [ps] });
+      prisma.profile.findFirst.mockResolvedValue(profile);
+
+      mockListTools.mockResolvedValue([
+        {
+          name: 'merk_search_companies',
+          description: 'desc',
+          inputSchema: SearchCompaniesSchema,
+        },
+      ]);
+      mockCallTool.mockResolvedValue({ content: [] });
+
+      await service.handleRequest(
+        'default',
+        makeRequest({
+          method: 'tools/call',
+          params: {
+            name: 'merk_search_companies',
+            arguments: {
+              query: 'vyroba',
+              limit: '10',
+              ordering: '["name","-turnover_id"]',
+              categories: '[1,2]',
+              active_job_ads_count_from: '3',
+            },
+          },
+        }),
+        'user-1',
+      );
+
+      expect(mockCallTool).toHaveBeenCalledWith('merk_search_companies', {
+        query: 'vyroba',
+        limit: 10,
+        ordering: ['name', '-turnover_id'],
+        categories: [1, 2],
+        active_job_ads_count_from: 3,
+      });
     });
 
     it('should handle debug log update failure for mcpServerId gracefully', async () => {
