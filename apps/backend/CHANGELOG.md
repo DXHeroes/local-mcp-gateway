@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.14.0](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.13.0...backend-v0.14.0) (2026-03-18)
+
+
+### Features
+
+* **proxy:** add argument coercion for Merk search tool calls ([b9c9a0c](https://github.com/DXHeroes/local-mcp-gateway/commit/b9c9a0c3f0bc91fc1aca493fdb828271190c805c))
+* **proxy:** implement argument coercion for tool calls based on input schema ([e9ac930](https://github.com/DXHeroes/local-mcp-gateway/commit/e9ac930a7b739590577075fce146a80c157f0708))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-core bumped to 0.10.1
+    * @dxheroes/local-mcp-database bumped to 0.7.1
+    * @dxheroes/mcp-abra-flexi bumped to 0.4.2
+    * @dxheroes/mcp-fakturoid bumped to 0.5.0
+    * @dxheroes/mcp-gemini-deep-research bumped to 0.5.10
+    * @dxheroes/mcp-merk bumped to 0.4.0
+    * @dxheroes/mcp-toggl bumped to 0.3.10
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.15
+
 ## [0.13.0](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.12.0...backend-v0.13.0) (2026-03-16)
 
 
