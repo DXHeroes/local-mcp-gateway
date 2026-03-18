@@ -9,7 +9,8 @@
  * - Gateway endpoint uses default profile with user scoping
  */
 
-import { NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { NotFoundException, UnauthorizedException, type ExecutionContext } from '@nestjs/common';
+import type { ConfigService } from '@nestjs/config';
 import type { EventEmitter2 } from '@nestjs/event-emitter';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { type AuthService, type AuthUser } from '../../modules/auth/auth.service.js';
@@ -85,16 +86,18 @@ function createMockEventEmitter() {
   };
 }
 
+type RequestWithUser = import('express').Request & { user?: AuthUser };
+
 function createMockRequest(
   headers: Record<string, string> = {},
   query: Record<string, string> = {}
-) {
+): RequestWithUser {
   return {
     headers,
     query,
     on: vi.fn(),
-    user: undefined as any,
-  } as unknown as import('express').Request;
+    user: undefined,
+  } as unknown as RequestWithUser;
 }
 
 function createMockResponse() {
@@ -105,7 +108,7 @@ function createMockResponse() {
   } as unknown as import('express').Response;
 }
 
-function createMockExecutionContext(req: import('express').Request) {
+function createMockExecutionContext(req: import('express').Request): ExecutionContext {
   return {
     switchToHttp: () => ({
       getRequest: () => req,
@@ -113,7 +116,7 @@ function createMockExecutionContext(req: import('express').Request) {
     }),
     getHandler: () => ({}),
     getClass: () => ({}),
-  } as any;
+  } as unknown as ExecutionContext;
 }
 
 // ────────────────────────────────────────────────
@@ -127,7 +130,10 @@ describe('McpOAuthGuard', () => {
   beforeEach(() => {
     authService = createMockAuthService();
     const configService = createMockConfigService();
-    guard = new McpOAuthGuard(authService as unknown as AuthService, configService as any);
+    guard = new McpOAuthGuard(
+      authService as unknown as AuthService,
+      configService as unknown as ConfigService
+    );
   });
 
   it('rejects request without Bearer token with 401', async () => {
@@ -143,10 +149,11 @@ describe('McpOAuthGuard', () => {
 
     try {
       await guard.canActivate(ctx);
-    } catch (error: any) {
-      expect(error.wwwAuthenticate).toContain('resource_metadata=');
-      expect(error.wwwAuthenticate).toContain('resource_metadata_uri=');
-      expect(error.wwwAuthenticate).toContain('/.well-known/oauth-protected-resource');
+    } catch (error: unknown) {
+      const authError = error as { wwwAuthenticate?: string };
+      expect(authError.wwwAuthenticate).toContain('resource_metadata=');
+      expect(authError.wwwAuthenticate).toContain('resource_metadata_uri=');
+      expect(authError.wwwAuthenticate).toContain('/.well-known/oauth-protected-resource');
     }
   });
 
@@ -242,7 +249,7 @@ describe('Proxy controller auth', () => {
     it('uses req.user set by McpOAuthGuard', async () => {
       const guardUser: AuthUser = { id: 'guard-user', name: 'Guard', email: 'g@test.com' };
       const req = createMockRequest({ authorization: 'Bearer some-token' });
-      (req as any).user = guardUser;
+      req.user = guardUser;
 
       const mcpRequest: McpRequest = { jsonrpc: '2.0', id: 1, method: 'tools/list' };
 
@@ -263,7 +270,7 @@ describe('Proxy controller auth', () => {
 
     it('org slug and user are passed through to proxy service', async () => {
       const req = createMockRequest({ authorization: 'Bearer token-a' });
-      (req as any).user = userA;
+      req.user = userA;
       const mcpRequest: McpRequest = { jsonrpc: '2.0', id: 1, method: 'tools/list' };
 
       await controller.handleOrgMcpRequest(req, 'org-a', 'user-a-profile', mcpRequest);
@@ -278,13 +285,13 @@ describe('Proxy controller auth', () => {
 
     it('different users get different userId passed to proxy', async () => {
       const reqA = createMockRequest({ authorization: 'Bearer token-a' });
-      (reqA as any).user = userA;
+      reqA.user = userA;
       const mcpReq: McpRequest = { jsonrpc: '2.0', id: 1, method: 'tools/list' };
 
       await controller.handleOrgMcpRequest(reqA, 'shared-org', 'shared-profile', mcpReq);
 
       const reqB = createMockRequest({ authorization: 'Bearer token-b' });
-      (reqB as any).user = userB;
+      reqB.user = userB;
 
       await controller.handleOrgMcpRequest(reqB, 'shared-org', 'shared-profile', mcpReq);
 
@@ -308,7 +315,7 @@ describe('Proxy controller auth', () => {
       settingsService.getDefaultGatewayProfile.mockResolvedValue('my-default');
 
       const req = createMockRequest({ authorization: 'Bearer token-a' });
-      (req as any).user = userA;
+      req.user = userA;
       const mcpRequest: McpRequest = { jsonrpc: '2.0', id: 1, method: 'tools/list' };
 
       await controller.handleGatewayRequest(req, mcpRequest);
@@ -323,7 +330,7 @@ describe('Proxy controller auth', () => {
       );
 
       const req = createMockRequest({ authorization: 'Bearer token-a' });
-      (req as any).user = userA;
+      req.user = userA;
       const mcpRequest: McpRequest = { jsonrpc: '2.0', id: 1, method: 'tools/list' };
 
       await expect(controller.handleGatewayRequest(req, mcpRequest)).rejects.toThrow(
@@ -333,7 +340,7 @@ describe('Proxy controller auth', () => {
 
     it('org-scoped profile info endpoint uses orgSlug', async () => {
       const req = createMockRequest({ authorization: 'Bearer token-a' });
-      (req as any).user = userA;
+      req.user = userA;
 
       await controller.getOrgProfileInfo('my-org', 'my-profile', req);
 
@@ -351,7 +358,7 @@ describe('Proxy controller auth', () => {
       });
 
       const req = createMockRequest({ authorization: 'Bearer token-a' });
-      (req as any).user = userA;
+      req.user = userA;
       const res = createMockResponse();
 
       await controller.getOrgMcpEndpoint('my-org', 'my-profile', req, res);

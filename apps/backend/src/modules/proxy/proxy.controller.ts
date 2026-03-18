@@ -19,6 +19,7 @@ import {
   Post,
   Req,
   Res,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -45,7 +46,11 @@ export class ProxyController {
    * McpOAuthGuard always validates and attaches user before this is called.
    */
   private resolveUser(req: Request): { id: string } {
-    return req.user!;
+    if (!req.user) {
+      throw new UnauthorizedException('Authenticated MCP user not found on request');
+    }
+
+    return req.user;
   }
 
   // =========================================
