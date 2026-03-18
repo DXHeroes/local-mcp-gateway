@@ -212,7 +212,8 @@ export class ProxyController {
     @Res() res: Response
   ) {
     const profileName = await this.settingsService.getDefaultGatewayProfile();
-    await this.proxyService.getProfileInfoByOrgSlug(profileName, orgSlug);
+    const user = this.resolveUser(req);
+    await this.proxyService.getProfileInfoByOrgSlug(profileName, orgSlug, user.id);
     return this.streamGatewayEvents(req, res);
   }
 
@@ -235,9 +236,10 @@ export class ProxyController {
    * Get org-scoped gateway info
    */
   @Get(':orgSlug/gateway/info')
-  async getOrgGatewayInfo(@Param('orgSlug') orgSlug: string) {
+  async getOrgGatewayInfo(@Param('orgSlug') orgSlug: string, @Req() req: Request) {
     const profileName = await this.settingsService.getDefaultGatewayProfile();
-    const info = await this.proxyService.getProfileInfoByOrgSlug(profileName, orgSlug);
+    const user = this.resolveUser(req);
+    const info = await this.proxyService.getProfileInfoByOrgSlug(profileName, orgSlug, user.id);
     return {
       ...info,
       gateway: {
@@ -255,15 +257,16 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ) {
+    const user = this.resolveUser(req);
     const acceptHeader = req.headers.accept || '';
     if (acceptHeader.includes('text/event-stream')) {
       const profileName = await this.settingsService.getDefaultGatewayProfile();
-      await this.proxyService.getProfileInfoByOrgSlug(profileName, orgSlug);
+      await this.proxyService.getProfileInfoByOrgSlug(profileName, orgSlug, user.id);
       return this.streamGatewayEvents(req, res);
     }
 
     const profileName = await this.settingsService.getDefaultGatewayProfile();
-    const info = await this.proxyService.getProfileInfoByOrgSlug(profileName, orgSlug);
+    const info = await this.proxyService.getProfileInfoByOrgSlug(profileName, orgSlug, user.id);
 
     return res.json({
       message: 'This is the MCP Gateway endpoint. Use POST for JSON-RPC requests.',
@@ -319,7 +322,8 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ) {
-    await this.proxyService.getProfileInfoByOrgSlug(profileName, orgSlug);
+    const user = this.resolveUser(req);
+    await this.proxyService.getProfileInfoByOrgSlug(profileName, orgSlug, user.id);
     return this.streamGatewayEvents(req, res);
   }
 
@@ -343,9 +347,11 @@ export class ProxyController {
   @Get(':orgSlug/:profileName/info')
   async getOrgProfileInfo(
     @Param('orgSlug') orgSlug: string,
-    @Param('profileName') profileName: string
+    @Param('profileName') profileName: string,
+    @Req() req: Request
   ) {
-    return this.proxyService.getProfileInfoByOrgSlug(profileName, orgSlug);
+    const user = this.resolveUser(req);
+    return this.proxyService.getProfileInfoByOrgSlug(profileName, orgSlug, user.id);
   }
 
   /**
@@ -358,7 +364,8 @@ export class ProxyController {
     @Req() req: Request,
     @Res() res: Response
   ) {
-    const info = await this.proxyService.getProfileInfoByOrgSlug(profileName, orgSlug);
+    const user = this.resolveUser(req);
+    const info = await this.proxyService.getProfileInfoByOrgSlug(profileName, orgSlug, user.id);
 
     const acceptHeader = req.headers.accept || '';
     if (acceptHeader.includes('text/event-stream')) {

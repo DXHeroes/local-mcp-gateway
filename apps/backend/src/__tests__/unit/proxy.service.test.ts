@@ -1595,12 +1595,13 @@ describe('ProxyService', () => {
   describe('handleRequestByOrgSlug', () => {
     it('should resolve org slug and find profile', async () => {
       prisma.organization.findUnique.mockResolvedValue({ id: 'org-1' });
-      prisma.profile.findFirst.mockResolvedValue(makeProfile({ id: 'p-org', name: 'my-profile' }));
+      prisma.profile.findUnique.mockResolvedValue(makeProfile({ id: 'p-org', name: 'my-profile' }));
 
       const result = await service.handleRequestByOrgSlug(
         'my-profile',
         'my-org',
-        makeRequest({ method: 'initialize' })
+        makeRequest({ method: 'initialize' }),
+        'user-1'
       );
 
       expect(result.result).toHaveProperty('protocolVersion');
@@ -1608,6 +1609,17 @@ describe('ProxyService', () => {
         where: { slug: 'my-org' },
         select: { id: true },
       });
+      expect(prisma.profile.findUnique).toHaveBeenCalledWith({
+        where: {
+          userId_organizationId_name: {
+            userId: 'user-1',
+            organizationId: 'org-1',
+            name: 'my-profile',
+          },
+        },
+        include: expect.anything(),
+      });
+      expect(prisma.profile.findFirst).not.toHaveBeenCalled();
     });
 
     it('should throw NotFoundException when org slug not found', async () => {
@@ -1617,45 +1629,49 @@ describe('ProxyService', () => {
         service.handleRequestByOrgSlug(
           'my-profile',
           'nonexistent-org',
-          makeRequest({ method: 'initialize' })
+          makeRequest({ method: 'initialize' }),
+          'user-1'
         )
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw NotFoundException when profile not found in org', async () => {
       prisma.organization.findUnique.mockResolvedValue({ id: 'org-1' });
-      prisma.profile.findFirst.mockResolvedValue(null);
+      prisma.profile.findUnique.mockResolvedValue(null);
 
       await expect(
         service.handleRequestByOrgSlug(
           'nonexistent',
           'my-org',
-          makeRequest({ method: 'initialize' })
+          makeRequest({ method: 'initialize' }),
+          'user-1'
         )
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw NotFoundException when org profile not found', async () => {
       prisma.organization.findUnique.mockResolvedValue({ id: 'org-1' });
-      prisma.profile.findFirst.mockResolvedValue(null);
+      prisma.profile.findUnique.mockResolvedValue(null);
 
       await expect(
         service.handleRequestByOrgSlug(
           'missing-profile',
           'my-org',
-          makeRequest({ method: 'initialize' })
+          makeRequest({ method: 'initialize' }),
+          'user-1'
         )
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should create debug log for non-initialize methods', async () => {
       prisma.organization.findUnique.mockResolvedValue({ id: 'org-1' });
-      prisma.profile.findFirst.mockResolvedValue(makeProfile());
+      prisma.profile.findUnique.mockResolvedValue(makeProfile());
 
       await service.handleRequestByOrgSlug(
         'default',
         'my-org',
-        makeRequest({ method: 'tools/list' })
+        makeRequest({ method: 'tools/list' }),
+        'user-1'
       );
 
       expect(debugService.createLog).toHaveBeenCalledWith(
@@ -1665,12 +1681,13 @@ describe('ProxyService', () => {
 
     it('should skip debug log for initialize method', async () => {
       prisma.organization.findUnique.mockResolvedValue({ id: 'org-1' });
-      prisma.profile.findFirst.mockResolvedValue(makeProfile());
+      prisma.profile.findUnique.mockResolvedValue(makeProfile());
 
       await service.handleRequestByOrgSlug(
         'default',
         'my-org',
-        makeRequest({ method: 'initialize' })
+        makeRequest({ method: 'initialize' }),
+        'user-1'
       );
 
       expect(debugService.createLog).not.toHaveBeenCalled();
@@ -1678,26 +1695,29 @@ describe('ProxyService', () => {
 
     it('should route to correct handler for all methods', async () => {
       prisma.organization.findUnique.mockResolvedValue({ id: 'org-1' });
-      prisma.profile.findFirst.mockResolvedValue(makeProfile());
+      prisma.profile.findUnique.mockResolvedValue(makeProfile());
 
       const listResult = await service.handleRequestByOrgSlug(
         'default',
         'my-org',
-        makeRequest({ method: 'tools/list' })
+        makeRequest({ method: 'tools/list' }),
+        'user-1'
       );
       expect(listResult.result).toHaveProperty('tools');
 
       const resResult = await service.handleRequestByOrgSlug(
         'default',
         'my-org',
-        makeRequest({ method: 'resources/list' })
+        makeRequest({ method: 'resources/list' }),
+        'user-1'
       );
       expect(resResult.result).toHaveProperty('resources');
 
       const unknownResult = await service.handleRequestByOrgSlug(
         'default',
         'my-org',
-        makeRequest({ method: 'unknown/method' })
+        makeRequest({ method: 'unknown/method' }),
+        'user-1'
       );
       expect(unknownResult.error?.code).toBe(-32601);
     });
@@ -1709,14 +1729,15 @@ describe('ProxyService', () => {
         { id: 'srv-org-err', type: 'external', config: '{"command":"node"}' },
         []
       );
-      prisma.profile.findFirst.mockResolvedValue(makeProfile({ mcpServers: [ps] }));
+      prisma.profile.findUnique.mockResolvedValue(makeProfile({ mcpServers: [ps] }));
 
       mockListTools.mockRejectedValueOnce(new Error('Server crashed'));
 
       const result = await service.handleRequestByOrgSlug(
         'default',
         'my-org',
-        makeRequest({ method: 'tools/list' })
+        makeRequest({ method: 'tools/list' }),
+        'user-1'
       );
 
       expect(result.error).toEqual({ code: -32603, message: 'Server crashed' });
@@ -1728,13 +1749,14 @@ describe('ProxyService', () => {
 
     it('should handle debug log creation failure gracefully', async () => {
       prisma.organization.findUnique.mockResolvedValue({ id: 'org-1' });
-      prisma.profile.findFirst.mockResolvedValue(makeProfile());
+      prisma.profile.findUnique.mockResolvedValue(makeProfile());
       debugService.createLog.mockRejectedValueOnce(new Error('DB error'));
 
       const result = await service.handleRequestByOrgSlug(
         'default',
         'my-org',
-        makeRequest({ method: 'tools/list' })
+        makeRequest({ method: 'tools/list' }),
+        'user-1'
       );
 
       expect(result.result).toHaveProperty('tools');
@@ -1746,7 +1768,7 @@ describe('ProxyService', () => {
         { id: 'srv-org-logfail', type: 'external', config: '{"command":"node"}' },
         []
       );
-      prisma.profile.findFirst.mockResolvedValue(makeProfile({ mcpServers: [ps] }));
+      prisma.profile.findUnique.mockResolvedValue(makeProfile({ mcpServers: [ps] }));
 
       mockListTools.mockRejectedValueOnce(new Error('Fail'));
       debugService.updateLog.mockRejectedValueOnce(new Error('DB error'));
@@ -1754,7 +1776,8 @@ describe('ProxyService', () => {
       const result = await service.handleRequestByOrgSlug(
         'default',
         'my-org',
-        makeRequest({ method: 'tools/list' })
+        makeRequest({ method: 'tools/list' }),
+        'user-1'
       );
 
       expect(result.error).toBeDefined();
@@ -1766,14 +1789,15 @@ describe('ProxyService', () => {
         { id: 'srv-org-nonErr', type: 'external', config: '{"command":"node"}' },
         []
       );
-      prisma.profile.findFirst.mockResolvedValue(makeProfile({ mcpServers: [ps] }));
+      prisma.profile.findUnique.mockResolvedValue(makeProfile({ mcpServers: [ps] }));
 
       mockListTools.mockRejectedValueOnce(42);
 
       const result = await service.handleRequestByOrgSlug(
         'default',
         'my-org',
-        makeRequest({ method: 'tools/list' })
+        makeRequest({ method: 'tools/list' }),
+        'user-1'
       );
 
       expect(result.error?.message).toBe('Internal error');
@@ -1893,11 +1917,11 @@ describe('ProxyService', () => {
         { id: 'srv-orginfo-1', type: 'external', config: '{"command":"node"}' },
         []
       );
-      prisma.profile.findFirst.mockResolvedValue(makeProfile({ mcpServers: [ps] }));
+      prisma.profile.findUnique.mockResolvedValue(makeProfile({ mcpServers: [ps] }));
 
       mockListTools.mockResolvedValue([{ name: 'tool1', description: 'desc', inputSchema: {} }]);
 
-      const result = await service.getProfileInfoByOrgSlug('default', 'my-org');
+      const result = await service.getProfileInfoByOrgSlug('default', 'my-org', 'user-1');
 
       expect(result.tools).toHaveLength(1);
       expect(result.serverStatus.total).toBe(1);
@@ -1906,16 +1930,16 @@ describe('ProxyService', () => {
     it('should throw NotFoundException when org not found', async () => {
       prisma.organization.findUnique.mockResolvedValue(null);
 
-      await expect(service.getProfileInfoByOrgSlug('default', 'no-org')).rejects.toThrow(
+      await expect(service.getProfileInfoByOrgSlug('default', 'no-org', 'user-1')).rejects.toThrow(
         NotFoundException
       );
     });
 
     it('should throw NotFoundException when profile not found in org', async () => {
       prisma.organization.findUnique.mockResolvedValue({ id: 'org-1' });
-      prisma.profile.findFirst.mockResolvedValue(null);
+      prisma.profile.findUnique.mockResolvedValue(null);
 
-      await expect(service.getProfileInfoByOrgSlug('missing', 'my-org')).rejects.toThrow(
+      await expect(service.getProfileInfoByOrgSlug('missing', 'my-org', 'user-1')).rejects.toThrow(
         NotFoundException
       );
     });

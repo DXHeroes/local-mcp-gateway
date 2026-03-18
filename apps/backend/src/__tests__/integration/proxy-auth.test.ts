@@ -97,6 +97,14 @@ function createMockRequest(
   } as unknown as import('express').Request;
 }
 
+function createMockResponse() {
+  return {
+    json: vi.fn((payload: unknown) => payload),
+    setHeader: vi.fn(),
+    write: vi.fn(),
+  } as unknown as import('express').Response;
+}
+
 function createMockExecutionContext(req: import('express').Request) {
   return {
     switchToHttp: () => ({
@@ -324,9 +332,45 @@ describe('Proxy controller auth', () => {
     });
 
     it('org-scoped profile info endpoint uses orgSlug', async () => {
-      await controller.getOrgProfileInfo('my-org', 'my-profile');
+      const req = createMockRequest({ authorization: 'Bearer token-a' });
+      (req as any).user = userA;
 
-      expect(proxyService.getProfileInfoByOrgSlug).toHaveBeenCalledWith('my-profile', 'my-org');
+      await controller.getOrgProfileInfo('my-org', 'my-profile', req);
+
+      expect(proxyService.getProfileInfoByOrgSlug).toHaveBeenCalledWith(
+        'my-profile',
+        'my-org',
+        'user-a'
+      );
+    });
+
+    it('org-scoped profile endpoint reports tool count from user-scoped info lookup', async () => {
+      proxyService.getProfileInfoByOrgSlug.mockResolvedValue({
+        tools: [{ name: 'tool-a', description: 'A' }, { name: 'tool-b', description: 'B' }],
+        serverStatus: { total: 1, connected: 1, servers: {} },
+      });
+
+      const req = createMockRequest({ authorization: 'Bearer token-a' });
+      (req as any).user = userA;
+      const res = createMockResponse();
+
+      await controller.getOrgMcpEndpoint('my-org', 'my-profile', req, res);
+
+      expect(proxyService.getProfileInfoByOrgSlug).toHaveBeenCalledWith(
+        'my-profile',
+        'my-org',
+        'user-a'
+      );
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          profile: expect.objectContaining({
+            name: 'my-profile',
+            toolCount: 2,
+            serverCount: 1,
+            connectedServers: 1,
+          }),
+        })
+      );
     });
   });
 });

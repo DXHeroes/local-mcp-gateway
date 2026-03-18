@@ -644,11 +644,19 @@ export class ProxyService {
   }
 
   /**
-   * Find a profile by name within an organization.
+   * Find a profile by name within an organization for the authenticated user.
+   * Public org-scoped MCP routes must resolve through the caller's profile identity,
+   * because profile names are not unique across the whole organization.
    */
-  private async findProfileByNameAndOrg(profileName: string, orgId: string) {
-    return this.prisma.profile.findFirst({
-      where: { name: profileName, organizationId: orgId },
+  private async findProfileByNameAndOrg(profileName: string, orgId: string, userId: string) {
+    return this.prisma.profile.findUnique({
+      where: {
+        userId_organizationId_name: {
+          userId,
+          organizationId: orgId,
+          name: profileName,
+        },
+      },
       include: this.getProfileInfoInclude(),
     });
   }
@@ -683,22 +691,31 @@ export class ProxyService {
   }
 
   /**
-   * Handle MCP request using org slug to resolve the profile.
+   * Resolve an org-scoped public profile for the authenticated user.
    */
-  async handleRequestByOrgSlug(
-    profileName: string,
-    orgSlug: string,
-    request: McpRequest,
-    _userId?: string
-  ): Promise<McpResponse> {
+  private async resolveOrgScopedProfile(profileName: string, orgSlug: string, userId: string) {
     const orgId = await this.resolveOrgBySlug(orgSlug);
-    const profile = await this.findProfileByNameAndOrg(profileName, orgId);
+    const profile = await this.findProfileByNameAndOrg(profileName, orgId, userId);
 
     if (!profile) {
       throw new NotFoundException(
         `Profile "${profileName}" not found in organization "${orgSlug}"`
       );
     }
+
+    return profile;
+  }
+
+  /**
+   * Handle MCP request using org slug to resolve the profile.
+   */
+  async handleRequestByOrgSlug(
+    profileName: string,
+    orgSlug: string,
+    request: McpRequest,
+    userId: string
+  ): Promise<McpResponse> {
+    const profile = await this.resolveOrgScopedProfile(profileName, orgSlug, userId);
 
     const requestId = request.id;
     const startTime = Date.now();
@@ -794,16 +811,8 @@ export class ProxyService {
   /**
    * Get profile info using org slug.
    */
-  async getProfileInfoByOrgSlug(profileName: string, orgSlug: string) {
-    const orgId = await this.resolveOrgBySlug(orgSlug);
-    const profile = await this.findProfileByNameAndOrg(profileName, orgId);
-
-    if (!profile) {
-      throw new NotFoundException(
-        `Profile "${profileName}" not found in organization "${orgSlug}"`
-      );
-    }
-
+  async getProfileInfoByOrgSlug(profileName: string, orgSlug: string, userId: string) {
+    const profile = await this.resolveOrgScopedProfile(profileName, orgSlug, userId);
     return this.aggregateProfileInfo(profile);
   }
 
