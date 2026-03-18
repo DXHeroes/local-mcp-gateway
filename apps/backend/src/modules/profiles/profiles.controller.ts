@@ -64,6 +64,18 @@ export class ProfilesController {
   }
 
   /**
+   * Get aggregated info for a specific profile by ID
+   */
+  @Get(':id/info')
+  async getInfo(
+    @CurrentUser() user: AuthUser,
+    @ActiveOrgId() orgId: string,
+    @Param('id') id: string
+  ) {
+    return this.profilesService.getInfo(id, user.id, orgId);
+  }
+
+  /**
    * Get a specific profile by ID
    */
   @Get(':id')

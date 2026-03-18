@@ -23,17 +23,17 @@ export const handlers = [
     return HttpResponse.json({ serverIds: [] });
   }),
 
-  http.get(`${API_URL}/api/mcp/gateway/info`, () => {
-    return HttpResponse.json({ tools: [] });
+  http.get(`${API_URL}/api/profiles/:id/info`, () => {
+    return HttpResponse.json({
+      tools: [],
+      serverStatus: { total: 0, connected: 0, servers: {} },
+    });
   }),
-  http.get('/api/mcp/gateway/info', () => {
-    return HttpResponse.json({ tools: [] });
-  }),
-  http.get(`${API_URL}/api/mcp/:orgSlug/:profileName/info`, () => {
-    return HttpResponse.json({ tools: [] });
-  }),
-  http.get('/api/mcp/:orgSlug/:profileName/info', () => {
-    return HttpResponse.json({ tools: [] });
+  http.get('/api/profiles/:id/info', () => {
+    return HttpResponse.json({
+      tools: [],
+      serverStatus: { total: 0, connected: 0, servers: {} },
+    });
   }),
 
   // MCP Presets API
@@ -73,6 +73,14 @@ export const handlers = [
   }),
   http.get('/api/debug/logs', () => {
     return HttpResponse.json([]);
+  }),
+
+  // Sharing summary API
+  http.get(`${API_URL}/api/sharing/summary/:resourceType`, () => {
+    return HttpResponse.json({});
+  }),
+  http.get('/api/sharing/summary/:resourceType', () => {
+    return HttpResponse.json({});
   }),
 
   // Settings API

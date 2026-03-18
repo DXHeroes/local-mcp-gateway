@@ -357,10 +357,7 @@ export class ProxyService {
           }
 
           // Coerce string arguments to expected types based on tool's input schema
-          const coercedArgs = this.coerceToolArguments(
-            params.arguments || {},
-            toolDef.inputSchema
-          );
+          const coercedArgs = this.coerceToolArguments(params.arguments || {}, toolDef.inputSchema);
 
           const result = await instance.callTool(toolName, coercedArgs);
 
@@ -615,6 +612,24 @@ export class ProxyService {
   }
 
   /**
+   * Build the include shape used for profile tool aggregation.
+   */
+  private getProfileInfoInclude() {
+    return {
+      mcpServers: {
+        where: { isActive: true },
+        include: {
+          mcpServer: {
+            include: { toolConfigs: true },
+          },
+          tools: true,
+        },
+        orderBy: { order: 'asc' as const },
+      },
+    };
+  }
+
+  /**
    * Resolve an org slug to an organization ID.
    */
   private async resolveOrgBySlug(orgSlug: string): Promise<string> {
@@ -632,22 +647,9 @@ export class ProxyService {
    * Find a profile by name within an organization.
    */
   private async findProfileByNameAndOrg(profileName: string, orgId: string) {
-    const include = {
-      mcpServers: {
-        where: { isActive: true },
-        include: {
-          mcpServer: {
-            include: { toolConfigs: true },
-          },
-          tools: true,
-        },
-        orderBy: { order: 'asc' as const },
-      },
-    };
-
     return this.prisma.profile.findFirst({
       where: { name: profileName, organizationId: orgId },
-      include,
+      include: this.getProfileInfoInclude(),
     });
   }
 
@@ -655,19 +657,6 @@ export class ProxyService {
    * Find a profile by name, scoped to the user's organizations.
    */
   private async findProfileByName(profileName: string, userId: string) {
-    const include = {
-      mcpServers: {
-        where: { isActive: true },
-        include: {
-          mcpServer: {
-            include: { toolConfigs: true },
-          },
-          tools: true,
-        },
-        orderBy: { order: 'asc' as const },
-      },
-    };
-
     // Look up user's memberships and search in their orgs
     const memberships = await this.prisma.member.findMany({
       where: { userId },
@@ -679,7 +668,17 @@ export class ProxyService {
 
     return this.prisma.profile.findFirst({
       where: { name: profileName, organizationId: { in: orgIds } },
-      include,
+      include: this.getProfileInfoInclude(),
+    });
+  }
+
+  /**
+   * Find a profile by ID for internal app lookups.
+   */
+  private async findProfileById(profileId: string) {
+    return this.prisma.profile.findUnique({
+      where: { id: profileId },
+      include: this.getProfileInfoInclude(),
     });
   }
 
@@ -822,6 +821,19 @@ export class ProxyService {
   }
 
   /**
+   * Get profile info with aggregated tools and server status by profile ID.
+   */
+  async getProfileInfoById(profileId: string) {
+    const profile = await this.findProfileById(profileId);
+
+    if (!profile) {
+      throw new NotFoundException(`Profile ${profileId} not found`);
+    }
+
+    return this.aggregateProfileInfo(profile);
+  }
+
+  /**
    * Aggregate tools and server status from a profile.
    */
   private async aggregateProfileInfo(profile: {
@@ -923,9 +935,7 @@ export class ProxyService {
   /**
    * Extract JSON Schema properties from either a Zod schema or a plain JSON Schema object.
    */
-  private extractJsonSchemaProperties(
-    schema: unknown
-  ): Record<string, unknown> | null {
+  private extractJsonSchemaProperties(schema: unknown): Record<string, unknown> | null {
     if (!schema || typeof schema !== 'object') return null;
 
     const s = schema as Record<string, unknown>;

@@ -64,17 +64,17 @@ describe('ProfilesPage', () => {
       http.get('/api/profiles/1/servers', () => {
         return HttpResponse.json({ serverIds: [] });
       }),
-      http.get(`${API_URL}/api/mcp/gateway/info`, () => {
-        return HttpResponse.json({ tools: [] });
+      http.get(`${API_URL}/api/profiles/1/info`, () => {
+        return HttpResponse.json({
+          tools: [],
+          serverStatus: { total: 0, connected: 0, servers: {} },
+        });
       }),
-      http.get('/api/mcp/gateway/info', () => {
-        return HttpResponse.json({ tools: [] });
-      }),
-      http.get(`${API_URL}/api/mcp/:orgSlug/:profileName/info`, () => {
-        return HttpResponse.json({ tools: [] });
-      }),
-      http.get('/api/mcp/:orgSlug/:profileName/info', () => {
-        return HttpResponse.json({ tools: [] });
+      http.get('/api/profiles/1/info', () => {
+        return HttpResponse.json({
+          tools: [],
+          serverStatus: { total: 0, connected: 0, servers: {} },
+        });
       })
     );
 
@@ -211,17 +211,17 @@ describe('ProfilesPage', () => {
       http.get('/api/profiles/1/servers', () => {
         return HttpResponse.json({ serverIds: [] });
       }),
-      http.get(`${API_URL}/api/mcp/gateway/info`, () => {
-        return HttpResponse.json({ tools: [] });
+      http.get(`${API_URL}/api/profiles/1/info`, () => {
+        return HttpResponse.json({
+          tools: [],
+          serverStatus: { total: 0, connected: 0, servers: {} },
+        });
       }),
-      http.get('/api/mcp/gateway/info', () => {
-        return HttpResponse.json({ tools: [] });
-      }),
-      http.get(`${API_URL}/api/mcp/:orgSlug/:profileName/info`, () => {
-        return HttpResponse.json({ tools: [] });
-      }),
-      http.get('/api/mcp/:orgSlug/:profileName/info', () => {
-        return HttpResponse.json({ tools: [] });
+      http.get('/api/profiles/1/info', () => {
+        return HttpResponse.json({
+          tools: [],
+          serverStatus: { total: 0, connected: 0, servers: {} },
+        });
       })
     );
 
@@ -260,5 +260,73 @@ describe('ProfilesPage', () => {
       },
       { timeout: 10000 }
     );
+  });
+
+  it('should fetch profile info by profile id and show the matching tool count', async () => {
+    const mockProfiles = [
+      {
+        id: '1',
+        name: 'alpha-profile',
+        description: 'Alpha profile',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      },
+      {
+        id: '2',
+        name: 'beta-profile',
+        description: 'Beta profile',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      },
+    ];
+
+    server.use(
+      http.get(`${API_URL}/api/profiles`, () => {
+        return HttpResponse.json(mockProfiles);
+      }),
+      http.get('/api/profiles', () => {
+        return HttpResponse.json(mockProfiles);
+      }),
+      http.get(`${API_URL}/api/profiles/1/info`, () => {
+        return HttpResponse.json({
+          tools: [{ name: 'tool-a' }, { name: 'tool-b' }],
+          serverStatus: { total: 1, connected: 1, servers: {} },
+        });
+      }),
+      http.get('/api/profiles/1/info', () => {
+        return HttpResponse.json({
+          tools: [{ name: 'tool-a' }, { name: 'tool-b' }],
+          serverStatus: { total: 1, connected: 1, servers: {} },
+        });
+      }),
+      http.get(`${API_URL}/api/profiles/2/info`, () => {
+        return HttpResponse.json({
+          tools: [{ name: 'tool-x' }],
+          serverStatus: { total: 2, connected: 1, servers: {} },
+        });
+      }),
+      http.get('/api/profiles/2/info', () => {
+        return HttpResponse.json({
+          tools: [{ name: 'tool-x' }],
+          serverStatus: { total: 2, connected: 1, servers: {} },
+        });
+      })
+    );
+
+    render(
+      <MemoryRouter>
+        <ProfilesPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('alpha-profile')).toBeInTheDocument();
+      expect(screen.getByText('beta-profile')).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('1/1 servers · 2 tools')).toBeInTheDocument();
+      expect(screen.getByText('1/2 servers · 1 tools')).toBeInTheDocument();
+    });
   });
 });

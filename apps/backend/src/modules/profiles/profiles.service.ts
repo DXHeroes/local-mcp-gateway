@@ -60,17 +60,6 @@ export class ProfilesService {
   ) {}
 
   /**
-   * Get the user's organization IDs for sharing lookups
-   */
-  private async getUserOrgIds(userId: string): Promise<string[]> {
-    const memberships = await this.prisma.member.findMany({
-      where: { userId },
-      select: { organizationId: true },
-    });
-    return memberships.map((m) => m.organizationId);
-  }
-
-  /**
    * Validate profile name against reserved names
    */
   private validateProfileName(name: string): void {
@@ -172,6 +161,17 @@ export class ProfilesService {
     }
 
     return profile;
+  }
+
+  /**
+   * Get aggregated tool info for a profile by ID.
+   */
+  async getInfo(id: string, userId: string, orgId?: string) {
+    if (orgId) {
+      await this.assertAccess(id, userId, orgId);
+    }
+
+    return this.proxyService.getProfileInfoById(id);
   }
 
   /**

@@ -122,7 +122,7 @@ test.describe('Profiles', () => {
       data: { name: profileName },
     });
     expect(response.status()).toBe(201);
-    const profile = await response.json();
+    await response.json();
 
     // Navigate
     await page.goto('/profiles');
@@ -131,7 +131,11 @@ test.describe('Profiles', () => {
 
     // Click the menu button on the profile card (three dots)
     const profileCard = page.locator(`h3:has-text("${profileName}")`).locator('..').locator('..');
-    await profileCard.getByRole('button').filter({ has: page.locator('svg') }).first().click();
+    await profileCard
+      .getByRole('button')
+      .filter({ has: page.locator('svg') })
+      .first()
+      .click();
 
     // Click Delete from dropdown
     await page.getByRole('menuitem', { name: /delete/i }).click();
@@ -176,7 +180,9 @@ test.describe('Profiles', () => {
     await page.getByRole('button', { name: 'Create' }).click();
 
     // Error should appear
-    await expect(page.getByText('Name must contain only alphanumeric')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Name must contain only alphanumeric')).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test('should edit a profile', async ({ page, request }) => {
@@ -196,7 +202,11 @@ test.describe('Profiles', () => {
 
     // Click the menu button on the profile card
     const profileCard = page.locator(`h3:has-text("${profileName}")`).locator('..').locator('..');
-    await profileCard.getByRole('button').filter({ has: page.locator('svg') }).first().click();
+    await profileCard
+      .getByRole('button')
+      .filter({ has: page.locator('svg') })
+      .first()
+      .click();
 
     // Click Edit from dropdown
     await page.getByRole('menuitem', { name: /edit/i }).click();
@@ -216,6 +226,113 @@ test.describe('Profiles', () => {
 
     // Updated profile should be visible
     await expect(page.getByRole('heading', { name: updatedName })).toBeVisible({ timeout: 15000 });
+  });
+
+  test('should refresh tool count after assigning a server in edit dialog', async ({
+    page,
+    request,
+  }) => {
+    const profileName = `e2e-profile-${Date.now()}`;
+    const serverName = `e2e-server-${Date.now()}`;
+    let routeShowsAssignedTools = false;
+    let profileId = '';
+    let serverId = '';
+
+    try {
+      const profileResponse = await retryRequest(request, 'post', `${API_URL}/api/profiles`, {
+        data: { name: profileName, description: 'Profile for tool count refresh' },
+      });
+      expect(profileResponse.status()).toBe(201);
+      profileId = (await profileResponse.json()).id;
+
+      const serverResponse = await retryRequest(request, 'post', `${API_URL}/api/mcp-servers`, {
+        data: {
+          name: serverName,
+          type: 'remote_http',
+          config: { url: 'https://example.com/mcp' },
+        },
+      });
+      expect(serverResponse.status()).toBe(201);
+      const server = await serverResponse.json();
+      serverId = server.id;
+
+      await page.route(`**/api/profiles/${profileId}/info`, async (route) => {
+        if (routeShowsAssignedTools) {
+          await route.fulfill({
+            json: {
+              tools: [{ name: 'tool-a' }, { name: 'tool-b' }],
+              serverStatus: {
+                total: 1,
+                connected: 1,
+                servers: {
+                  [serverId]: {
+                    connected: true,
+                    toolCount: 2,
+                  },
+                },
+              },
+            },
+          });
+          return;
+        }
+
+        await route.fulfill({
+          json: {
+            tools: [],
+            serverStatus: {
+              total: 0,
+              connected: 0,
+              servers: {},
+            },
+          },
+        });
+      });
+
+      await page.goto('/profiles');
+      await page.waitForLoadState('networkidle');
+      await expect(page.getByRole('heading', { name: profileName })).toBeVisible({
+        timeout: 15000,
+      });
+      await expect(page.getByText('0/0 servers · 0 tools')).toBeVisible({ timeout: 10000 });
+
+      const profileCard = page.locator(`h3:has-text("${profileName}")`).locator('..').locator('..');
+      await profileCard
+        .getByRole('button')
+        .filter({ has: page.locator('svg') })
+        .first()
+        .click();
+      await page.getByRole('menuitem', { name: /edit/i }).click();
+
+      await expect(page.getByRole('heading', { name: 'Edit Profile' })).toBeVisible({
+        timeout: 5000,
+      });
+      await expect(page.getByText(serverName)).toBeVisible({ timeout: 5000 });
+
+      await page.getByLabel(serverName).click();
+      routeShowsAssignedTools = true;
+      await page.getByRole('button', { name: 'Update' }).click();
+
+      await expect(page.getByText('1/1 servers · 2 tools')).toBeVisible({ timeout: 15000 });
+
+      const serversResponse = await retryRequest(
+        request,
+        'get',
+        `${API_URL}/api/profiles/${profileId}/servers`
+      );
+      expect(serversResponse.status()).toBe(200);
+      const profileServers = await serversResponse.json();
+      expect(
+        Array.isArray(profileServers) &&
+          profileServers.some((item: { mcpServerId: string }) => item.mcpServerId === serverId)
+      ).toBe(true);
+    } finally {
+      if (profileId) {
+        await safeDelete(request, `${API_URL}/api/profiles/${profileId}`);
+      }
+      if (serverId) {
+        await safeDelete(request, `${API_URL}/api/mcp-servers/${serverId}`);
+      }
+    }
   });
 
   test('should navigate to profile edit page on card click', async ({ page, request }) => {
@@ -247,7 +364,12 @@ test.describe('Profiles', () => {
     await expect(page.getByText('Gateway', { exact: true })).toBeVisible({ timeout: 10000 });
 
     // Gateway endpoint code element
-    await expect(page.locator('code').filter({ hasText: /\/api\/mcp/ }).first()).toBeVisible();
+    await expect(
+      page
+        .locator('code')
+        .filter({ hasText: /\/api\/mcp/ })
+        .first()
+    ).toBeVisible();
 
     // Copy button for gateway endpoint
     await expect(page.getByLabel('Copy gateway endpoint')).toBeVisible();
@@ -290,7 +412,11 @@ test.describe('Profiles', () => {
 
     // Open dropdown menu
     const profileCard = page.locator(`h3:has-text("${profileName}")`).locator('..').locator('..');
-    await profileCard.getByRole('button').filter({ has: page.locator('svg') }).first().click();
+    await profileCard
+      .getByRole('button')
+      .filter({ has: page.locator('svg') })
+      .first()
+      .click();
 
     // Click View from dropdown
     await page.getByRole('menuitem', { name: /view/i }).click();

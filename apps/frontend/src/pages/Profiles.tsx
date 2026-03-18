@@ -29,9 +29,9 @@ import { useNavigate } from 'react-router';
 import GatewayConfig from '../components/GatewayConfig';
 import ProfileForm from '../components/ProfileForm';
 import { getGatewayUrl, getProfileUrl } from '../config/api';
+import { useSharingSummary } from '../hooks/useSharingSummary';
 import { apiFetch } from '../lib/api-fetch';
 import { authClient } from '../lib/auth-client';
-import { useSharingSummary } from '../hooks/useSharingSummary';
 
 // Get active org slug for org-scoped MCP URLs
 function useOrgSlug(): string | undefined {
@@ -111,10 +111,7 @@ export default function ProfilesPage() {
       // Stage 2: Enrich each profile with status in background (parallel)
       const enrichPromises = data.map(async (profile) => {
         try {
-          const infoPath = orgSlug
-            ? `/api/mcp/${orgSlug}/${profile.name}/info`
-            : '/api/mcp/gateway/info';
-          const infoResponse = await apiFetch(infoPath);
+          const infoResponse = await apiFetch(`/api/profiles/${profile.id}/info`);
           if (infoResponse.ok) {
             const infoData = await infoResponse.json();
             const toolsCount = Array.isArray(infoData.tools) ? infoData.tools.length : 0;
@@ -138,7 +135,7 @@ export default function ProfilesPage() {
       setError(err instanceof Error ? err.message : 'Unknown error');
       setLoading(false);
     }
-  }, [orgSlug]);
+  }, []);
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -246,9 +243,7 @@ export default function ProfilesPage() {
     }
 
     if (data.serverIds !== undefined) {
-      const currentServersResponse = await apiFetch(
-        `/api/profiles/${editingProfile.id}/servers`
-      );
+      const currentServersResponse = await apiFetch(`/api/profiles/${editingProfile.id}/servers`);
       const currentServersData = await currentServersResponse.json();
       const currentServerIds = new Set(
         Array.isArray(currentServersData)
@@ -274,17 +269,14 @@ export default function ProfilesPage() {
       if (data.serverIds) {
         for (const serverId of newServerIds) {
           if (!currentServerIds.has(serverId)) {
-            const addResponse = await apiFetch(
-              `/api/profiles/${editingProfile.id}/servers`,
-              {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  mcpServerId: serverId,
-                  order: data.serverIds.indexOf(serverId),
-                }),
-              }
-            );
+            const addResponse = await apiFetch(`/api/profiles/${editingProfile.id}/servers`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                mcpServerId: serverId,
+                order: data.serverIds.indexOf(serverId),
+              }),
+            });
             if (!addResponse.ok) {
               const err = await addResponse.json().catch(() => ({}));
               throw new Error(err.message || 'Failed to add server to profile');
@@ -447,12 +439,15 @@ export default function ProfilesPage() {
                       <>
                         {info?.inbound && (
                           <Badge variant="secondary" className="text-xs shrink-0">
-                            Shared · {info.inbound.permission.charAt(0).toUpperCase() + info.inbound.permission.slice(1)}
+                            Shared ·{' '}
+                            {info.inbound.permission.charAt(0).toUpperCase() +
+                              info.inbound.permission.slice(1)}
                           </Badge>
                         )}
                         {info?.outbound && (
                           <Badge variant="outline" className="text-xs shrink-0">
-                            Sharing · {info.outbound.total} member{info.outbound.total !== 1 ? 's' : ''}
+                            Sharing · {info.outbound.total} member
+                            {info.outbound.total !== 1 ? 's' : ''}
                           </Badge>
                         )}
                       </>
@@ -562,10 +557,7 @@ export default function ProfilesPage() {
 /**
  * Empty state with quick-start guide
  */
-function EmptyState({
-  onCreateClick,
-  orgSlug,
-}: { onCreateClick: () => void; orgSlug?: string }) {
+function EmptyState({ onCreateClick, orgSlug }: { onCreateClick: () => void; orgSlug?: string }) {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 

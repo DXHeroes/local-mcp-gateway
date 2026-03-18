@@ -9,9 +9,19 @@ import { ProfilesService } from '../../modules/profiles/profiles.service.js';
 import type { ProxyService } from '../../modules/proxy/proxy.service.js';
 import type { SharingService } from '../../modules/sharing/sharing.service.js';
 
+type MockFn = ReturnType<typeof vi.fn>;
+type PrismaMocks = {
+  profile: Record<string, MockFn>;
+  profileMcpServer: Record<string, MockFn>;
+  profileMcpServerTool: Record<string, MockFn>;
+  mcpServer: Record<string, MockFn>;
+  member: Record<string, MockFn>;
+  $transaction: MockFn;
+};
+
 describe('ProfilesService', () => {
   let service: ProfilesService;
-  let prisma: Record<string, Record<string, ReturnType<typeof vi.fn>>>;
+  let prisma: PrismaMocks;
   let proxyService: Record<string, ReturnType<typeof vi.fn>>;
   let sharingService: Record<string, ReturnType<typeof vi.fn>>;
 
@@ -72,11 +82,21 @@ describe('ProfilesService', () => {
       member: {
         findMany: vi.fn().mockResolvedValue([]),
       },
-      $transaction: vi.fn().mockImplementation((cb) => cb(prisma)) as any,
+      $transaction: vi.fn().mockImplementation((cb) => cb(prisma)) as unknown as ReturnType<
+        typeof vi.fn
+      >,
     };
 
     proxyService = {
       getToolsForServer: vi.fn().mockResolvedValue([]),
+      getProfileInfoById: vi.fn().mockResolvedValue({
+        tools: [],
+        serverStatus: {
+          total: 0,
+          connected: 0,
+          servers: {},
+        },
+      }),
     };
 
     sharingService = {
@@ -527,6 +547,59 @@ describe('ProfilesService', () => {
       await expect(service.getServers(profileId, userId, orgId)).rejects.toThrow(
         ForbiddenException
       );
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // getInfo
+  // ---------------------------------------------------------------------------
+  describe('getInfo', () => {
+    it('should return aggregated info for an accessible profile', async () => {
+      prisma.profile.findUnique.mockResolvedValueOnce({
+        userId,
+        organizationId: orgId,
+      });
+      proxyService.getProfileInfoById.mockResolvedValueOnce({
+        tools: [{ name: 'tool-a', description: 'Tool A' }],
+        serverStatus: {
+          total: 1,
+          connected: 1,
+          servers: {
+            [serverId]: {
+              connected: true,
+              toolCount: 1,
+            },
+          },
+        },
+      });
+
+      const result = await service.getInfo(profileId, userId, orgId);
+
+      expect(proxyService.getProfileInfoById).toHaveBeenCalledWith(profileId);
+      expect(result).toEqual({
+        tools: [{ name: 'tool-a', description: 'Tool A' }],
+        serverStatus: {
+          total: 1,
+          connected: 1,
+          servers: {
+            [serverId]: {
+              connected: true,
+              toolCount: 1,
+            },
+          },
+        },
+      });
+    });
+
+    it('should reject access to an unshared profile', async () => {
+      prisma.profile.findUnique.mockResolvedValueOnce({
+        userId: 'other-user',
+        organizationId: orgId,
+      });
+      sharingService.isSharedWith.mockResolvedValueOnce(false);
+
+      await expect(service.getInfo(profileId, userId, orgId)).rejects.toThrow(ForbiddenException);
+      expect(proxyService.getProfileInfoById).not.toHaveBeenCalled();
     });
   });
 
