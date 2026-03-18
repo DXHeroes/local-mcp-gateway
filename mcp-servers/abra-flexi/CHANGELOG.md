@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.4.3](https://github.com/DXHeroes/local-mcp-gateway/compare/mcp-abra-flexi-v0.4.2...mcp-abra-flexi-v0.4.3) (2026-03-18)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * peerDependencies
+    * @dxheroes/local-mcp-core bumped to 0.10.2
+
 ## [0.4.2](https://github.com/DXHeroes/local-mcp-gateway/compare/mcp-abra-flexi-v0.4.1...mcp-abra-flexi-v0.4.2) (2026-03-18)
 
 
