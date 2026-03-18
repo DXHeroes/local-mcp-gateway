@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.16.0](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.15.1...frontend-v0.16.0) (2026-03-18)
+
+
+### Features
+
+* **debug:** enhance logging retrieval with pagination and filtering support ([815f268](https://github.com/DXHeroes/local-mcp-gateway/commit/815f2686f1ec44ee81bd6455509254fea21cf8c1))
+* **logging:** implement structured logging and error handling across services ([5de103a](https://github.com/DXHeroes/local-mcp-gateway/commit/5de103a22bf25a7780437e89e67b6526d2b5b894))
+* **profiles:** implement getInfo method for profile aggregation ([1a8efb4](https://github.com/DXHeroes/local-mcp-gateway/commit/1a8efb4bd3e199ee9355646850ca86179f39f6a7))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.16
+    * @dxheroes/local-mcp-ui bumped to 0.5.14
+
 ## [0.15.1](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.15.0...frontend-v0.15.1) (2026-03-18)
 
 

@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.15.0](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.14.0...backend-v0.15.0) (2026-03-18)
+
+
+### Features
+
+* **debug:** enhance logging retrieval with pagination and filtering support ([815f268](https://github.com/DXHeroes/local-mcp-gateway/commit/815f2686f1ec44ee81bd6455509254fea21cf8c1))
+* **logging:** implement structured logging and error handling across services ([5de103a](https://github.com/DXHeroes/local-mcp-gateway/commit/5de103a22bf25a7780437e89e67b6526d2b5b894))
+* **profiles:** implement getInfo method for profile aggregation ([1a8efb4](https://github.com/DXHeroes/local-mcp-gateway/commit/1a8efb4bd3e199ee9355646850ca86179f39f6a7))
+* **proxy:** enhance profile retrieval with user context ([de5ba86](https://github.com/DXHeroes/local-mcp-gateway/commit/de5ba86dfdd370e84cfe5b5b2a261dda6b63e2ee))
+
+
+### Code Refactoring
+
+* **tests:** improve type handling and error management in proxy-auth tests ([74c7a61](https://github.com/DXHeroes/local-mcp-gateway/commit/74c7a61f11ae66581aa9f8340940e30b479935f1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-core bumped to 0.10.2
+    * @dxheroes/local-mcp-database bumped to 0.7.2
+    * @dxheroes/mcp-abra-flexi bumped to 0.4.3
+    * @dxheroes/mcp-fakturoid bumped to 0.5.1
+    * @dxheroes/mcp-gemini-deep-research bumped to 0.5.11
+    * @dxheroes/mcp-merk bumped to 0.4.1
+    * @dxheroes/mcp-toggl bumped to 0.3.11
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.16
+
 ## [0.14.0](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.13.0...backend-v0.14.0) (2026-03-18)
 
 
