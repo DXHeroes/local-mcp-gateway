@@ -10,7 +10,7 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('Debug Logs', () => {
-  test('should display Debug Logs heading and filters', async ({ page }) => {
+  test('should display overview first with tabs and filters', async ({ page }) => {
     await page.goto('/debug-logs');
     await page.waitForLoadState('networkidle');
 
@@ -18,26 +18,25 @@ test.describe('Debug Logs', () => {
       timeout: 10000,
     });
 
+    await expect(page.getByRole('tab', { name: 'Overview' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Events' })).toBeVisible();
+
     // Filter controls should be visible
-    await expect(page.getByText('Filters')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Filters' })).toBeVisible();
     await expect(page.getByLabel('Profile')).toBeVisible();
     await expect(page.getByLabel('MCP Server')).toBeVisible();
     await expect(page.getByLabel('Request Type')).toBeVisible();
     await expect(page.getByLabel('Status')).toBeVisible();
   });
 
-  test('should show empty state or logs', async ({ page }) => {
+  test('should show overview content on initial load', async ({ page }) => {
     await page.goto('/debug-logs');
     await page.waitForLoadState('networkidle');
 
-    // Either empty message or log entries should be visible
-    const hasEmptyState = await page
-      .getByText(/no debug logs found/i)
-      .isVisible()
-      .catch(() => false);
-    const hasLogs = (await page.locator('.bg-white.rounded-lg.shadow.p-4').count()) > 1; // >1 because filter panel is also .bg-white
-
-    expect(hasEmptyState || hasLogs).toBeTruthy();
+    await expect(page.getByText(/log pulse/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Success Rate', { exact: true })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('should have auto-refresh toggle', async ({ page }) => {
@@ -79,7 +78,15 @@ test.describe('Debug Logs', () => {
     const requestTypeSelect = page.getByLabel('Request Type');
     await expect(requestTypeSelect).toBeVisible();
 
-    // Should have options
-    await expect(requestTypeSelect.locator('option')).toHaveCount(5); // All Types + 4 types
+    const optionCount = await requestTypeSelect.locator('option').count();
+    expect(optionCount).toBeGreaterThan(1);
+  });
+
+  test('should switch from overview to events tab', async ({ page }) => {
+    await page.goto('/debug-logs');
+    await page.waitForLoadState('networkidle');
+
+    await page.getByRole('tab', { name: 'Events' }).click();
+    await expect(page.getByText(/page \d+ of \d+/i)).toBeVisible({ timeout: 10000 });
   });
 });

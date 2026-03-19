@@ -74,6 +74,58 @@ export const handlers = [
   http.get('/api/debug/logs', () => {
     return HttpResponse.json({ logs: [], total: 0, page: 1, limit: 100, totalPages: 1, offset: 0 });
   }),
+  http.get(`${API_URL}/api/debug/logs/summary`, () => {
+    return HttpResponse.json({
+      overview: {
+        totalLogs: 0,
+        successCount: 0,
+        errorCount: 0,
+        pendingCount: 0,
+        errorRate: 0,
+        avgDurationMs: 0,
+        p95DurationMs: 0,
+        uniqueProfiles: 0,
+        uniqueServers: 0,
+      },
+      timeBucket: 'day',
+      timeseries: [],
+      statusBreakdown: [],
+      requestTypeBreakdown: [],
+      serverBreakdown: [],
+      latencyBuckets: [
+        { label: '0-100ms', count: 0 },
+        { label: '100-500ms', count: 0 },
+        { label: '500ms-1s', count: 0 },
+        { label: '1s+', count: 0 },
+      ],
+    });
+  }),
+  http.get('/api/debug/logs/summary', () => {
+    return HttpResponse.json({
+      overview: {
+        totalLogs: 0,
+        successCount: 0,
+        errorCount: 0,
+        pendingCount: 0,
+        errorRate: 0,
+        avgDurationMs: 0,
+        p95DurationMs: 0,
+        uniqueProfiles: 0,
+        uniqueServers: 0,
+      },
+      timeBucket: 'day',
+      timeseries: [],
+      statusBreakdown: [],
+      requestTypeBreakdown: [],
+      serverBreakdown: [],
+      latencyBuckets: [
+        { label: '0-100ms', count: 0 },
+        { label: '100-500ms', count: 0 },
+        { label: '500ms-1s', count: 0 },
+        { label: '1s+', count: 0 },
+      ],
+    });
+  }),
 
   // Sharing summary API
   http.get(`${API_URL}/api/sharing/summary/:resourceType`, () => {

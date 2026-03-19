@@ -41,6 +41,25 @@ export class DebugController {
     });
   }
 
+  @Get('logs/summary')
+  async getSummary(
+    @Query('profileId') profileId?: string,
+    @Query('mcpServerId') mcpServerId?: string,
+    @Query('requestType') requestType?: string,
+    @Query('status') status?: 'pending' | 'success' | 'error',
+    @Query('since') since?: string,
+    @Query('until') until?: string
+  ) {
+    return this.debugService.getSummary({
+      profileId,
+      mcpServerId,
+      requestType,
+      status,
+      since,
+      until,
+    });
+  }
+
   /**
    * Clear debug logs
    */
