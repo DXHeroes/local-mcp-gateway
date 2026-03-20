@@ -334,22 +334,28 @@ describe('ProxyService', () => {
       });
     });
 
-    it('should handle errors thrown during request handling', async () => {
+    it('should handle errors thrown during tool execution', async () => {
       const profile = makeProfile({
         mcpServers: [
           makeProfileServer(
             { id: 'srv-err-1', type: 'external', config: '{"command":"node"}' },
-            []
+            [{ toolName: 'brokenTool', isEnabled: true, customName: null }]
           ),
         ],
       });
       prisma.profile.findFirst.mockResolvedValue(profile);
 
-      mockListTools.mockRejectedValueOnce(new Error('Connection refused'));
+      mockListTools.mockResolvedValueOnce([
+        { name: 'brokenTool', description: 'Broken tool', inputSchema: {} },
+      ]);
+      mockCallTool.mockRejectedValueOnce(new Error('Connection refused'));
 
       const result = await service.handleRequest(
         'default',
-        makeRequest({ method: 'tools/list' }),
+        makeRequest({
+          method: 'tools/call',
+          params: { name: 'brokenTool', arguments: {} },
+        }),
         'user-1'
       );
 
@@ -359,20 +365,30 @@ describe('ProxyService', () => {
       });
     });
 
-    it('should update debug log with error when handler throws', async () => {
+    it('should update debug log with error when tool execution throws', async () => {
       const profile = makeProfile({
         mcpServers: [
           makeProfileServer(
             { id: 'srv-err-2', type: 'external', config: '{"command":"node"}' },
-            []
+            [{ toolName: 'brokenTool', isEnabled: true, customName: null }]
           ),
         ],
       });
       prisma.profile.findFirst.mockResolvedValue(profile);
 
-      mockListTools.mockRejectedValueOnce(new Error('Connection refused'));
+      mockListTools.mockResolvedValueOnce([
+        { name: 'brokenTool', description: 'Broken tool', inputSchema: {} },
+      ]);
+      mockCallTool.mockRejectedValueOnce(new Error('Connection refused'));
 
-      await service.handleRequest('default', makeRequest({ method: 'tools/list' }), 'user-1');
+      await service.handleRequest(
+        'default',
+        makeRequest({
+          method: 'tools/call',
+          params: { name: 'brokenTool', arguments: {} },
+        }),
+        'user-1'
+      );
 
       expect(debugService.updateLog).toHaveBeenCalledWith(
         'log-1',
@@ -383,22 +399,28 @@ describe('ProxyService', () => {
       );
     });
 
-    it('should handle non-Error objects thrown during request handling', async () => {
+    it('should handle non-Error objects thrown during tool execution', async () => {
       const profile = makeProfile({
         mcpServers: [
           makeProfileServer(
             { id: 'srv-err-3', type: 'external', config: '{"command":"node"}' },
-            []
+            [{ toolName: 'brokenTool', isEnabled: true, customName: null }]
           ),
         ],
       });
       prisma.profile.findFirst.mockResolvedValue(profile);
 
-      mockListTools.mockRejectedValueOnce('string error');
+      mockListTools.mockResolvedValueOnce([
+        { name: 'brokenTool', description: 'Broken tool', inputSchema: {} },
+      ]);
+      mockCallTool.mockRejectedValueOnce('string error');
 
       const result = await service.handleRequest(
         'default',
-        makeRequest({ method: 'tools/list' }),
+        makeRequest({
+          method: 'tools/call',
+          params: { name: 'brokenTool', arguments: {} },
+        }),
         'user-1'
       );
 
@@ -440,17 +462,23 @@ describe('ProxyService', () => {
         mcpServers: [
           makeProfileServer(
             { id: 'srv-err-4', type: 'external', config: '{"command":"node"}' },
-            []
+            [{ toolName: 'brokenTool', isEnabled: true, customName: null }]
           ),
         ],
       });
       prisma.profile.findFirst.mockResolvedValue(profile);
-      mockListTools.mockRejectedValueOnce(new Error('fail'));
+      mockListTools.mockResolvedValueOnce([
+        { name: 'brokenTool', description: 'Broken tool', inputSchema: {} },
+      ]);
+      mockCallTool.mockRejectedValueOnce(new Error('fail'));
       debugService.updateLog.mockRejectedValueOnce(new Error('DB error'));
 
       const result = await service.handleRequest(
         'default',
-        makeRequest({ method: 'tools/list' }),
+        makeRequest({
+          method: 'tools/call',
+          params: { name: 'brokenTool', arguments: {} },
+        }),
         'user-1'
       );
 
@@ -529,6 +557,70 @@ describe('ProxyService', () => {
           expect.objectContaining({ name: 'toolB' }),
         ])
       );
+    });
+
+    it('should skip servers that require OAuth and return tools from available servers', async () => {
+      const ps1 = makeProfileServer(
+        { id: 'srv-agg-good', type: 'external', config: '{"command":"node"}' },
+        []
+      );
+      const ps2 = makeProfileServer(
+        { id: 'srv-agg-oauth', type: 'remote_http', config: '{"url":"https://example.com/mcp"}' },
+        []
+      );
+      const profile = makeProfile({ mcpServers: [ps1, ps2] });
+      prisma.profile.findFirst.mockResolvedValue(profile);
+
+      mockInitialize
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValueOnce(new Error('OAUTH_REQUIRED: need auth'));
+      mockListTools.mockResolvedValueOnce([
+        { name: 'availableTool', description: 'available', inputSchema: {} },
+      ]);
+
+      const result = await service.handleRequest(
+        'default',
+        makeRequest({ method: 'tools/list' }),
+        'user-1'
+      );
+
+      expect(result.error).toBeUndefined();
+      expect((result.result as { tools: unknown[] }).tools).toEqual([
+        expect.objectContaining({ name: 'availableTool' }),
+      ]);
+      expect(debugService.updateLog).toHaveBeenCalledWith(
+        'log-1',
+        expect.objectContaining({ status: 'success' })
+      );
+    });
+
+    it('should skip servers that fail during listTools and keep healthy server tools', async () => {
+      const ps1 = makeProfileServer(
+        { id: 'srv-agg-list-ok', type: 'external', config: '{"command":"node"}' },
+        []
+      );
+      const ps2 = makeProfileServer(
+        { id: 'srv-agg-list-fail', type: 'external', config: '{"command":"python"}' },
+        []
+      );
+      const profile = makeProfile({ mcpServers: [ps1, ps2] });
+      prisma.profile.findFirst.mockResolvedValue(profile);
+
+      mockInitialize.mockResolvedValue(undefined);
+      mockListTools
+        .mockResolvedValueOnce([{ name: 'toolA', description: 'desc A', inputSchema: {} }])
+        .mockRejectedValueOnce(new Error('Connection failed'));
+
+      const result = await service.handleRequest(
+        'default',
+        makeRequest({ method: 'tools/list' }),
+        'user-1'
+      );
+
+      expect(result.error).toBeUndefined();
+      expect((result.result as { tools: unknown[] }).tools).toEqual([
+        expect.objectContaining({ name: 'toolA' }),
+      ]);
     });
 
     it('should apply custom name from tool customization', async () => {
@@ -640,6 +732,26 @@ describe('ProxyService', () => {
       expect(tools[0]).toHaveProperty('name', 'uncustomizedTool');
     });
 
+    it('should return an empty tool list when all servers are unavailable', async () => {
+      const ps = makeProfileServer(
+        { id: 'srv-all-oauth', type: 'remote_http', config: '{"url":"https://example.com/mcp"}' },
+        []
+      );
+      const profile = makeProfile({ mcpServers: [ps] });
+      prisma.profile.findFirst.mockResolvedValue(profile);
+
+      mockInitialize.mockRejectedValueOnce(new Error('OAUTH_REQUIRED: need auth'));
+
+      const result = await service.handleRequest(
+        'default',
+        makeRequest({ method: 'tools/list' }),
+        'user-1'
+      );
+
+      expect(result.error).toBeUndefined();
+      expect((result.result as { tools: unknown[] }).tools).toEqual([]);
+    });
+
     it('should skip servers that fail to get an instance', async () => {
       const ps = makeProfileServer({ id: 'srv-bad-type', type: 'unknown_type', config: '{}' }, []);
       const profile = makeProfile({ mcpServers: [ps] });
@@ -686,6 +798,39 @@ describe('ProxyService', () => {
       expect(result.result).toEqual({
         content: [{ type: 'text', text: 'hello' }],
       });
+    });
+
+    it('should skip an unavailable server and call the tool on a later healthy server', async () => {
+      const ps1 = makeProfileServer(
+        { id: 'srv-call-oauth', type: 'remote_http', config: '{"url":"https://example.com/mcp"}' },
+        []
+      );
+      const ps2 = makeProfileServer(
+        { id: 'srv-call-ok', type: 'external', config: '{"command":"node"}' },
+        [{ toolName: 'sharedTool', isEnabled: true, customName: null }]
+      );
+      const profile = makeProfile({ mcpServers: [ps1, ps2] });
+      prisma.profile.findFirst.mockResolvedValue(profile);
+
+      mockInitialize
+        .mockRejectedValueOnce(new Error('OAUTH_REQUIRED: need auth'))
+        .mockResolvedValueOnce(undefined);
+      mockListTools.mockResolvedValueOnce([
+        { name: 'sharedTool', description: 'desc', inputSchema: {} },
+      ]);
+      mockCallTool.mockResolvedValueOnce({ content: [{ type: 'text', text: 'ok' }] });
+
+      const result = await service.handleRequest(
+        'default',
+        makeRequest({
+          method: 'tools/call',
+          params: { name: 'sharedTool', arguments: {} },
+        }),
+        'user-1'
+      );
+
+      expect(result.error).toBeUndefined();
+      expect(mockCallTool).toHaveBeenCalledWith('sharedTool', {});
     });
 
     it('should resolve custom name to original tool name', async () => {
@@ -930,6 +1075,35 @@ describe('ProxyService', () => {
       const resources = (result.result as { resources: unknown[] }).resources;
       expect(resources).toHaveLength(0);
     });
+
+    it('should skip servers that fail to initialize and keep resources from healthy servers', async () => {
+      const ps1 = makeProfileServer(
+        { id: 'srv-res-oauth', type: 'remote_http', config: '{"url":"https://example.com/mcp"}' },
+        []
+      );
+      const ps2 = makeProfileServer(
+        { id: 'srv-res-ok', type: 'external', config: '{"command":"node"}' },
+        []
+      );
+      const profile = makeProfile({ mcpServers: [ps1, ps2] });
+      prisma.profile.findFirst.mockResolvedValue(profile);
+
+      mockInitialize
+        .mockRejectedValueOnce(new Error('OAUTH_REQUIRED: need auth'))
+        .mockResolvedValueOnce(undefined);
+      mockListResources.mockResolvedValueOnce([{ uri: 'file:///ok.txt', name: 'OK' }]);
+
+      const result = await service.handleRequest(
+        'default',
+        makeRequest({ method: 'resources/list' }),
+        'user-1'
+      );
+
+      expect(result.error).toBeUndefined();
+      expect((result.result as { resources: unknown[] }).resources).toEqual([
+        expect.objectContaining({ uri: 'file:///ok.txt', name: 'OK' }),
+      ]);
+    });
   });
 
   // =========================================================================
@@ -984,6 +1158,35 @@ describe('ProxyService', () => {
       );
 
       expect(result.result).toEqual({ contents: [{ text: 'found on second' }] });
+    });
+
+    it('should try next server when first server fails to initialize', async () => {
+      const ps1 = makeProfileServer(
+        { id: 'srv-rr-oauth', type: 'remote_http', config: '{"url":"https://example.com/mcp"}' },
+        []
+      );
+      const ps2 = makeProfileServer(
+        { id: 'srv-rr-ok', type: 'external', config: '{"command":"python"}' },
+        []
+      );
+      const profile = makeProfile({ mcpServers: [ps1, ps2] });
+      prisma.profile.findFirst.mockResolvedValue(profile);
+
+      mockInitialize
+        .mockRejectedValueOnce(new Error('OAUTH_REQUIRED: need auth'))
+        .mockResolvedValueOnce(undefined);
+      mockReadResource.mockResolvedValueOnce({ contents: [{ text: 'from second server' }] });
+
+      const result = await service.handleRequest(
+        'default',
+        makeRequest({
+          method: 'resources/read',
+          params: { uri: 'file:///test.txt' },
+        }),
+        'user-1'
+      );
+
+      expect(result.result).toEqual({ contents: [{ text: 'from second server' }] });
     });
 
     it('should return resource not found when no server has it', async () => {
@@ -1722,21 +1925,27 @@ describe('ProxyService', () => {
       expect(unknownResult.error?.code).toBe(-32601);
     });
 
-    it('should handle errors and update debug log', async () => {
+    it('should handle tool execution errors and update debug log', async () => {
       prisma.organization.findUnique.mockResolvedValue({ id: 'org-1' });
 
       const ps = makeProfileServer(
         { id: 'srv-org-err', type: 'external', config: '{"command":"node"}' },
-        []
+        [{ toolName: 'brokenTool', isEnabled: true, customName: null }]
       );
       prisma.profile.findUnique.mockResolvedValue(makeProfile({ mcpServers: [ps] }));
 
-      mockListTools.mockRejectedValueOnce(new Error('Server crashed'));
+      mockListTools.mockResolvedValueOnce([
+        { name: 'brokenTool', description: 'Broken tool', inputSchema: {} },
+      ]);
+      mockCallTool.mockRejectedValueOnce(new Error('Server crashed'));
 
       const result = await service.handleRequestByOrgSlug(
         'default',
         'my-org',
-        makeRequest({ method: 'tools/list' }),
+        makeRequest({
+          method: 'tools/call',
+          params: { name: 'brokenTool', arguments: {} },
+        }),
         'user-1'
       );
 
@@ -1762,21 +1971,27 @@ describe('ProxyService', () => {
       expect(result.result).toHaveProperty('tools');
     });
 
-    it('should handle debug log update failure on error gracefully', async () => {
+    it('should handle debug log update failure on tool execution error gracefully', async () => {
       prisma.organization.findUnique.mockResolvedValue({ id: 'org-1' });
       const ps = makeProfileServer(
         { id: 'srv-org-logfail', type: 'external', config: '{"command":"node"}' },
-        []
+        [{ toolName: 'brokenTool', isEnabled: true, customName: null }]
       );
       prisma.profile.findUnique.mockResolvedValue(makeProfile({ mcpServers: [ps] }));
 
-      mockListTools.mockRejectedValueOnce(new Error('Fail'));
+      mockListTools.mockResolvedValueOnce([
+        { name: 'brokenTool', description: 'Broken tool', inputSchema: {} },
+      ]);
+      mockCallTool.mockRejectedValueOnce(new Error('Fail'));
       debugService.updateLog.mockRejectedValueOnce(new Error('DB error'));
 
       const result = await service.handleRequestByOrgSlug(
         'default',
         'my-org',
-        makeRequest({ method: 'tools/list' }),
+        makeRequest({
+          method: 'tools/call',
+          params: { name: 'brokenTool', arguments: {} },
+        }),
         'user-1'
       );
 
@@ -1787,16 +2002,22 @@ describe('ProxyService', () => {
       prisma.organization.findUnique.mockResolvedValue({ id: 'org-1' });
       const ps = makeProfileServer(
         { id: 'srv-org-nonErr', type: 'external', config: '{"command":"node"}' },
-        []
+        [{ toolName: 'brokenTool', isEnabled: true, customName: null }]
       );
       prisma.profile.findUnique.mockResolvedValue(makeProfile({ mcpServers: [ps] }));
 
-      mockListTools.mockRejectedValueOnce(42);
+      mockListTools.mockResolvedValueOnce([
+        { name: 'brokenTool', description: 'Broken tool', inputSchema: {} },
+      ]);
+      mockCallTool.mockRejectedValueOnce(42);
 
       const result = await service.handleRequestByOrgSlug(
         'default',
         'my-org',
-        makeRequest({ method: 'tools/list' }),
+        makeRequest({
+          method: 'tools/call',
+          params: { name: 'brokenTool', arguments: {} },
+        }),
         'user-1'
       );
 

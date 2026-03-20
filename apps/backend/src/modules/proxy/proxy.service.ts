@@ -96,6 +96,25 @@ interface RequestExecutionResult {
   serverCount?: number;
 }
 
+interface ListedTool {
+  name: string;
+  description: string;
+  inputSchema: unknown;
+}
+
+interface ListedResource {
+  uri: string;
+  name: string;
+  description?: string;
+  mimeType?: string;
+}
+
+interface ServerToolsContext {
+  connected: boolean;
+  instance: McpServer | null;
+  tools: ListedTool[];
+}
+
 @Injectable()
 export class ProxyService {
   private readonly serverInstances = new Map<string, McpServer>();
@@ -398,6 +417,113 @@ export class ProxyService {
     return config?.isEnabled ?? false;
   }
 
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return 'Internal error';
+  }
+
+  private isOAuthRequiredError(error: unknown): boolean {
+    return this.getErrorMessage(error).includes('OAUTH_REQUIRED');
+  }
+
+  private logSkippedProfileServer(
+    server: { id: string; type: string },
+    operation: string,
+    phase: string,
+    error: unknown
+  ) {
+    appLogger.warn(
+      {
+        event: 'mcp.profile.server.skipped',
+        operation,
+        phase,
+        mcpServerId: server.id,
+        serverType: server.type,
+        oauthRequired: this.isOAuthRequiredError(error),
+        error: this.getErrorMessage(error),
+      },
+      'Skipping unavailable MCP server during profile aggregation'
+    );
+  }
+
+  private async getServerInstanceSafe(
+    server: {
+      id: string;
+      type: string;
+      config: unknown;
+      apiKeyConfig: unknown;
+    },
+    operation: string
+  ): Promise<McpServer | null> {
+    try {
+      return await this.getServerInstance(server);
+    } catch (error) {
+      this.logSkippedProfileServer(server, operation, 'initialize', error);
+      return null;
+    }
+  }
+
+  private async getServerToolsContext(
+    server: {
+      id: string;
+      type: string;
+      config: unknown;
+      apiKeyConfig: unknown;
+    },
+    operation: string
+  ): Promise<ServerToolsContext> {
+    const instance = await this.getServerInstanceSafe(server, operation);
+
+    if (!instance) {
+      return {
+        connected: false,
+        instance: null,
+        tools: [],
+      };
+    }
+
+    try {
+      return {
+        connected: true,
+        instance,
+        tools: await instance.listTools(),
+      };
+    } catch (error) {
+      this.logSkippedProfileServer(server, operation, 'listTools', error);
+      return {
+        connected: false,
+        instance: null,
+        tools: [],
+      };
+    }
+  }
+
+  private async getServerResources(
+    server: {
+      id: string;
+      type: string;
+      config: unknown;
+      apiKeyConfig: unknown;
+    },
+    operation: string
+  ): Promise<ListedResource[]> {
+    const instance = await this.getServerInstanceSafe(server, operation);
+
+    if (!instance) {
+      return [];
+    }
+
+    try {
+      return await instance.listResources();
+    } catch (error) {
+      this.logSkippedProfileServer(server, operation, 'listResources', error);
+      return [];
+    }
+  }
+
   private async handleToolsList(
     requestId: string | number,
     profile: ResolvedProfile
@@ -408,28 +534,32 @@ export class ProxyService {
       inputSchema: unknown;
     }> = [];
 
-    for (const profileServer of profile.mcpServers) {
-      const server = profileServer.mcpServer;
-      const instance = await this.getServerInstance(server);
+    const serverResults = await Promise.all(
+      profile.mcpServers.map(async (profileServer) => ({
+        profileServer,
+        context: await this.getServerToolsContext(profileServer.mcpServer, 'tools/list'),
+      }))
+    );
 
-      if (instance) {
-        const tools = await instance.listTools();
+    for (const { profileServer, context } of serverResults) {
+      if (!context.connected) {
+        continue;
+      }
 
-        for (const tool of tools) {
-          // Server-level allowlist filter
-          if (!this.isToolAllowedByServer(tool.name, server.toolConfigs)) {
-            continue;
-          }
+      for (const tool of context.tools) {
+        // Server-level allowlist filter
+        if (!this.isToolAllowedByServer(tool.name, profileServer.mcpServer.toolConfigs)) {
+          continue;
+        }
 
-          // Profile-level customization filter
-          const customization = profileServer.tools.find((t) => t.toolName === tool.name);
-          if (!customization || customization.isEnabled) {
-            allTools.push({
-              name: customization?.customName || tool.name,
-              description: customization?.customDescription || tool.description,
-              inputSchema: tool.inputSchema,
-            });
-          }
+        // Profile-level customization filter
+        const customization = profileServer.tools.find((t) => t.toolName === tool.name);
+        if (!customization || customization.isEnabled) {
+          allTools.push({
+            name: customization?.customName || tool.name,
+            description: customization?.customDescription || tool.description,
+            inputSchema: tool.inputSchema,
+          });
         }
       }
     }
@@ -458,53 +588,53 @@ export class ProxyService {
     // Find which server has this tool
     for (const profileServer of profile.mcpServers) {
       const server = profileServer.mcpServer;
-      const instance = await this.getServerInstance(server);
+      const { connected, instance, tools } = await this.getServerToolsContext(server, 'tools/call');
 
-      if (instance) {
-        const tools = await instance.listTools();
+      if (!connected || !instance) {
+        continue;
+      }
 
-        // Check if this server has the requested tool (by name or custom name)
-        const customization = profileServer.tools.find(
-          (t) => t.customName === params.name || t.toolName === params.name
-        );
+      // Check if this server has the requested tool (by name or custom name)
+      const customization = profileServer.tools.find(
+        (t) => t.customName === params.name || t.toolName === params.name
+      );
 
-        // Skip if tool is disabled at profile level
-        if (customization && !customization.isEnabled) {
-          continue;
-        }
+      // Skip if tool is disabled at profile level
+      if (customization && !customization.isEnabled) {
+        continue;
+      }
 
-        // Skip if tool is disabled at server level (allowlist)
-        const resolvedToolName = customization?.toolName || params.name;
-        if (!this.isToolAllowedByServer(resolvedToolName, server.toolConfigs)) {
-          continue;
-        }
+      // Skip if tool is disabled at server level (allowlist)
+      const resolvedToolName = customization?.toolName || params.name;
+      if (!this.isToolAllowedByServer(resolvedToolName, server.toolConfigs)) {
+        continue;
+      }
 
-        const toolName = customization?.toolName || params.name;
-        const toolDef = tools.find((t) => t.name === toolName);
+      const toolName = customization?.toolName || params.name;
+      const toolDef = tools.find((t) => t.name === toolName);
 
-        if (toolDef) {
-          // Update log with the server that handled this tool call
-          await this.updateDebugLog(logId, {
-            mcpServerId: server.id,
-          });
+      if (toolDef) {
+        // Update log with the server that handled this tool call
+        await this.updateDebugLog(logId, {
+          mcpServerId: server.id,
+        });
 
-          // Coerce string arguments to expected types based on tool's input schema
-          const coercedArgs = this.coerceToolArguments(params.arguments || {}, toolDef.inputSchema);
+        // Coerce string arguments to expected types based on tool's input schema
+        const coercedArgs = this.coerceToolArguments(params.arguments || {}, toolDef.inputSchema);
 
-          const result = await instance.callTool(toolName, coercedArgs);
+        const result = await instance.callTool(toolName, coercedArgs);
 
-          return {
-            response: {
-              jsonrpc: '2.0',
-              id: requestId,
-              result,
-            },
-            event: 'mcp.tool.call.completed',
-            status: 'success',
-            mcpServerId: server.id,
-            toolName,
-          };
-        }
+        return {
+          response: {
+            jsonrpc: '2.0',
+            id: requestId,
+            result,
+          },
+          event: 'mcp.tool.call.completed',
+          status: 'success',
+          mcpServerId: server.id,
+          toolName,
+        };
       }
     }
 
@@ -537,21 +667,16 @@ export class ProxyService {
       }>;
     }
   ): Promise<McpResponse> {
-    const allResources: Array<{
-      uri: string;
-      name: string;
-      description?: string;
-      mimeType?: string;
-    }> = [];
+    const allResources: ListedResource[] = [];
 
-    for (const profileServer of profile.mcpServers) {
-      const server = profileServer.mcpServer;
-      const instance = await this.getServerInstance(server);
+    const resourceResults = await Promise.all(
+      profile.mcpServers.map(async (profileServer) =>
+        this.getServerResources(profileServer.mcpServer, 'resources/list')
+      )
+    );
 
-      if (instance) {
-        const resources = await instance.listResources();
-        allResources.push(...resources);
-      }
+    for (const resources of resourceResults) {
+      allResources.push(...resources);
     }
 
     return {
@@ -581,7 +706,7 @@ export class ProxyService {
     // Try each server until we find one that has this resource
     for (const profileServer of profile.mcpServers) {
       const server = profileServer.mcpServer;
-      const instance = await this.getServerInstance(server);
+      const instance = await this.getServerInstanceSafe(server, 'resources/read');
 
       if (instance) {
         try {
@@ -920,49 +1045,36 @@ export class ProxyService {
     const tools: Array<{ name: string; description: string }> = [];
     const serverStatus: Record<string, { connected: boolean; toolCount: number }> = {};
 
-    const results = await Promise.allSettled(
-      profile.mcpServers.map(async (ps) => {
-        const server = ps.mcpServer;
-        const instance = await this.getServerInstance(server);
-
-        if (instance) {
-          const serverTools = await instance.listTools();
-          return { ps, serverTools, connected: true };
-        }
-        return {
-          ps,
-          serverTools: [] as Array<{ name: string; description: string; inputSchema: unknown }>,
-          connected: false,
-        };
-      })
+    const results = await Promise.all(
+      profile.mcpServers.map(async (ps) => ({
+        ps,
+        context: await this.getServerToolsContext(ps.mcpServer, 'profile/info'),
+      }))
     );
 
-    for (const result of results) {
-      if (result.status === 'fulfilled') {
-        const { ps, serverTools, connected } = result.value;
-        serverStatus[ps.mcpServer.id] = { connected, toolCount: serverTools.length };
+    for (const { ps, context } of results) {
+      serverStatus[ps.mcpServer.id] = {
+        connected: context.connected,
+        toolCount: context.tools.length,
+      };
 
-        if (connected) {
-          for (const tool of serverTools) {
-            // Server-level allowlist filter
-            if (!this.isToolAllowedByServer(tool.name, ps.mcpServer.toolConfigs)) {
-              continue;
-            }
+      if (!context.connected) {
+        continue;
+      }
 
-            const customization = ps.tools.find((t) => t.toolName === tool.name);
-            if (!customization || customization.isEnabled) {
-              tools.push({
-                name: customization?.customName || tool.name,
-                description: customization?.customDescription || tool.description,
-              });
-            }
-          }
+      for (const tool of context.tools) {
+        // Server-level allowlist filter
+        if (!this.isToolAllowedByServer(tool.name, ps.mcpServer.toolConfigs)) {
+          continue;
         }
-      } else {
-        // Failed — find the corresponding ps from the original array by index
-        const index = results.indexOf(result);
-        const ps = profile.mcpServers[index];
-        serverStatus[ps.mcpServer.id] = { connected: false, toolCount: 0 };
+
+        const customization = ps.tools.find((t) => t.toolName === tool.name);
+        if (!customization || customization.isEnabled) {
+          tools.push({
+            name: customization?.customName || tool.name,
+            description: customization?.customDescription || tool.description,
+          });
+        }
       }
     }
 
