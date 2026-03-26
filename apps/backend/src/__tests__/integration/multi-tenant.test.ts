@@ -285,7 +285,8 @@ describe('Multi-tenant data isolation', () => {
         prisma as unknown as PrismaService,
         registry,
         debugService as unknown as DebugService,
-        sharingService as unknown as SharingService
+        sharingService as unknown as SharingService,
+        { emit: vi.fn() } as any
       );
     });
 

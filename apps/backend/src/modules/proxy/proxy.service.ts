@@ -11,6 +11,7 @@ import {
   RemoteSseMcpServer,
 } from '@dxheroes/local-mcp-core';
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import { appLogger } from '../../common/logging/app-logger.js';
 import { stringifyRedacted } from '../../common/logging/redact-sensitive-fields.js';
 import { PrismaService } from '../database/prisma.service.js';
@@ -115,6 +116,8 @@ interface ServerToolsContext {
   tools: ListedTool[];
 }
 
+export const MCP_SERVER_CHANGED = 'mcp.server.changed';
+
 @Injectable()
 export class ProxyService {
   private readonly serverInstances = new Map<string, McpServer>();
@@ -124,6 +127,38 @@ export class ProxyService {
     private readonly registry: McpRegistry,
     private readonly debugService: DebugService
   ) {}
+
+  /**
+   * Handle MCP server config/apiKey changes.
+   * Evicts the stale cached instance and re-initializes with fresh config.
+   */
+  @OnEvent(MCP_SERVER_CHANGED)
+  async handleServerChanged(payload: { serverId: string }) {
+    this.serverInstances.delete(payload.serverId);
+
+    const server = await this.prisma.mcpServer.findUnique({
+      where: { id: payload.serverId },
+    });
+
+    if (!server) return;
+
+    try {
+      await this.getServerInstance(server);
+      appLogger.info(
+        { event: 'mcp.server.reinitialized', serverId: payload.serverId },
+        'MCP server reinitialized after config change'
+      );
+    } catch (error) {
+      appLogger.warn(
+        {
+          event: 'mcp.server.reinitialize.failed',
+          serverId: payload.serverId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        'Failed to reinitialize MCP server after config change'
+      );
+    }
+  }
 
   /**
    * Handle MCP JSON-RPC request for a profile

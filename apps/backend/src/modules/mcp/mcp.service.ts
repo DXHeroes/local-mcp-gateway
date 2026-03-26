@@ -12,6 +12,8 @@ import {
   RemoteSseMcpServer,
 } from '@dxheroes/local-mcp-core';
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { MCP_SERVER_CHANGED } from '../proxy/proxy.service.js';
 
 /** Sentinel value for unauthenticated MCP access */
 const UNAUTHENTICATED_ID = '__unauthenticated__';
@@ -50,7 +52,8 @@ export class McpService {
     private readonly prisma: PrismaService,
     private readonly registry: McpRegistry,
     private readonly debugService: DebugService,
-    private readonly sharingService: SharingService
+    private readonly sharingService: SharingService,
+    private readonly eventEmitter: EventEmitter2
   ) {}
 
   private invalidateBatchCache(userId: string, orgId?: string) {
@@ -240,6 +243,7 @@ export class McpService {
       },
     });
     this.invalidateBatchCache(userId, _orgId);
+    this.eventEmitter.emit(MCP_SERVER_CHANGED, { serverId: id });
     return result;
   }
 
@@ -256,6 +260,7 @@ export class McpService {
 
     await this.prisma.mcpServer.delete({ where: { id } });
     this.invalidateBatchCache(userId, _orgId);
+    this.eventEmitter.emit(MCP_SERVER_CHANGED, { serverId: id });
   }
 
   /**

@@ -243,7 +243,8 @@ describe('Sharing and per-user access control', () => {
         prisma as unknown as PrismaService,
         registry,
         debugService as unknown as DebugService,
-        sharingServiceMock as unknown as SharingServiceType
+        sharingServiceMock as unknown as SharingServiceType,
+        { emit: vi.fn() } as any
       );
     });
 
