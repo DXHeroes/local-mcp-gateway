@@ -61,6 +61,7 @@ Auth is always enabled with email+password as the baseline method.
 | `BETTER_AUTH_URL` | Base URL for the auth server | `http://localhost:3001` |
 | `FRONTEND_URL` | Frontend URL (used for invitation links and redirects) | `http://localhost:3000` |
 | `AUTH_EMAIL_PASSWORD` | Enable email+password login. Set to `false` to disable. | `true` |
+| `AUTH_EMAIL_PASSWORD_SIGNUP_MODE` | Email+password signup policy: `open`, `invite_only`, or `closed`. | `open` |
 
 ### Google OAuth (optional)
 

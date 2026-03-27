@@ -10,6 +10,8 @@ import { apiFetch } from '../lib/api-fetch';
 import { authClient } from '../lib/auth-client';
 import { hasMcpAuthQuery, isMcpLoginPath } from '../lib/mcp-auth';
 
+type SignupMode = 'open' | 'invite_only' | 'closed';
+
 export default function LoginPage() {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [name, setName] = useState('');
@@ -19,6 +21,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleEnabled, setGoogleEnabled] = useState(false);
   const [emailPasswordEnabled, setEmailPasswordEnabled] = useState(true);
+  const [signupMode, setSignupMode] = useState<SignupMode>('open');
   const [configLoaded, setConfigLoaded] = useState(false);
   const [backendError, setBackendError] = useState(false);
 
@@ -37,6 +40,11 @@ export default function LoginPage() {
         if (!config) return;
         setGoogleEnabled(config.google === true);
         setEmailPasswordEnabled(config.emailAndPassword !== false);
+        setSignupMode(
+          config.signupMode === 'invite_only' || config.signupMode === 'closed'
+            ? config.signupMode
+            : 'open'
+        );
         setConfigLoaded(true);
       })
       .catch(() => {
@@ -48,13 +56,28 @@ export default function LoginPage() {
     fetchAuthConfig();
   }, [fetchAuthConfig]);
 
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/';
+  const isInviteRoute = currentPath.startsWith('/invite/');
+  const invitationId = isInviteRoute ? (currentPath.split('/')[2] ?? '') : '';
+  const allowEmailPasswordSignUp =
+    emailPasswordEnabled &&
+    (signupMode === 'open' || (signupMode === 'invite_only' && isInviteRoute));
+  const activeMode = allowEmailPasswordSignUp ? mode : 'signin';
+
+  useEffect(() => {
+    if (configLoaded && mode === 'signup' && !allowEmailPasswordSignUp) {
+      setMode('signin');
+      setError('');
+    }
+  }, [allowEmailPasswordSignUp, configLoaded, mode]);
+
   const callbackPath =
     typeof window !== 'undefined' &&
-    isMcpLoginPath(window.location.pathname) &&
+    isMcpLoginPath(currentPath) &&
     hasMcpAuthQuery(window.location.search)
-      ? `${window.location.pathname}${window.location.search}`
-      : typeof window !== 'undefined' && window.location.pathname.startsWith('/invite/')
-        ? window.location.pathname
+      ? `${currentPath}${window.location.search}`
+      : isInviteRoute
+        ? currentPath
         : '/';
 
   const callbackURL =
@@ -81,7 +104,16 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const result = await authClient.signUp.email({ name, email, password });
+      const result = await authClient.signUp.email(
+        { name, email, password },
+        isInviteRoute && invitationId
+          ? {
+              headers: {
+                'X-Invitation-Id': invitationId,
+              },
+            }
+          : undefined
+      );
       if (result.error) {
         setError(result.error.message || 'Sign up failed');
       }
@@ -146,13 +178,15 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
       <div className="max-w-md w-full bg-white shadow-sm rounded-lg p-8">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-2 text-center">
-          Local MCP Gateway
-        </h1>
+        <h1 className="text-2xl font-semibold text-gray-900 mb-2 text-center">Local MCP Gateway</h1>
         <p className="text-gray-500 mb-8 text-center">
-          {mode === 'signin'
-            ? 'Sign in to manage your MCP servers and profiles'
-            : 'Create an account to get started'}
+          {isInviteRoute
+            ? activeMode === 'signin'
+              ? 'Sign in or create your invited account to continue'
+              : 'Create your invited account to continue'
+            : activeMode === 'signin'
+              ? 'Sign in to manage your MCP servers and profiles'
+              : 'Create an account to get started'}
         </p>
 
         {error && (
@@ -167,10 +201,30 @@ export default function LoginPage() {
           </div>
         )}
 
+        {configLoaded && emailPasswordEnabled && signupMode === 'invite_only' && !isInviteRoute && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm text-center">
+            Account creation is available only through an invitation link. Existing users can still
+            sign in.
+          </div>
+        )}
+
+        {configLoaded && emailPasswordEnabled && signupMode === 'closed' && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm text-center">
+            Account creation is currently disabled. Existing users can still sign in.
+          </div>
+        )}
+
+        {configLoaded && isInviteRoute && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm text-center">
+            Use the invited email address to create an account, then accept the organization
+            invitation.
+          </div>
+        )}
+
         {emailPasswordEnabled && (
           <>
-            <form onSubmit={mode === 'signin' ? handleEmailSignIn : handleEmailSignUp}>
-              {mode === 'signup' && (
+            <form onSubmit={activeMode === 'signin' ? handleEmailSignIn : handleEmailSignUp}>
+              {activeMode === 'signup' && (
                 <div className="mb-4">
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                     Name
@@ -223,41 +277,47 @@ export default function LoginPage() {
                 disabled={loading}
                 className="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Please wait...' : mode === 'signin' ? 'Sign In' : 'Create Account'}
+                {loading
+                  ? 'Please wait...'
+                  : activeMode === 'signin'
+                    ? 'Sign In'
+                    : 'Create Account'}
               </button>
             </form>
 
-            <div className="mt-4 text-center">
-              {mode === 'signin' ? (
-                <p className="text-sm text-gray-500">
-                  Don&apos;t have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMode('signup');
-                      setError('');
-                    }}
-                    className="text-blue-600 hover:text-blue-800 font-medium"
-                  >
-                    Sign up
-                  </button>
-                </p>
-              ) : (
-                <p className="text-sm text-gray-500">
-                  Already have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMode('signin');
-                      setError('');
-                    }}
-                    className="text-blue-600 hover:text-blue-800 font-medium"
-                  >
-                    Sign in
-                  </button>
-                </p>
-              )}
-            </div>
+            {allowEmailPasswordSignUp && (
+              <div className="mt-4 text-center">
+                {activeMode === 'signin' ? (
+                  <p className="text-sm text-gray-500">
+                    Don&apos;t have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMode('signup');
+                        setError('');
+                      }}
+                      className="text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      Sign up
+                    </button>
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-500">
+                    Already have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMode('signin');
+                        setError('');
+                      }}
+                      className="text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      Sign in
+                    </button>
+                  </p>
+                )}
+              </div>
+            )}
           </>
         )}
 

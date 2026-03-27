@@ -11,9 +11,14 @@ import type { PrismaClient } from '@dxheroes/local-mcp-database/generated/prisma
 import { ConfigService } from '@nestjs/config';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
+import { createAuthMiddleware } from 'better-auth/api';
 import { mcp } from 'better-auth/plugins';
 import { organization } from 'better-auth/plugins/organization';
 import { Resend } from 'resend';
+import {
+  assertEmailPasswordSignupAllowed,
+  getEmailPasswordSignupMode,
+} from './auth-signup.utils.js';
 import { resolveFrontendOrigin, resolveMcpLoginPageUrl } from './mcp-oauth.utils.js';
 
 /**
@@ -42,16 +47,17 @@ function toSlug(name: string): string {
 export function createAuth(prisma: PrismaClient): AuthInstance {
   const hasGoogle = !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET;
   const emailPasswordEnabled = process.env.AUTH_EMAIL_PASSWORD !== 'false';
+  const signupMode = getEmailPasswordSignupMode();
   const configService = new ConfigService();
 
   const auth = betterAuth({
     basePath: '/api/auth',
     baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3001',
     secret: process.env.BETTER_AUTH_SECRET,
-    trustedOrigins: (process.env.CORS_ORIGINS?.split(',') || [
+    trustedOrigins: process.env.CORS_ORIGINS?.split(',') || [
       'http://localhost:5173',
       'http://localhost:3000',
-    ]),
+    ],
     database: prismaAdapter(prisma, { provider: 'postgresql' }),
     emailAndPassword: { enabled: emailPasswordEnabled },
     ...(hasGoogle && {
@@ -67,6 +73,20 @@ export function createAuth(prisma: PrismaClient): AuthInstance {
         enabled: true,
         maxAge: 5 * 60, // 5 minutes
       },
+    },
+    hooks: {
+      before: createAuthMiddleware(async (ctx) => {
+        if (ctx.path !== '/sign-up/email') {
+          return;
+        }
+
+        await assertEmailPasswordSignupAllowed({
+          prisma,
+          signupMode,
+          email: typeof ctx.body?.email === 'string' ? ctx.body.email : '',
+          headers: ctx.headers ?? new Headers(),
+        });
+      }),
     },
     databaseHooks: {
       user: {

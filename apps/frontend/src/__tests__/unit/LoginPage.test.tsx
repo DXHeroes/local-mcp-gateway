@@ -8,6 +8,25 @@ const signInEmail = vi.fn();
 const signInSocial = vi.fn();
 const signUpEmail = vi.fn();
 
+function mockAuthConfig(
+  config: {
+    emailAndPassword?: boolean;
+    google?: boolean;
+    signupMode?: 'open' | 'invite_only' | 'closed';
+  } = {}
+) {
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+    new Response(
+      JSON.stringify({
+        emailAndPassword: config.emailAndPassword ?? true,
+        google: config.google ?? true,
+        signupMode: config.signupMode ?? 'open',
+      }),
+      { status: 200 }
+    )
+  );
+}
+
 vi.mock('../../lib/auth-client', () => ({
   authClient: {
     signIn: {
@@ -22,9 +41,7 @@ vi.mock('../../lib/auth-client', () => ({
 
 describe('LoginPage', () => {
   beforeEach(() => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ emailAndPassword: true, google: true }), { status: 200 })
-    );
+    mockAuthConfig();
   });
 
   afterEach(() => {
@@ -77,7 +94,7 @@ describe('LoginPage', () => {
 
     render(<LoginPage />);
 
-    fireEvent.change(screen.getByLabelText('Email'), {
+    fireEvent.change(await screen.findByLabelText('Email'), {
       target: { value: 'user@example.com' },
     });
     fireEvent.change(screen.getByLabelText('Password'), {
@@ -87,6 +104,52 @@ describe('LoginPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Invalid email or password')).toBeInTheDocument();
+    });
+  });
+
+  it('hides public sign-up when signup is invite-only', async () => {
+    mockAuthConfig({ signupMode: 'invite_only' });
+
+    render(<LoginPage />);
+
+    expect(
+      await screen.findByText(/account creation is available only through an invitation link/i)
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /sign up/i })).not.toBeInTheDocument();
+  });
+
+  it('allows sign-up from an invitation link and forwards the invitation header', async () => {
+    window.history.pushState({}, '', 'http://localhost:3000/invite/invite-123');
+    mockAuthConfig({ signupMode: 'invite_only' });
+    signUpEmail.mockResolvedValue({ data: { ok: true } });
+
+    render(<LoginPage />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Sign up' }));
+    fireEvent.change(screen.getByLabelText('Name'), {
+      target: { value: 'Invited User' },
+    });
+    fireEvent.change(screen.getByLabelText('Email'), {
+      target: { value: 'invited@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('Password'), {
+      target: { value: 'password123' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Create Account' }));
+
+    await waitFor(() => {
+      expect(signUpEmail).toHaveBeenCalledWith(
+        {
+          name: 'Invited User',
+          email: 'invited@example.com',
+          password: 'password123',
+        },
+        {
+          headers: {
+            'X-Invitation-Id': 'invite-123',
+          },
+        }
+      );
     });
   });
 });

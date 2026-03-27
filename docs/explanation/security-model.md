@@ -24,6 +24,7 @@ We use `localtunnel` to create a public HTTPS URL.
 The gateway uses [Better Auth](https://www.better-auth.com/) for user authentication:
 
 - **Email + password**: Enabled by default. Can be disabled via `AUTH_EMAIL_PASSWORD=false`.
+- **Email + password signup policy**: Controlled via `AUTH_EMAIL_PASSWORD_SIGNUP_MODE` (`open`, `invite_only`, `closed`).
 - **Google OAuth**: Optional. Enabled when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set.
 - **Session management**: Cookie-based sessions with a configurable secret (`BETTER_AUTH_SECRET`). Sessions are cached for 5 minutes.
 - **Bearer tokens**: MCP proxy endpoints accept `Authorization: Bearer <token>` headers for programmatic access.
@@ -58,4 +59,3 @@ For connecting to backend MCP servers (not gateway user auth):
 3.  **Review logs**: Periodically check the "Debug Logs" page to ensure no unexpected access is occurring.
 4.  **Use organizations**: Group team resources in a shared organization with appropriate roles.
 5.  **Protect your auth secret**: Set a strong `BETTER_AUTH_SECRET` in production to prevent session forgery.
-

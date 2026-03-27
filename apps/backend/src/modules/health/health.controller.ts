@@ -5,6 +5,7 @@
  */
 
 import { Controller, Get } from '@nestjs/common';
+import { getEmailPasswordSignupMode } from '../auth/auth-signup.utils.js';
 import { Public } from '../auth/decorators/public.decorator.js';
 import { PrismaService } from '../database/prisma.service.js';
 
@@ -32,6 +33,7 @@ export class HealthController {
   getAuthConfig() {
     return {
       emailAndPassword: process.env.AUTH_EMAIL_PASSWORD !== 'false',
+      signupMode: getEmailPasswordSignupMode(),
       google: !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET,
     };
   }
