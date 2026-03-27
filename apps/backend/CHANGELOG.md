@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.16.0](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.15.0...backend-v0.16.0) (2026-03-27)
+
+
+### Features
+
+* **auth:** implement email/password signup modes and validation ([a772b51](https://github.com/DXHeroes/local-mcp-gateway/commit/a772b51acd00255ba7fb4c316e00ad49374c9b62))
+* **debug:** implement summary endpoint and enhance debug logs overview ([675650a](https://github.com/DXHeroes/local-mcp-gateway/commit/675650a47260401b4cf07daefabe4ff5e06349b3))
+* **mcp:** add byzdata Czech business registry MCP package ([c42d2b8](https://github.com/DXHeroes/local-mcp-gateway/commit/c42d2b8aebc2a93271fafce9cc32cf477973d43e))
+* **proxy:** enhance tool execution handling and server aggregation ([fc83803](https://github.com/DXHeroes/local-mcp-gateway/commit/fc838037c160a66fa010143f07de2bb421410549))
+
+
+### Bug Fixes
+
+* **proxy:** invalidate cached server instances when API key changes ([9ab8898](https://github.com/DXHeroes/local-mcp-gateway/commit/9ab8898deb20e373d026d14c032b4fb2e5335ced))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-core bumped to 0.10.3
+    * @dxheroes/local-mcp-database bumped to 0.7.3
+    * @dxheroes/mcp-abra-flexi bumped to 0.4.4
+    * @dxheroes/mcp-fakturoid bumped to 0.5.2
+    * @dxheroes/mcp-gemini-deep-research bumped to 0.5.12
+    * @dxheroes/mcp-merk bumped to 0.4.2
+    * @dxheroes/mcp-toggl bumped to 0.3.12
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.17
+
 ## [0.15.0](https://github.com/DXHeroes/local-mcp-gateway/compare/backend-v0.14.0...backend-v0.15.0) (2026-03-18)
 
 
