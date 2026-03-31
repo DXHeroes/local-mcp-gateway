@@ -332,8 +332,18 @@ export class ProxyService {
       const durationMs = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : 'Internal error';
 
+      const errorResponse = {
+        jsonrpc: '2.0' as const,
+        id: request.id,
+        error: {
+          code: -32603,
+          message: errorMessage,
+        },
+      };
+
       if (shouldLog) {
         await this.updateDebugLog(logId, {
+          responsePayload: errorResponse,
           status: 'error',
           errorMessage,
           durationMs,
@@ -353,14 +363,7 @@ export class ProxyService {
         );
       }
 
-      return {
-        jsonrpc: '2.0',
-        id: request.id,
-        error: {
-          code: -32603,
-          message: errorMessage,
-        },
-      };
+      return errorResponse;
     }
   }
 

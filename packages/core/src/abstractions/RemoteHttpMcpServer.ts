@@ -26,7 +26,7 @@ export interface HttpClient {
     url: string,
     body: unknown,
     headers?: Record<string, string>
-  ): Promise<{ status: number; headers: Headers; json(): Promise<unknown> }>;
+  ): Promise<{ status: number; headers: Headers; json(): Promise<unknown>; text(): Promise<string> }>;
 }
 
 /**
@@ -37,7 +37,7 @@ class FetchHttpClient implements HttpClient {
     url: string,
     body: unknown,
     headers: Record<string, string> = {}
-  ): Promise<{ status: number; headers: Headers; json(): Promise<unknown> }> {
+  ): Promise<{ status: number; headers: Headers; json(): Promise<unknown>; text(): Promise<string> }> {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -48,12 +48,24 @@ class FetchHttpClient implements HttpClient {
       body: JSON.stringify(body),
     });
 
+    // Cache the body text so both json() and text() can use it
+    let cachedText: string | undefined;
+    const getText = async () => {
+      if (cachedText === undefined) {
+        cachedText = await response.text();
+      }
+      return cachedText;
+    };
+
     return {
       status: response.status,
       headers: response.headers,
+      async text() {
+        return getText();
+      },
       async json() {
         // Don't throw on non-ok status - let caller handle it
-        const text = await response.text();
+        const text = await getText();
 
         // Check if response is SSE format (event: message data: {...})
         if (text.includes('event:') && text.includes('data:')) {
@@ -317,11 +329,15 @@ export class RemoteHttpMcpServer extends McpServer {
         // Check for session-related errors (400/404 with error about missing/invalid session)
         if (response.status === 400 || response.status === 404) {
           let result: unknown;
+          const rawText = await response.text();
           try {
-            result = await response.json();
+            result = JSON.parse(rawText);
           } catch {
-            // If JSON parsing fails, throw with status info so the outer retry loop can handle it
-            throw new Error(`HTTP ${response.status}: Failed to parse response as JSON`);
+            // Include raw body preview so it's visible in debug logs
+            const preview = rawText.length > 500 ? `${rawText.substring(0, 500)}...` : rawText;
+            throw new Error(
+              `HTTP ${response.status}: Failed to parse response as JSON${preview ? `\n\nRaw response:\n${preview}` : ''}`
+            );
           }
 
           const errorMessage =

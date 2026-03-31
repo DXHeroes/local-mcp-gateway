@@ -206,6 +206,16 @@ describe('RemoteHttpMcpServer', () => {
           return {
             status: 400,
             headers: new Headers(),
+            async text() {
+              return JSON.stringify({
+                jsonrpc: '2.0',
+                id: 1,
+                error: {
+                  code: -32000,
+                  message: 'Session not found',
+                },
+              });
+            },
             async json() {
               return {
                 jsonrpc: '2.0',
@@ -720,6 +730,16 @@ describe('RemoteHttpMcpServer', () => {
           return {
             status: 404,
             headers: new Headers(),
+            async text() {
+              return JSON.stringify({
+                jsonrpc: '2.0',
+                id: 2,
+                error: {
+                  code: -32000,
+                  message: 'Session not found',
+                },
+              });
+            },
             async json() {
               return {
                 jsonrpc: '2.0',
@@ -799,6 +819,9 @@ describe('RemoteHttpMcpServer', () => {
             return {
               status: 404,
               headers: new Headers(),
+              async text() {
+                return JSON.stringify({ error: { code: -32000, message: 'Session not found' } });
+              },
               async json() {
                 return { error: { code: -32000, message: 'Session not found' } };
               },
@@ -858,6 +881,9 @@ describe('RemoteHttpMcpServer', () => {
           return {
             status: 404,
             headers: new Headers(),
+            async text() {
+              return JSON.stringify({ error: { code: -32000, message: 'Session not found' } });
+            },
             async json() {
               return { error: { code: -32000, message: 'Session not found' } };
             },
