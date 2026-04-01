@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.2](https://github.com/DXHeroes/local-mcp-gateway/compare/mcp-fakturoid-v0.5.1...mcp-fakturoid-v0.5.2) (2026-04-01)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * peerDependencies
+    * @dxheroes/local-mcp-core bumped to 0.10.3
+
 ## [0.5.1](https://github.com/DXHeroes/local-mcp-gateway/compare/mcp-fakturoid-v0.5.0...mcp-fakturoid-v0.5.1) (2026-03-18)
 
 
