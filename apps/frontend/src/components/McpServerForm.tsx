@@ -294,7 +294,7 @@ export default function McpServerForm({
           setOauthAuthUrl(server.oauthConfig.authorizationServerUrl);
           setOauthTokenEndpoint(server.oauthConfig.tokenEndpoint || '');
           setOauthResource(server.oauthConfig.resource || '');
-          setOauthScopes(server.oauthConfig.scopes.join(' '));
+          setOauthScopes((server.oauthConfig.scopes || []).join(' '));
           setOauthClientId(server.oauthConfig.clientId || '');
           setOauthClientSecret(server.oauthConfig.clientSecret || '');
           setOauthCallbackUrl(server.oauthConfig.callbackUrl || '');

@@ -333,9 +333,24 @@ export class McpService {
       };
       const apiKeyConfig = server.apiKeyConfig ? JSON.parse(server.apiKeyConfig as string) : null;
 
+      // Map OAuth token from Prisma types to core OAuthToken
+      const oauthToken = server.oauthToken
+        ? {
+            id: server.oauthToken.id,
+            mcpServerId: server.oauthToken.mcpServerId,
+            accessToken: server.oauthToken.accessToken,
+            tokenType: server.oauthToken.tokenType,
+            refreshToken: server.oauthToken.refreshToken ?? undefined,
+            scope: server.oauthToken.scope ?? undefined,
+            expiresAt: server.oauthToken.expiresAt?.getTime(),
+            createdAt: server.oauthToken.createdAt.getTime(),
+            updatedAt: server.oauthToken.updatedAt.getTime(),
+          }
+        : null;
+
       const remoteServer = new RemoteHttpMcpServer(
         { url: config.url, transport: 'http', headers: config.headers },
-        null,
+        oauthToken,
         apiKeyConfig
       );
       await remoteServer.initialize();
@@ -351,9 +366,24 @@ export class McpService {
       };
       const apiKeyConfig = server.apiKeyConfig ? JSON.parse(server.apiKeyConfig as string) : null;
 
+      // Map OAuth token from Prisma types to core OAuthToken
+      const oauthToken = server.oauthToken
+        ? {
+            id: server.oauthToken.id,
+            mcpServerId: server.oauthToken.mcpServerId,
+            accessToken: server.oauthToken.accessToken,
+            tokenType: server.oauthToken.tokenType,
+            refreshToken: server.oauthToken.refreshToken ?? undefined,
+            scope: server.oauthToken.scope ?? undefined,
+            expiresAt: server.oauthToken.expiresAt?.getTime(),
+            createdAt: server.oauthToken.createdAt.getTime(),
+            updatedAt: server.oauthToken.updatedAt.getTime(),
+          }
+        : null;
+
       const remoteServer = new RemoteSseMcpServer(
         { url: config.url, transport: 'sse', headers: config.headers },
-        null,
+        oauthToken,
         apiKeyConfig
       );
       await remoteServer.initialize();
