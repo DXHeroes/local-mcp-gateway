@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.17.0](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.16.0...frontend-v0.17.0) (2026-04-01)
+
+
+### Features
+
+* **auth:** implement email/password signup modes and validation ([a772b51](https://github.com/DXHeroes/local-mcp-gateway/commit/a772b51acd00255ba7fb4c316e00ad49374c9b62))
+* **debug:** implement summary endpoint and enhance debug logs overview ([675650a](https://github.com/DXHeroes/local-mcp-gateway/commit/675650a47260401b4cf07daefabe4ff5e06349b3))
+* **mcp:** map OAuth token from Prisma types to core OAuthToken in McpService ([f4bb2e9](https://github.com/DXHeroes/local-mcp-gateway/commit/f4bb2e9636ba0945352a1bd5a34ca0524c8c6c13))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.17
+    * @dxheroes/local-mcp-ui bumped to 0.5.15
+
 ## [0.16.0](https://github.com/DXHeroes/local-mcp-gateway/compare/frontend-v0.15.1...frontend-v0.16.0) (2026-03-18)
 
 

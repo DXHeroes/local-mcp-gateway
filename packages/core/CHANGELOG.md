@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.10.3](https://github.com/DXHeroes/local-mcp-gateway/compare/core-v0.10.2...core-v0.10.3) (2026-04-01)
+
+
+### Bug Fixes
+
+* **proxy:** streamline error response handling in ProxyService ([b9f371e](https://github.com/DXHeroes/local-mcp-gateway/commit/b9f371e800aaed357a55ebf65b312c4aeb599927))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.17
+  * devDependencies
+    * @dxheroes/local-mcp-config bumped to 0.4.17
+
 ## [0.10.2](https://github.com/DXHeroes/local-mcp-gateway/compare/core-v0.10.1...core-v0.10.2) (2026-03-18)
 
 

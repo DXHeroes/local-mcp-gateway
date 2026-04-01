@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.4.2](https://github.com/DXHeroes/local-mcp-gateway/compare/mcp-merk-v0.4.1...mcp-merk-v0.4.2) (2026-04-01)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * peerDependencies
+    * @dxheroes/local-mcp-core bumped to 0.10.3
+
 ## [0.4.1](https://github.com/DXHeroes/local-mcp-gateway/compare/mcp-merk-v0.4.0...mcp-merk-v0.4.1) (2026-03-18)
 
 
